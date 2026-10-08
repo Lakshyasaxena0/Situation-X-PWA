@@ -52,7 +52,11 @@ export async function groqJsonCompletion(
   // A model that does not accept JSON mode answers 400. The prompt already demands "ONLY a JSON
   // object", so retry once without the option instead of losing the AI answer.
   if (res.status === 400) res = await post(request);
-  if (!res.ok) throw new Error(`Groq request failed with HTTP ${res.status}`);
+  if (!res.ok) {
+    // Groq explains what is wrong (unknown model, bad key...) in the body: keep it for the logs.
+    const detail = (await res.text().catch(() => "")).replace(/\s+/g, " ").slice(0, 300);
+    throw new Error(`Groq request failed with HTTP ${res.status}${detail ? `: ${detail}` : ""}`);
+  }
 
   const data = (await res.json()) as ChatResponse;
   return data.choices?.[0]?.message?.content ?? null;
