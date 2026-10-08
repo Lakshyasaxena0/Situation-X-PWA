@@ -2,6 +2,7 @@ import app from "./app";
 import { logger } from "./lib/logger";
 import { paywallEnabled } from "./services/billing.service";
 import { razorpayConfigured } from "./lib/razorpay";
+import { databaseTarget } from "@workspace/db";
 
 const rawPort = process.env["PORT"];
 
@@ -24,6 +25,7 @@ app.listen(port, (err) => {
   }
 
   logger.info({ port }, "Server listening");
+  logger.info({ database: databaseTarget() }, "Database target (password not shown)");
 
   // Billing readiness, so a missing key is noticed at deploy time and not by a customer.
   if (paywallEnabled() && !razorpayConfigured()) {

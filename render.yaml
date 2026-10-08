@@ -31,6 +31,7 @@ services:
       # --- Database (Supabase -> Connect -> connection string). Create the tables first with lib/db/supabase-setup.sql.
       - key: DATABASE_URL
         sync: false
+      # Alternative to DATABASE_URL (no URL-encoding of the password needed): DB_HOST, DB_USER, DB_PASSWORD, DB_NAME, DB_PORT.
       # --- AI
       - key: GROQ_API_KEY
         sync: false
