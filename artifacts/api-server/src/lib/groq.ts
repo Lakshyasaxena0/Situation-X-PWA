@@ -18,6 +18,28 @@ export function groqConfigured(): boolean {
 
 type ChatResponse = { choices?: { message?: { content?: string | null } }[] };
 
+/** Tried in this order when the configured model is not available to the account. */
+const PREFERRED_MODELS = [
+  "llama-3.3-70b-versatile",
+  "openai/gpt-oss-120b",
+  "openai/gpt-oss-20b",
+  "qwen/qwen3-32b",
+  "llama-3.1-8b-instant",
+];
+let discoveredModel: string | null = null;
+
+async function discoverModel(): Promise<string | null> {
+  const baseUrl = (process.env.GROQ_BASE_URL || DEFAULT_BASE_URL).replace(/\/+$/, "");
+  const res = await fetch(`${baseUrl}/models`, {
+    headers: { authorization: `Bearer ${process.env.GROQ_API_KEY}` },
+    signal: AbortSignal.timeout(10_000),
+  }).catch(() => null);
+  if (!res?.ok) return null;
+  const data = (await res.json().catch(() => null)) as { data?: { id?: string }[] } | null;
+  const ids = new Set((data?.data ?? []).map((m) => m.id).filter((id): id is string => Boolean(id)));
+  return PREFERRED_MODELS.find((m) => ids.has(m)) ?? null;
+}
+
 function post(body: Record<string, unknown>): Promise<Response> {
   const baseUrl = (process.env.GROQ_BASE_URL || DEFAULT_BASE_URL).replace(/\/+$/, "");
   const timeoutMs = Number(process.env.GROQ_TIMEOUT_MS) || DEFAULT_TIMEOUT_MS;
@@ -35,23 +57,39 @@ function post(body: Record<string, unknown>): Promise<Response> {
 /**
  * Sends one prompt and returns the model's reply text (expected to be a JSON object).
  * Throws on network errors, timeouts and non-2xx answers; the caller decides the fallback.
- * The error message never contains the API key or the response body.
+ * The error message never contains the API key (it may carry the start of Groq's own error text).
+ *
+ * If the configured model is unknown to this Groq account (HTTP 404 / model_not_found), the models the
+ * account can actually use are looked up once and the best match is used from then on.
  */
 export async function groqJsonCompletion(
   prompt: string,
   options: { maxTokens?: number; temperature?: number; model?: string } = {},
 ): Promise<string | null> {
   const request = {
-    model: options.model || process.env.GROQ_MODEL || DEFAULT_GROQ_MODEL,
+    model: options.model || discoveredModel || process.env.GROQ_MODEL || DEFAULT_GROQ_MODEL,
     temperature: options.temperature ?? 0.3,
     max_completion_tokens: options.maxTokens ?? 500,
     messages: [{ role: "user", content: prompt }],
   };
 
-  let res = await post({ ...request, response_format: { type: "json_object" } });
-  // A model that does not accept JSON mode answers 400. The prompt already demands "ONLY a JSON
-  // object", so retry once without the option instead of losing the AI answer.
-  if (res.status === 400) res = await post(request);
+  const send = async (): Promise<Response> => {
+    let r = await post({ ...request, response_format: { type: "json_object" } });
+    // A model that does not accept JSON mode answers 400. The prompt already demands "ONLY a JSON
+    // object", so retry once without the option instead of losing the AI answer.
+    if (r.status === 400) r = await post(request);
+    return r;
+  };
+
+  let res = await send();
+  if (res.status === 404 && !options.model) {
+    const found = await discoverModel();
+    if (found && found !== request.model) {
+      discoveredModel = found;
+      request.model = found;
+      res = await send();
+    }
+  }
   if (!res.ok) {
     // Groq explains what is wrong (unknown model, bad key...) in the body: keep it for the logs.
     const detail = (await res.text().catch(() => "")).replace(/\s+/g, " ").slice(0, 300);
