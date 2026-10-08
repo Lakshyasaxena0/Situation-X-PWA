@@ -2,9 +2,20 @@ import { SaturnXLogo, SituationFullLogo } from "@/components/SaturnXLogo";
 
 const base = import.meta.env.BASE_URL?.replace(/\/$/, "") ?? "";
 
+/** The landing page uses the logo's own paper colour (#f8f9f3) so the logo blends in with no visible box. */
+const LANDING_THEME = {
+  "--background": "70 33% 96.5%",
+  "--foreground": "222 40% 12%",
+  "--border": "60 12% 84%",
+  "--muted": "60 18% 91%",
+  "--muted-foreground": "220 10% 36%",
+  "--primary": "25 95% 50%",
+  "--primary-foreground": "0 0% 100%",
+} as React.CSSProperties;
+
 export default function Landing() {
   return (
-    <div className="min-h-screen bg-background text-foreground flex flex-col">
+    <div className="min-h-screen bg-background text-foreground flex flex-col" style={LANDING_THEME}>
       {/* Header */}
       <header className="border-b border-border px-6 py-4 flex items-center justify-between">
         <div className="flex items-center gap-3">
@@ -30,7 +41,7 @@ export default function Landing() {
       {/* Hero */}
       <main className="flex-1 flex flex-col items-center justify-center px-6 py-20 text-center">
         <div className="mb-8">
-          <SituationFullLogo width={380} />
+          <SituationFullLogo width={420} />
         </div>
 
         <h1 className="sr-only">

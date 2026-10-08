@@ -27,7 +27,7 @@ export function SituationFullLogo({ width = 360, className = "" }: { width?: num
       src={`${base}logo-full.jpg`}
       alt="Situation X"
       draggable={false}
-      className={`rounded-2xl select-none ${className}`}
+      className={`select-none ${className}`}
       style={{ width: "100%", maxWidth: width, height: "auto" }}
     />
   );
