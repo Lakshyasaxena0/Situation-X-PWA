@@ -75,7 +75,16 @@ export function databaseTarget(): { host: string; port: string; user: string; da
   }
   try {
     const u = new URL(process.env.DATABASE_URL as string);
-    return { host: u.hostname, port: u.port || "5432", user: decodeURIComponent(u.username), database: u.pathname.replace(/^\//, ""), source: "DATABASE_URL" };
+    // A malformed URL can leave the password inside any of these parts, so anything that does not
+    // look like a plain name is hidden rather than logged.
+    const plain = (v: string) => (/^[A-Za-z0-9_.-]{0,80}$/.test(v) ? v : "(unreadable: check the URL format)");
+    return {
+      host: plain(u.hostname),
+      port: u.port || "5432",
+      user: plain((() => { try { return decodeURIComponent(u.username); } catch { return u.username; } })()),
+      database: plain(u.pathname.replace(/^\//, "")),
+      source: "DATABASE_URL",
+    };
   } catch {
     return { host: "(DATABASE_URL could not be read as a URL)", port: "", user: "", database: "", source: "DATABASE_URL" };
   }
