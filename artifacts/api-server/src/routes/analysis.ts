@@ -12,6 +12,8 @@ import { currentUserId } from "../middlewares/requireUser.js";
 import { getCalibration } from "../services/calibration.service.js";
 import { synthesize } from "../services/synthesis.service.js";
 import { computeCost, withoutAi, type CreditCost } from "../services/credit-cost.service.js";
+import type { AnalysisOptions } from "../services/analysis-options.js";
+import type { BirthInput } from "../services/timing.service.js";
 import { attachAnalysis, billingActiveFor, debitCredits, getBalance, refundCharge, type DebitResult } from "../services/credits.service.js";
 
 const MAX_SITUATION_LENGTH = 2000; // matches the UI textarea limit
@@ -19,7 +21,14 @@ const MAX_PAGE_SIZE = 100;
 
 const router = Router();
 
-type Parsed = { situation: string; latitude?: number; longitude?: number; depth: "auto" | "standard" | "deep" | "expert" };
+type Parsed = {
+  situation: string;
+  latitude?: number;
+  longitude?: number;
+  depth: "auto" | "standard" | "deep" | "expert";
+  options: AnalysisOptions;
+  birth?: BirthInput;
+};
 type ParseOutcome = { ok: true; data: Parsed } | { ok: false; status: number; body: { error: string; message: string } };
 
 /** Shared by /analyze and /estimate so the quoted price always matches the charged price. */
@@ -47,7 +56,25 @@ function parseSituationRequest(body: unknown): ParseOutcome {
   if (longitude !== undefined && (!Number.isFinite(longitude) || longitude < -180 || longitude > 180)) {
     return { ok: false, status: 400, body: { error: "invalid_location", message: "longitude must be between -180 and 180." } };
   }
-  return { ok: true, data: { situation, latitude, longitude, depth } };
+
+  let birth: BirthInput | undefined;
+  const b = parseResult.data.birth;
+  if (b) {
+    const at = new Date(b.datetime);
+    if (Number.isNaN(at.getTime()) || at.getTime() > Date.now() || at.getUTCFullYear() < 1800) {
+      return { ok: false, status: 400, body: { error: "invalid_birth", message: "Birth date and time must be a valid moment in the past." } };
+    }
+    if (!Number.isFinite(b.latitude) || Math.abs(b.latitude) > 90 || !Number.isFinite(b.longitude) || Math.abs(b.longitude) > 180) {
+      return { ok: false, status: 400, body: { error: "invalid_birth", message: "Birth place coordinates are out of range." } };
+    }
+    birth = { at, latitude: b.latitude, longitude: b.longitude };
+  }
+  const options: AnalysisOptions = {
+    useAi: parseResult.data.useAi ?? true,
+    useAstrology: parseResult.data.useAstrology ?? true,
+    language: parseResult.data.language ?? "auto",
+  };
+  return { ok: true, data: { situation, latitude, longitude, depth, options, birth } };
 }
 
 router.post("/analysis/estimate", async (req, res) => {
@@ -57,9 +84,9 @@ router.post("/analysis/estimate", async (req, res) => {
     return;
   }
   try {
-    const { situation, latitude, longitude, depth } = parsed.data;
+    const { situation, latitude, longitude, depth, options, birth } = parsed.data;
     const userId = currentUserId(res);
-    const cost = computeCost(situation, runEngine(situation, latitude, longitude), depth);
+    const cost = computeCost(situation, runEngine(situation, { latitude, longitude, birth, useAstrology: options.useAstrology }), depth, options);
     const billingActive = billingActiveFor(userId);
     const balance = await getBalance(userId);
     res.json({ ...cost, billingActive, balance, enough: !billingActive || balance >= cost.total });
@@ -75,18 +102,18 @@ router.post("/analysis/analyze", async (req, res) => {
     res.status(parsed.status).json(parsed.body);
     return;
   }
-  const { situation, latitude, longitude, depth } = parsed.data;
+  const { situation, latitude, longitude, depth, options, birth } = parsed.data;
   const userId = currentUserId(res);
   const billingActive = billingActiveFor(userId);
   let charge: { ledgerId: number; balance: number } | null = null;
 
   try {
     // Step 1: Run the local engine pipeline (AJIT → MANU → Ethical Filter → ASTRO → SIVI)
-    const engineResult = runEngine(situation, latitude, longitude);
+    const engineResult = runEngine(situation, { latitude, longitude, birth, useAstrology: options.useAstrology });
 
     // The price is fixed by the modules involved and the reasoning level, so it is charged up front
     // (atomically, never below zero) and the AI part is given back if the AI cannot answer.
-    const cost: CreditCost = computeCost(situation, engineResult, depth);
+    const cost: CreditCost = computeCost(situation, engineResult, depth, options);
     if (billingActive) {
       const debit: DebitResult = await debitCredits(userId, cost.total, { lines: cost.lines, depth: cost.depth });
       if (!debit.ok) {
@@ -105,14 +132,15 @@ router.post("/analysis/analyze", async (req, res) => {
     // Step 2: AI and astrology work together on the final answer. The AI sees every module's
     // output plus the dasha/transits, and past follow-up accuracy tempers the result.
     const calibration = await getCalibration(engineResult.intent.intent);
-    const synthesis = await synthesize(situation, engineResult, calibration, undefined, cost.depth);
+    const synthesis = await synthesize(situation, engineResult, calibration, undefined, cost.depth, options);
 
     // Charged only for what was delivered: without the AI the user still gets the engine +
     // astrology answer, so the AI credits go back.
-    const aiAnswered = synthesis.source === "ai+astro";
-    const billed = aiAnswered ? { total: cost.total, lines: cost.lines } : withoutAi(cost);
+    const aiAnswered = synthesis.usedAi;
+    const aiMissing = options.useAi && !aiAnswered;
+    const billed = aiMissing ? withoutAi(cost) : { total: cost.total, lines: cost.lines };
     let balanceNow = charge?.balance ?? null;
-    if (charge && !aiAnswered && (await refundCharge(userId, charge.ledgerId, cost.aiCredits, "ai_unavailable"))) {
+    if (charge && aiMissing && (await refundCharge(userId, charge.ledgerId, cost.aiCredits, "ai_unavailable"))) {
       balanceNow = charge.balance + cost.aiCredits;
     }
     const credits = {
@@ -126,8 +154,25 @@ router.post("/analysis/analyze", async (req, res) => {
     const summary = synthesis.summary;
     const overallScore = synthesis.score;
 
+    const modules = [
+      ...engineResult.modules,
+      {
+        key: "AI" as const,
+        name: "AI - reasoning",
+        area: "synthesis" as const,
+        active: aiAnswered,
+        verdict: aiAnswered
+          ? `Own judgment ${synthesis.logicScore}/100${synthesis.astroAlignment ? `; astrology ${synthesis.astroAlignment} it` : ""}; final ${synthesis.score}/100 (${synthesis.verdict}).`
+          : options.useAi
+            ? "The AI could not answer this time, so the engine and astrology answer is shown (AI credits refunded)."
+            : "Switched off in your settings.",
+        evidence: synthesis.reasoning ? [synthesis.reasoning] : [],
+      },
+    ];
     const fullAnalysis = {
       situation,
+      modules,
+      options,
       intent: engineResult.intent,
       emotion: engineResult.emotion,
       simulation: engineResult.simulation,
@@ -145,7 +190,7 @@ router.post("/analysis/analyze", async (req, res) => {
       userId,
       situation,
       category: engineResult.intent.intent,
-      modules: ["AJIT", "MANU", "SIVI", "ASTRO"],
+      modules: modules.filter((m) => m.active).map((m) => m.key),
       overallResult: synthesis.verdict,
       overallConfidence: synthesis.confidence,
       overallScore,

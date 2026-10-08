@@ -8,7 +8,7 @@ export type EmotionResult = {
   score: number;
 };
 
-const EMOTION_KEYWORDS: Record<EmotionType, string[]> = {
+export const EMOTION_KEYWORDS: Record<EmotionType, string[]> = {
   calm: ["fine", "okay", "normal", "stable", "peaceful", "clear"],
   stressed: ["stress", "pressure", "overwhelmed", "burden", "tension"],
   anxious: ["anxious", "worried", "fear", "scared", "nervous", "uneasy"],

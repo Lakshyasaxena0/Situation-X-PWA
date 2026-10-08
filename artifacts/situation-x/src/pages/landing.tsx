@@ -1,4 +1,5 @@
 import { SaturnXLogo, SituationFullLogo } from "@/components/SaturnXLogo";
+import { BrandName } from "@/components/BrandName";
 
 const base = import.meta.env.BASE_URL?.replace(/\/$/, "") ?? "";
 
@@ -9,18 +10,26 @@ const LANDING_THEME = {
   "--border": "60 12% 84%",
   "--muted": "60 18% 91%",
   "--muted-foreground": "220 10% 36%",
-  "--primary": "25 95% 50%",
-  "--primary-foreground": "0 0% 100%",
+  "--primary": "38 92% 50%",
+  "--primary-foreground": "222 47% 8%",
 } as React.CSSProperties;
 
 export default function Landing() {
   return (
-    <div className="min-h-screen bg-background text-foreground flex flex-col" style={LANDING_THEME}>
+    <div className="relative min-h-screen bg-background text-foreground flex flex-col overflow-hidden" style={LANDING_THEME}>
+      {/* Logo watermark */}
+      <img
+        src={`${base}/logo-mark.png`}
+        alt=""
+        aria-hidden="true"
+        draggable={false}
+        className="pointer-events-none select-none absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[min(95vw,820px)] opacity-[0.07]"
+      />
       {/* Header */}
-      <header className="border-b border-border px-6 py-4 flex items-center justify-between">
+      <header className="relative border-b border-border px-6 py-4 flex items-center justify-between">
         <div className="flex items-center gap-3">
           <SaturnXLogo size={32} />
-          <span className="font-semibold text-foreground tracking-tight">Situation X</span>
+          <BrandName />
         </div>
         <div className="flex items-center gap-2">
           <a
@@ -39,7 +48,7 @@ export default function Landing() {
       </header>
 
       {/* Hero */}
-      <main className="flex-1 flex flex-col items-center justify-center px-6 py-20 text-center">
+      <main className="relative flex-1 flex flex-col items-center justify-center px-6 py-20 text-center">
         <div className="mb-8">
           <SituationFullLogo width={420} />
         </div>
@@ -47,10 +56,7 @@ export default function Landing() {
         <h1 className="sr-only">
           Situation X
         </h1>
-        <p className="text-xl text-muted-foreground max-w-lg mb-2">
-          Multi-dimensional situation analysis.
-        </p>
-        <p className="text-sm text-muted-foreground max-w-md mb-10">
+        <p className="text-lg sm:text-xl text-muted-foreground max-w-xl mb-10 leading-relaxed">
           Combines intent detection, emotion mapping, path simulation, and Vedic astrology into a single structured analysis of any situation you face.
         </p>
 
@@ -70,7 +76,7 @@ export default function Landing() {
         </div>
       </main>
 
-      <footer className="border-t border-border px-6 py-4 text-center text-xs text-muted-foreground">
+      <footer className="relative border-t border-border px-6 py-4 text-center text-xs text-muted-foreground">
         Situation X — Analytical intelligence for complex decisions.
       </footer>
     </div>

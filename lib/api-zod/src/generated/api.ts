@@ -39,6 +39,38 @@ export const EstimateAnalysisCostBody = zod.object({
     .describe(
       'How deeply the AI should reason. \"auto\" (default) picks the level from how complex the question is. Deeper levels cost more credits.',
     ),
+  language: zod
+    .enum(["auto", "en", "hi", "hinglish"])
+    .optional()
+    .describe(
+      'Language of the written answer. \"auto\" (default) follows the language of the question.',
+    ),
+  useAi: zod
+    .boolean()
+    .optional()
+    .describe(
+      "Use the AI for the final answer (default true). When false the engine and astrology answer is returned and no AI credits are charged.",
+    ),
+  useAstrology: zod
+    .boolean()
+    .optional()
+    .describe(
+      "Use the astrology lens (default true). When false the astrology is not used in the answer and is not charged.",
+    ),
+  birth: zod
+    .object({
+      datetime: zod
+        .string()
+        .describe(
+          "Birth moment as an ISO 8601 date-time with its UTC offset, e.g. 1995-04-12T08:30:00+05:30",
+        ),
+      latitude: zod.number(),
+      longitude: zod.number(),
+    })
+    .optional()
+    .describe(
+      "Optional birth moment and place. When given, the dashas are those of the person's own chart instead of the chart of the moment of the question.",
+    ),
 });
 
 export const EstimateAnalysisCostResponse = zod.object({
@@ -85,6 +117,38 @@ export const AnalyzeSituationBody = zod.object({
     .optional()
     .describe(
       'How deeply the AI should reason. \"auto\" (default) picks the level from how complex the question is. Deeper levels cost more credits.',
+    ),
+  language: zod
+    .enum(["auto", "en", "hi", "hinglish"])
+    .optional()
+    .describe(
+      'Language of the written answer. \"auto\" (default) follows the language of the question.',
+    ),
+  useAi: zod
+    .boolean()
+    .optional()
+    .describe(
+      "Use the AI for the final answer (default true). When false the engine and astrology answer is returned and no AI credits are charged.",
+    ),
+  useAstrology: zod
+    .boolean()
+    .optional()
+    .describe(
+      "Use the astrology lens (default true). When false the astrology is not used in the answer and is not charged.",
+    ),
+  birth: zod
+    .object({
+      datetime: zod
+        .string()
+        .describe(
+          "Birth moment as an ISO 8601 date-time with its UTC offset, e.g. 1995-04-12T08:30:00+05:30",
+        ),
+      latitude: zod.number(),
+      longitude: zod.number(),
+    })
+    .optional()
+    .describe(
+      "Optional birth moment and place. When given, the dashas are those of the person's own chart instead of the chart of the moment of the question.",
     ),
 });
 
@@ -437,6 +501,86 @@ export const AnalyzeSituationResponse = zod.object({
         chartType: zod.string().describe("D1, D3, D9, or D10"),
       })
       .optional(),
+    timing: zod
+      .object({
+        timeBased: zod.boolean(),
+        basis: zod.enum(["birth", "question"]),
+        vimshottari: zod.object({
+          mahadasha: zod.object({
+            planet: zod.string(),
+            startDate: zod.string(),
+            endDate: zod.string(),
+            durationYears: zod.number().optional(),
+          }),
+          antardasha: zod.object({
+            planet: zod.string(),
+            startDate: zod.string(),
+            endDate: zod.string(),
+            durationYears: zod.number().optional(),
+          }),
+          pratyantardasha: zod.object({
+            planet: zod.string(),
+            startDate: zod.string(),
+            endDate: zod.string(),
+            durationYears: zod.number().optional(),
+          }),
+          sookshmadasha: zod.object({
+            planet: zod.string(),
+            startDate: zod.string(),
+            endDate: zod.string(),
+            durationYears: zod.number().optional(),
+          }),
+        }),
+        chara: zod
+          .union([
+            zod.object({
+              school: zod.string(),
+              direction: zod.enum(["direct", "reverse"]),
+              mahadasha: zod.object({
+                sign: zod.string(),
+                signIndex: zod.number().optional(),
+                startDate: zod.string(),
+                endDate: zod.string(),
+                years: zod.number(),
+              }),
+              antardasha: zod.object({
+                sign: zod.string(),
+                signIndex: zod.number().optional(),
+                startDate: zod.string(),
+                endDate: zod.string(),
+                years: zod.number(),
+              }),
+              sequence: zod.array(
+                zod.object({
+                  sign: zod.string(),
+                  signIndex: zod.number().optional(),
+                  startDate: zod.string(),
+                  endDate: zod.string(),
+                  years: zod.number(),
+                }),
+              ),
+              notes: zod.array(zod.string()),
+            }),
+            zod.null(),
+          ])
+          .optional(),
+        house: zod.number(),
+        houseSign: zod.string(),
+        houseLord: zod.string(),
+        activations: zod.array(zod.string()),
+        summary: zod.string(),
+      })
+      .optional()
+      .describe(
+        "Running dashas and whether they touch the house the question is about",
+      ),
+    location: zod
+      .object({
+        latitude: zod.number(),
+        longitude: zod.number(),
+      })
+      .optional()
+      .describe("The place the chart was cast for"),
   }),
   overallScore: zod.number(),
   summary: zod.string(),
@@ -449,7 +593,9 @@ export const AnalyzeSituationResponse = zod.object({
       astroInsight: zod.string(),
       advice: zod.string(),
       timeframeDays: zod.number(),
-      source: zod.enum(["ai+astro", "engine"]),
+      source: zod.enum(["ai+astro", "ai", "engine"]),
+      usedAi: zod.boolean().optional(),
+      usedAstrology: zod.boolean().optional(),
       calibration: zod
         .object({
           samples: zod.number(),
@@ -495,6 +641,37 @@ export const AnalyzeSituationResponse = zod.object({
     .describe(
       "Final answer produced by the AI working together with the astrology and the AJIT\/MANU\/SIVI modules",
     ),
+  modules: zod
+    .array(
+      zod
+        .object({
+          key: zod.enum(["AJIT", "MANU", "FILTER", "SIVI", "ASTRO", "AI"]),
+          name: zod.string(),
+          area: zod.enum([
+            "intent",
+            "emotion",
+            "paths",
+            "astrology",
+            "synthesis",
+          ]),
+          active: zod.boolean(),
+          verdict: zod.string(),
+          evidence: zod.array(zod.string()),
+        })
+        .describe("What one module did for this question"),
+    )
+    .optional()
+    .describe(
+      "What each module did for this question (active or not, its verdict and evidence)",
+    ),
+  options: zod
+    .object({
+      useAi: zod.boolean().optional(),
+      useAstrology: zod.boolean().optional(),
+      language: zod.string().optional(),
+    })
+    .optional()
+    .describe("The settings this analysis was run with"),
   credits: zod
     .object({
       billingActive: zod.boolean(),
@@ -891,6 +1068,86 @@ export const GetAnalysisHistoryResponse = zod.object({
                 chartType: zod.string().describe("D1, D3, D9, or D10"),
               })
               .optional(),
+            timing: zod
+              .object({
+                timeBased: zod.boolean(),
+                basis: zod.enum(["birth", "question"]),
+                vimshottari: zod.object({
+                  mahadasha: zod.object({
+                    planet: zod.string(),
+                    startDate: zod.string(),
+                    endDate: zod.string(),
+                    durationYears: zod.number().optional(),
+                  }),
+                  antardasha: zod.object({
+                    planet: zod.string(),
+                    startDate: zod.string(),
+                    endDate: zod.string(),
+                    durationYears: zod.number().optional(),
+                  }),
+                  pratyantardasha: zod.object({
+                    planet: zod.string(),
+                    startDate: zod.string(),
+                    endDate: zod.string(),
+                    durationYears: zod.number().optional(),
+                  }),
+                  sookshmadasha: zod.object({
+                    planet: zod.string(),
+                    startDate: zod.string(),
+                    endDate: zod.string(),
+                    durationYears: zod.number().optional(),
+                  }),
+                }),
+                chara: zod
+                  .union([
+                    zod.object({
+                      school: zod.string(),
+                      direction: zod.enum(["direct", "reverse"]),
+                      mahadasha: zod.object({
+                        sign: zod.string(),
+                        signIndex: zod.number().optional(),
+                        startDate: zod.string(),
+                        endDate: zod.string(),
+                        years: zod.number(),
+                      }),
+                      antardasha: zod.object({
+                        sign: zod.string(),
+                        signIndex: zod.number().optional(),
+                        startDate: zod.string(),
+                        endDate: zod.string(),
+                        years: zod.number(),
+                      }),
+                      sequence: zod.array(
+                        zod.object({
+                          sign: zod.string(),
+                          signIndex: zod.number().optional(),
+                          startDate: zod.string(),
+                          endDate: zod.string(),
+                          years: zod.number(),
+                        }),
+                      ),
+                      notes: zod.array(zod.string()),
+                    }),
+                    zod.null(),
+                  ])
+                  .optional(),
+                house: zod.number(),
+                houseSign: zod.string(),
+                houseLord: zod.string(),
+                activations: zod.array(zod.string()),
+                summary: zod.string(),
+              })
+              .optional()
+              .describe(
+                "Running dashas and whether they touch the house the question is about",
+              ),
+            location: zod
+              .object({
+                latitude: zod.number(),
+                longitude: zod.number(),
+              })
+              .optional()
+              .describe("The place the chart was cast for"),
           }),
           overallScore: zod.number(),
           summary: zod.string(),
@@ -903,7 +1160,9 @@ export const GetAnalysisHistoryResponse = zod.object({
               astroInsight: zod.string(),
               advice: zod.string(),
               timeframeDays: zod.number(),
-              source: zod.enum(["ai+astro", "engine"]),
+              source: zod.enum(["ai+astro", "ai", "engine"]),
+              usedAi: zod.boolean().optional(),
+              usedAstrology: zod.boolean().optional(),
               calibration: zod
                 .object({
                   samples: zod.number(),
@@ -951,6 +1210,44 @@ export const GetAnalysisHistoryResponse = zod.object({
             .describe(
               "Final answer produced by the AI working together with the astrology and the AJIT\/MANU\/SIVI modules",
             ),
+          modules: zod
+            .array(
+              zod
+                .object({
+                  key: zod.enum([
+                    "AJIT",
+                    "MANU",
+                    "FILTER",
+                    "SIVI",
+                    "ASTRO",
+                    "AI",
+                  ]),
+                  name: zod.string(),
+                  area: zod.enum([
+                    "intent",
+                    "emotion",
+                    "paths",
+                    "astrology",
+                    "synthesis",
+                  ]),
+                  active: zod.boolean(),
+                  verdict: zod.string(),
+                  evidence: zod.array(zod.string()),
+                })
+                .describe("What one module did for this question"),
+            )
+            .optional()
+            .describe(
+              "What each module did for this question (active or not, its verdict and evidence)",
+            ),
+          options: zod
+            .object({
+              useAi: zod.boolean().optional(),
+              useAstrology: zod.boolean().optional(),
+              language: zod.string().optional(),
+            })
+            .optional()
+            .describe("The settings this analysis was run with"),
           credits: zod
             .object({
               billingActive: zod.boolean(),
@@ -1351,6 +1648,86 @@ export const GetAnalysisByIdResponse = zod.object({
             chartType: zod.string().describe("D1, D3, D9, or D10"),
           })
           .optional(),
+        timing: zod
+          .object({
+            timeBased: zod.boolean(),
+            basis: zod.enum(["birth", "question"]),
+            vimshottari: zod.object({
+              mahadasha: zod.object({
+                planet: zod.string(),
+                startDate: zod.string(),
+                endDate: zod.string(),
+                durationYears: zod.number().optional(),
+              }),
+              antardasha: zod.object({
+                planet: zod.string(),
+                startDate: zod.string(),
+                endDate: zod.string(),
+                durationYears: zod.number().optional(),
+              }),
+              pratyantardasha: zod.object({
+                planet: zod.string(),
+                startDate: zod.string(),
+                endDate: zod.string(),
+                durationYears: zod.number().optional(),
+              }),
+              sookshmadasha: zod.object({
+                planet: zod.string(),
+                startDate: zod.string(),
+                endDate: zod.string(),
+                durationYears: zod.number().optional(),
+              }),
+            }),
+            chara: zod
+              .union([
+                zod.object({
+                  school: zod.string(),
+                  direction: zod.enum(["direct", "reverse"]),
+                  mahadasha: zod.object({
+                    sign: zod.string(),
+                    signIndex: zod.number().optional(),
+                    startDate: zod.string(),
+                    endDate: zod.string(),
+                    years: zod.number(),
+                  }),
+                  antardasha: zod.object({
+                    sign: zod.string(),
+                    signIndex: zod.number().optional(),
+                    startDate: zod.string(),
+                    endDate: zod.string(),
+                    years: zod.number(),
+                  }),
+                  sequence: zod.array(
+                    zod.object({
+                      sign: zod.string(),
+                      signIndex: zod.number().optional(),
+                      startDate: zod.string(),
+                      endDate: zod.string(),
+                      years: zod.number(),
+                    }),
+                  ),
+                  notes: zod.array(zod.string()),
+                }),
+                zod.null(),
+              ])
+              .optional(),
+            house: zod.number(),
+            houseSign: zod.string(),
+            houseLord: zod.string(),
+            activations: zod.array(zod.string()),
+            summary: zod.string(),
+          })
+          .optional()
+          .describe(
+            "Running dashas and whether they touch the house the question is about",
+          ),
+        location: zod
+          .object({
+            latitude: zod.number(),
+            longitude: zod.number(),
+          })
+          .optional()
+          .describe("The place the chart was cast for"),
       }),
       overallScore: zod.number(),
       summary: zod.string(),
@@ -1363,7 +1740,9 @@ export const GetAnalysisByIdResponse = zod.object({
           astroInsight: zod.string(),
           advice: zod.string(),
           timeframeDays: zod.number(),
-          source: zod.enum(["ai+astro", "engine"]),
+          source: zod.enum(["ai+astro", "ai", "engine"]),
+          usedAi: zod.boolean().optional(),
+          usedAstrology: zod.boolean().optional(),
           calibration: zod
             .object({
               samples: zod.number(),
@@ -1411,6 +1790,37 @@ export const GetAnalysisByIdResponse = zod.object({
         .describe(
           "Final answer produced by the AI working together with the astrology and the AJIT\/MANU\/SIVI modules",
         ),
+      modules: zod
+        .array(
+          zod
+            .object({
+              key: zod.enum(["AJIT", "MANU", "FILTER", "SIVI", "ASTRO", "AI"]),
+              name: zod.string(),
+              area: zod.enum([
+                "intent",
+                "emotion",
+                "paths",
+                "astrology",
+                "synthesis",
+              ]),
+              active: zod.boolean(),
+              verdict: zod.string(),
+              evidence: zod.array(zod.string()),
+            })
+            .describe("What one module did for this question"),
+        )
+        .optional()
+        .describe(
+          "What each module did for this question (active or not, its verdict and evidence)",
+        ),
+      options: zod
+        .object({
+          useAi: zod.boolean().optional(),
+          useAstrology: zod.boolean().optional(),
+          language: zod.string().optional(),
+        })
+        .optional()
+        .describe("The settings this analysis was run with"),
       credits: zod
         .object({
           billingActive: zod.boolean(),
@@ -1591,6 +2001,16 @@ export const GetSubscriptionStatusResponse = zod.object({
 export const GetCreditsResponse = zod.object({
   balance: zod.number(),
   billingActive: zod.boolean(),
+  granted: zod
+    .number()
+    .optional()
+    .describe(
+      "Credits received so far (welcome gift, plans, top-ups, purchases)",
+    ),
+  used: zod
+    .number()
+    .optional()
+    .describe("Credits used so far (analysis charges minus refunds)"),
   ledger: zod.array(
     zod.object({
       id: zod.number(),

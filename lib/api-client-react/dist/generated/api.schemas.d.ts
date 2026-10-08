@@ -8,19 +8,130 @@
 export interface HealthStatus {
     status: string;
 }
+/**
+ * How deeply the AI should reason. "auto" (default) picks the level from how complex the question is. Deeper levels cost more credits.
+ */
+export type AnalyzeRequestDepth = (typeof AnalyzeRequestDepth)[keyof typeof AnalyzeRequestDepth];
+export declare const AnalyzeRequestDepth: {
+    readonly auto: "auto";
+    readonly standard: "standard";
+    readonly deep: "deep";
+    readonly expert: "expert";
+};
+/**
+ * Language of the written answer. "auto" (default) follows the language of the question.
+ */
+export type AnalyzeRequestLanguage = (typeof AnalyzeRequestLanguage)[keyof typeof AnalyzeRequestLanguage];
+export declare const AnalyzeRequestLanguage: {
+    readonly auto: "auto";
+    readonly en: "en";
+    readonly hi: "hi";
+    readonly hinglish: "hinglish";
+};
+/**
+ * Optional birth moment and place. When given, the dashas are those of the person's own chart instead of the chart of the moment of the question.
+ */
+export interface BirthDetails {
+    /** Birth moment as an ISO 8601 date-time with its UTC offset, e.g. 1995-04-12T08:30:00+05:30 */
+    datetime: string;
+    latitude: number;
+    longitude: number;
+}
 export interface AnalyzeRequest {
     /** The situation to analyze (min 10 characters) */
     situation: string;
-    /** Optional birth date YYYY-MM-DD for Vedic chart */
-    birthDate?: string;
-    /** Optional birth time HH:MM */
-    birthTime?: string;
-    /** Optional birth place */
-    birthPlace?: string;
-    /** Optional latitude for birth place */
+    /** Optional latitude of where the question is asked (default New Delhi). Only refines the Prashna ascendant; no birth details are needed. */
     latitude?: number;
-    /** Optional longitude for birth place */
+    /** Optional longitude of where the question is asked (default New Delhi) */
     longitude?: number;
+    /** How deeply the AI should reason. "auto" (default) picks the level from how complex the question is. Deeper levels cost more credits. */
+    depth?: AnalyzeRequestDepth;
+    /** Language of the written answer. "auto" (default) follows the language of the question. */
+    language?: AnalyzeRequestLanguage;
+    /** Use the AI for the final answer (default true). When false the engine and astrology answer is returned and no AI credits are charged. */
+    useAi?: boolean;
+    /** Use the astrology lens (default true). When false the astrology is not used in the answer and is not charged. */
+    useAstrology?: boolean;
+    birth?: BirthDetails;
+}
+export type ModuleReportKey = (typeof ModuleReportKey)[keyof typeof ModuleReportKey];
+export declare const ModuleReportKey: {
+    readonly AJIT: "AJIT";
+    readonly MANU: "MANU";
+    readonly FILTER: "FILTER";
+    readonly SIVI: "SIVI";
+    readonly ASTRO: "ASTRO";
+    readonly AI: "AI";
+};
+export type ModuleReportArea = (typeof ModuleReportArea)[keyof typeof ModuleReportArea];
+export declare const ModuleReportArea: {
+    readonly intent: "intent";
+    readonly emotion: "emotion";
+    readonly paths: "paths";
+    readonly astrology: "astrology";
+    readonly synthesis: "synthesis";
+};
+/**
+ * What one module did for this question
+ */
+export interface ModuleReport {
+    key: ModuleReportKey;
+    name: string;
+    area: ModuleReportArea;
+    active: boolean;
+    verdict: string;
+    evidence: string[];
+}
+export interface TimingDashaLevel {
+    planet: string;
+    startDate: string;
+    endDate: string;
+    durationYears?: number;
+}
+export interface CharaPeriod {
+    sign: string;
+    signIndex?: number;
+    startDate: string;
+    endDate: string;
+    years: number;
+}
+export type CharaDashaDirection = (typeof CharaDashaDirection)[keyof typeof CharaDashaDirection];
+export declare const CharaDashaDirection: {
+    readonly direct: "direct";
+    readonly reverse: "reverse";
+};
+export interface CharaDasha {
+    school: string;
+    direction: CharaDashaDirection;
+    mahadasha: CharaPeriod;
+    antardasha: CharaPeriod;
+    sequence: CharaPeriod[];
+    notes: string[];
+}
+export type TimingResultBasis = (typeof TimingResultBasis)[keyof typeof TimingResultBasis];
+export declare const TimingResultBasis: {
+    readonly birth: "birth";
+    readonly question: "question";
+};
+export type TimingResultVimshottari = {
+    mahadasha: TimingDashaLevel;
+    antardasha: TimingDashaLevel;
+    pratyantardasha: TimingDashaLevel;
+    sookshmadasha: TimingDashaLevel;
+};
+/**
+ * Running dashas and whether they touch the house the question is about
+ */
+export interface TimingResult {
+    timeBased: boolean;
+    basis: TimingResultBasis;
+    vimshottari: TimingResultVimshottari;
+    chara?: CharaDasha | null;
+    house: number;
+    houseSign: string;
+    houseLord: string;
+    activations: string[];
+    summary: string;
 }
 export type IntentResultIntent = (typeof IntentResultIntent)[keyof typeof IntentResultIntent];
 export declare const IntentResultIntent: {
@@ -101,6 +212,13 @@ export interface FinalVerdict {
     reasoning: string;
     riskLevel: FinalVerdictRiskLevel;
 }
+export type PlanetPositionDignity = (typeof PlanetPositionDignity)[keyof typeof PlanetPositionDignity];
+export declare const PlanetPositionDignity: {
+    readonly exalted: "exalted";
+    readonly own: "own";
+    readonly debilitated: "debilitated";
+    readonly neutral: "neutral";
+};
 export interface PlanetPosition {
     name: string;
     longitude: number;
@@ -110,6 +228,10 @@ export interface PlanetPosition {
     isRetrograde: boolean;
     navamsaSign: string;
     dasamsaSign: string;
+    drekkanaSign?: string;
+    /** House (1-12, whole sign) counted from this chart's own lagna */
+    house?: number;
+    dignity?: PlanetPositionDignity;
 }
 export interface DashaLevel {
     planet: string;
@@ -129,8 +251,59 @@ export interface VedicChart {
     planets: PlanetPosition[];
     currentDasha?: DashaTree;
     ayanamsa: number;
-    /** D1, D9, or D10 */
+    /** D1, D3, D9, or D10 */
     chartType: string;
+}
+export interface PrashnaFactor {
+    label: string;
+    effect: number;
+    detail: string;
+}
+export interface PrashnaChartUse {
+    chart: string;
+    purpose: string;
+    note: string;
+}
+export type PrashnaReadingSignal = (typeof PrashnaReadingSignal)[keyof typeof PrashnaReadingSignal];
+export declare const PrashnaReadingSignal: {
+    readonly favorable: "favorable";
+    readonly challenging: "challenging";
+    readonly neutral: "neutral";
+};
+export type PrashnaReadingStability = (typeof PrashnaReadingStability)[keyof typeof PrashnaReadingStability];
+export declare const PrashnaReadingStability: {
+    readonly low: "low";
+    readonly medium: "medium";
+    readonly high: "high";
+};
+export type PrashnaReadingRisk = (typeof PrashnaReadingRisk)[keyof typeof PrashnaReadingRisk];
+export declare const PrashnaReadingRisk: {
+    readonly low: "low";
+    readonly medium: "medium";
+    readonly high: "high";
+};
+/**
+ * Prashna (horary) chart cast for the moment of the question, read for the question type
+ */
+export interface PrashnaReading {
+    castAt: string;
+    latitude?: number;
+    longitude?: number;
+    lagna: string;
+    lagnaLord: string;
+    moonSign: string;
+    moonNakshatra: string;
+    moonWaxing: boolean;
+    topic: string;
+    primaryHouse: number;
+    chartsUsed: PrashnaChartUse[];
+    factors: PrashnaFactor[];
+    score: number;
+    signal: PrashnaReadingSignal;
+    stability?: PrashnaReadingStability;
+    risk?: PrashnaReadingRisk;
+    dominantPlanet?: string;
+    summary: string;
 }
 export type AstroInfluenceStability = (typeof AstroInfluenceStability)[keyof typeof AstroInfluenceStability];
 export declare const AstroInfluenceStability: {
@@ -156,12 +329,139 @@ export interface AstroInfluence {
     risk: AstroInfluenceRisk;
     signal: AstroInfluenceSignal;
 }
+/**
+ * The place the chart was cast for
+ */
+export type AstroResultLocation = {
+    latitude: number;
+    longitude: number;
+};
 export interface AstroResult {
     influence: AstroInfluence;
     interpretation: string;
     vedicD1?: VedicChart;
+    vedicD3?: VedicChart;
+    prashna?: PrashnaReading;
     vedicD9?: VedicChart;
     vedicD10?: VedicChart;
+    timing?: TimingResult;
+    /** The place the chart was cast for */
+    location?: AstroResultLocation;
+}
+/**
+ * The settings this analysis was run with
+ */
+export type AnalysisResultOptions = {
+    useAi?: boolean;
+    useAstrology?: boolean;
+    language?: string;
+};
+export type SynthesisVerdict = (typeof SynthesisVerdict)[keyof typeof SynthesisVerdict];
+export declare const SynthesisVerdict: {
+    readonly YES: "YES";
+    readonly CONDITIONAL: "CONDITIONAL";
+    readonly NO: "NO";
+};
+export type SynthesisConfidence = (typeof SynthesisConfidence)[keyof typeof SynthesisConfidence];
+export declare const SynthesisConfidence: {
+    readonly low: "low";
+    readonly medium: "medium";
+    readonly high: "high";
+};
+export type SynthesisSource = (typeof SynthesisSource)[keyof typeof SynthesisSource];
+export declare const SynthesisSource: {
+    readonly "ai+astro": "ai+astro";
+    readonly ai: "ai";
+    readonly engine: "engine";
+};
+/**
+ * How accurate past predictions of this kind were, according to user follow-ups
+ */
+export interface Calibration {
+    samples: number;
+    hitRate: number;
+    applied: boolean;
+}
+/**
+ * How the astrology verdict relates to the AI's own judgment
+ */
+export type SynthesisAstroAlignment = (typeof SynthesisAstroAlignment)[keyof typeof SynthesisAstroAlignment];
+export declare const SynthesisAstroAlignment: {
+    readonly supports: "supports";
+    readonly mixed: "mixed";
+    readonly contradicts: "contradicts";
+};
+/**
+ * Weights used to blend the AI judgment and the astrology verdict
+ */
+export type SynthesisWeights = {
+    logic: number;
+    astro: number;
+};
+/**
+ * Final answer produced by the AI working together with the astrology and the AJIT/MANU/SIVI modules
+ */
+export interface Synthesis {
+    verdict: SynthesisVerdict;
+    score: number;
+    confidence: SynthesisConfidence;
+    summary: string;
+    astroInsight: string;
+    advice: string;
+    timeframeDays: number;
+    source: SynthesisSource;
+    usedAi?: boolean;
+    usedAstrology?: boolean;
+    calibration?: Calibration;
+    /** The AI's own merit-based score (0-100), before the astrology was weighed in */
+    logicScore?: number;
+    /** The Prashna astrology verdict as a 0-100 score */
+    astroScore?: number;
+    /** How the astrology verdict relates to the AI's own judgment */
+    astroAlignment?: SynthesisAstroAlignment;
+    /** The AI's reasoning about the situation itself */
+    reasoning?: string;
+    risks?: string[];
+    keyUnknowns?: string[];
+    nextSteps?: string[];
+    /** Weights used to blend the AI judgment and the astrology verdict */
+    weights?: SynthesisWeights;
+}
+export type CreditsUsedDepth = (typeof CreditsUsedDepth)[keyof typeof CreditsUsedDepth];
+export declare const CreditsUsedDepth: {
+    readonly standard: "standard";
+    readonly deep: "deep";
+    readonly expert: "expert";
+};
+export type CreditsUsedDepthChosen = (typeof CreditsUsedDepthChosen)[keyof typeof CreditsUsedDepthChosen];
+export declare const CreditsUsedDepthChosen: {
+    readonly auto: "auto";
+    readonly user: "user";
+};
+export type CostLineKey = (typeof CostLineKey)[keyof typeof CostLineKey];
+export declare const CostLineKey: {
+    readonly astro: "astro";
+    readonly ajit: "ajit";
+    readonly manu: "manu";
+    readonly sivi: "sivi";
+    readonly ai: "ai";
+};
+export interface CostLine {
+    key: CostLineKey;
+    label: string;
+    credits: number;
+    note: string;
+}
+/**
+ * What this analysis cost. charged is 0 while billing is off.
+ */
+export interface CreditsUsed {
+    billingActive: boolean;
+    charged: number;
+    balance: number | null;
+    depth: CreditsUsedDepth;
+    depthChosen: CreditsUsedDepthChosen;
+    lines: CostLine[];
 }
 export interface AnalysisResult {
     id: number;
@@ -173,6 +473,14 @@ export interface AnalysisResult {
     astro: AstroResult;
     overallScore: number;
     summary: string;
+    synthesis?: Synthesis;
+    /** What each module did for this question (active or not, its verdict and evidence) */
+    modules?: ModuleReport[];
+    /** The settings this analysis was run with */
+    options?: AnalysisResultOptions;
+    credits?: CreditsUsed;
+    /** When the app will ask how the prediction turned out */
+    followUpAt?: string;
     createdAt: string;
 }
 export interface AnalysisRecord {
@@ -192,10 +500,228 @@ export interface AnalysisHistoryResponse {
     limit: number;
     offset: number;
 }
+export interface DueFollowUp {
+    id: number;
+    situation: string;
+    summary: string;
+    verdict: string;
+    createdAt: string;
+}
+export interface DueFollowUpsResponse {
+    items: DueFollowUp[];
+    total: number;
+}
+export type BillingQuotePlanId = (typeof BillingQuotePlanId)[keyof typeof BillingQuotePlanId];
+export declare const BillingQuotePlanId: {
+    readonly monthly: "monthly";
+    readonly six_months: "six_months";
+    readonly yearly: "yearly";
+    readonly two_years: "two_years";
+};
+/**
+ * Price breakdown of one plan. All money values are integer paise (INR).
+ */
+export interface BillingQuote {
+    planId: BillingQuotePlanId;
+    label: string;
+    months: number;
+    currency: string;
+    monthlyPaise: number;
+    grossPaise: number;
+    discountPct: number;
+    discountPaise: number;
+    gstPct: number;
+    gstPaise: number;
+    totalPaise: number;
+    effectivePerMonthPaise: number;
+    /** Credits added to the wallet when this plan is paid */
+    credits: number;
+}
+export type CreditPackQuoteKind = (typeof CreditPackQuoteKind)[keyof typeof CreditPackQuoteKind];
+export declare const CreditPackQuoteKind: {
+    readonly topup: "topup";
+    readonly single: "single";
+};
+export type CreditPackQuotePackId = (typeof CreditPackQuotePackId)[keyof typeof CreditPackQuotePackId] | null;
+export declare const CreditPackQuotePackId: {
+    readonly topup_100: "topup_100";
+    readonly topup_300: "topup_300";
+    readonly topup_1000: "topup_1000";
+};
+/**
+ * Price of a credit-only purchase. All money values are integer paise (INR).
+ */
+export interface CreditPackQuote {
+    kind: CreditPackQuoteKind;
+    packId: CreditPackQuotePackId;
+    credits: number;
+    currency: string;
+    grossPaise: number;
+    discountPct: number;
+    discountPaise: number;
+    gstPct: number;
+    gstPaise: number;
+    totalPaise: number;
+    perCreditPaise: number;
+}
+/**
+ * Credits bought without a subscription, at a higher per-credit price
+ */
+export interface SingleQueryRate {
+    minCredits: number;
+    maxCredits: number;
+    perCreditPaise: number;
+}
+export interface CostTableRow {
+    label: string;
+    credits: number;
+}
+/**
+ * What each module and each reasoning level costs
+ */
+export interface CostTable {
+    modules: CostTableRow[];
+    ai: CostTableRow[];
+}
+export interface BillingPlansResponse {
+    currency: string;
+    paywallEnabled: boolean;
+    /** False until the payment gateway keys are set on the server */
+    paymentsConfigured: boolean;
+    plans: BillingQuote[];
+    /** Top-up packs (subscribers only) */
+    packs: CreditPackQuote[];
+    single: SingleQueryRate;
+    costs: CostTable;
+}
+export type CostEstimateDepth = (typeof CostEstimateDepth)[keyof typeof CostEstimateDepth];
+export declare const CostEstimateDepth: {
+    readonly standard: "standard";
+    readonly deep: "deep";
+    readonly expert: "expert";
+};
+export type CostEstimateDepthChosen = (typeof CostEstimateDepthChosen)[keyof typeof CostEstimateDepthChosen];
+export declare const CostEstimateDepthChosen: {
+    readonly auto: "auto";
+    readonly user: "user";
+};
+export interface CostEstimate {
+    total: number;
+    aiCredits: number;
+    depth: CostEstimateDepth;
+    depthChosen: CostEstimateDepthChosen;
+    lines: CostLine[];
+    /** False while credits are not being charged (everything is free) */
+    billingActive: boolean;
+    balance: number;
+    enough: boolean;
+}
+export interface InsufficientCreditsResponse {
+    error: string;
+    message: string;
+    required: number;
+    balance: number;
+    cost?: CostEstimate;
+}
+export type LedgerEntryReason = (typeof LedgerEntryReason)[keyof typeof LedgerEntryReason];
+export declare const LedgerEntryReason: {
+    readonly welcome: "welcome";
+    readonly plan: "plan";
+    readonly topup: "topup";
+    readonly single: "single";
+    readonly analysis: "analysis";
+    readonly refund: "refund";
+};
+export interface LedgerEntry {
+    id: number;
+    delta: number;
+    balanceAfter: number;
+    reason: LedgerEntryReason;
+    analysisId: number | null;
+    createdAt: string;
+}
+export interface CreditsResponse {
+    balance: number;
+    billingActive: boolean;
+    /** Credits received so far (welcome gift, plans, top-ups, purchases) */
+    granted?: number;
+    /** Credits used so far (analysis charges minus refunds) */
+    used?: number;
+    ledger: LedgerEntry[];
+}
+export interface SubscriptionStatus {
+    active: boolean;
+    plan: string | null;
+    currentPeriodEnd: string | null;
+    daysLeft: number;
+    paywallEnabled: boolean;
+    creditBalance?: number;
+}
+export type CreateOrderRequestPlan = (typeof CreateOrderRequestPlan)[keyof typeof CreateOrderRequestPlan];
+export declare const CreateOrderRequestPlan: {
+    readonly monthly: "monthly";
+    readonly six_months: "six_months";
+    readonly yearly: "yearly";
+    readonly two_years: "two_years";
+};
+/**
+ * Credit top-up pack (needs an active subscription)
+ */
+export type CreateOrderRequestPack = (typeof CreateOrderRequestPack)[keyof typeof CreateOrderRequestPack];
+export declare const CreateOrderRequestPack: {
+    readonly topup_100: "topup_100";
+    readonly topup_300: "topup_300";
+    readonly topup_1000: "topup_1000";
+};
+/**
+ * Exactly one of plan, pack or singleCredits.
+ */
+export interface CreateOrderRequest {
+    plan?: CreateOrderRequestPlan;
+    /** Credit top-up pack (needs an active subscription) */
+    pack?: CreateOrderRequestPack;
+    /** Buy this many credits at the single-query rate (no subscription needed) */
+    singleCredits?: number;
+}
+export type CreateOrderResponseKind = (typeof CreateOrderResponseKind)[keyof typeof CreateOrderResponseKind];
+export declare const CreateOrderResponseKind: {
+    readonly plan: "plan";
+    readonly topup: "topup";
+    readonly single: "single";
+};
+export interface CreateOrderResponse {
+    orderId: string;
+    keyId: string;
+    /** What is actually charged, after any referral discount */
+    amountPaise: number;
+    /** Price before the referral discount */
+    listPricePaise: number;
+    referralDiscountPct: number;
+    referralDiscountPaise: number;
+    currency: string;
+    kind: CreateOrderResponseKind;
+    product: string;
+    credits: number;
+    description: string;
+}
+export interface VerifyPaymentRequest {
+    razorpay_order_id: string;
+    razorpay_payment_id: string;
+    razorpay_signature: string;
+}
 export interface DeleteResponse {
     success: boolean;
     message: string;
 }
+/**
+ * Follow-up - did things turn out the way the reading suggested?
+ */
+export type CreateFeedbackRequestOutcome = (typeof CreateFeedbackRequestOutcome)[keyof typeof CreateFeedbackRequestOutcome];
+export declare const CreateFeedbackRequestOutcome: {
+    readonly matched: "matched";
+    readonly partly: "partly";
+    readonly different: "different";
+};
 export interface CreateFeedbackRequest {
     /** ID of the analysis being reviewed */
     analysisId: number;
@@ -215,6 +741,8 @@ export interface CreateFeedbackRequest {
     comment?: string;
     /** Was this analysis helpful? */
     helpful?: boolean;
+    /** Follow-up - did things turn out the way the reading suggested? */
+    outcome?: CreateFeedbackRequestOutcome;
 }
 export interface FeedbackItem {
     id: number;
@@ -224,6 +752,7 @@ export interface FeedbackItem {
     accuracy?: number;
     comment?: string;
     helpful?: boolean;
+    outcome?: string;
     createdAt: string;
 }
 export interface FeedbackListResponse {
@@ -231,6 +760,30 @@ export interface FeedbackListResponse {
     total: number;
     limit: number;
     offset: number;
+}
+export interface ReferralSummary {
+    /** The user's invite code */
+    code: string;
+    /** Discount earned for each friend who pays */
+    rewardPct: number;
+    /** Smallest first payment by the friend that earns the discount */
+    minPaymentPaise: number;
+    /** Friends who applied the code */
+    invited: number;
+    /** Friends who paid (discounts earned so far) */
+    converted: number;
+    discountsAvailable: number;
+    /** Discount that will be applied to the next purchase (0 if none) */
+    nextDiscountPct: number;
+    /** This user already applied someone's invite code */
+    referredBy: boolean;
+}
+export interface RedeemReferralRequest {
+    code: string;
+}
+export interface RedeemReferralResponse {
+    applied: boolean;
+    message: string;
 }
 export interface ErrorResponse {
     error: string;

@@ -5,11 +5,13 @@
  * Situation X - AI + Astrology Situation Analysis API
  * OpenAPI spec version: 0.1.0
  */
+import type { AnalysisResultOptions } from "./analysisResultOptions";
 import type { AstroResult } from "./astroResult";
 import type { CreditsUsed } from "./creditsUsed";
 import type { EmotionResult } from "./emotionResult";
 import type { FinalVerdict } from "./finalVerdict";
 import type { IntentResult } from "./intentResult";
+import type { ModuleReport } from "./moduleReport";
 import type { SimulationResult } from "./simulationResult";
 import type { Synthesis } from "./synthesis";
 
@@ -24,6 +26,10 @@ export interface AnalysisResult {
   overallScore: number;
   summary: string;
   synthesis?: Synthesis;
+  /** What each module did for this question (active or not, its verdict and evidence) */
+  modules?: ModuleReport[];
+  /** The settings this analysis was run with */
+  options?: AnalysisResultOptions;
   credits?: CreditsUsed;
   /** When the app will ask how the prediction turned out */
   followUpAt?: string;

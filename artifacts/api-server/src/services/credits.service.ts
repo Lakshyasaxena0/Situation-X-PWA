@@ -149,6 +149,21 @@ export async function refundCharge(userId: string, ledgerId: number, amount: num
   });
 }
 
+/**
+ * Lifetime totals for the credits bar: credits received (welcome gift, plans, top-ups, purchases)
+ * and credits used (analysis charges minus refunds). received - used = balance.
+ */
+export async function creditTotals(userId: string): Promise<{ granted: number; used: number }> {
+  const [row] = await db
+    .select({
+      granted: sql<number>`coalesce(sum(case when ${creditLedgerTable.reason} in ('welcome','plan','topup','single') then ${creditLedgerTable.delta} else 0 end), 0)::int`,
+      used: sql<number>`coalesce(-sum(case when ${creditLedgerTable.reason} in ('analysis','refund') then ${creditLedgerTable.delta} else 0 end), 0)::int`,
+    })
+    .from(creditLedgerTable)
+    .where(eq(creditLedgerTable.userId, userId));
+  return { granted: Number(row?.granted ?? 0), used: Number(row?.used ?? 0) };
+}
+
 export type LedgerView = {
   id: number;
   delta: number;

@@ -10,10 +10,10 @@ export function CosmicBackground() {
       <div className="absolute inset-0 opacity-30">
         <div className="absolute top-[10%] left-[20%] w-2 h-2 bg-primary rounded-full star" style={{ animationDelay: '0s' }}></div>
         <div className="absolute top-[30%] left-[80%] w-1.5 h-1.5 bg-secondary rounded-full star" style={{ animationDelay: '1s' }}></div>
-        <div className="absolute top-[60%] left-[10%] w-1 h-1 bg-white rounded-full star" style={{ animationDelay: '2s' }}></div>
+        <div className="absolute top-[60%] left-[10%] w-1 h-1 bg-card rounded-full star" style={{ animationDelay: '2s' }}></div>
         <div className="absolute top-[80%] left-[70%] w-2.5 h-2.5 bg-primary/80 rounded-full star" style={{ animationDelay: '1.5s' }}></div>
         <div className="absolute top-[40%] left-[40%] w-1.5 h-1.5 bg-accent rounded-full star" style={{ animationDelay: '0.5s' }}></div>
-        <div className="absolute top-[70%] left-[90%] w-1 h-1 bg-white rounded-full star" style={{ animationDelay: '2.5s' }}></div>
+        <div className="absolute top-[70%] left-[90%] w-1 h-1 bg-card rounded-full star" style={{ animationDelay: '2.5s' }}></div>
         <div className="absolute top-[15%] left-[60%] w-2 h-2 bg-secondary rounded-full star" style={{ animationDelay: '0.8s' }}></div>
         <div className="absolute top-[85%] left-[30%] w-1.5 h-1.5 bg-primary rounded-full star" style={{ animationDelay: '1.2s' }}></div>
       </div>

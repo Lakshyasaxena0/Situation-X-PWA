@@ -31,3 +31,8 @@ export function countKeywordMatches(text: string, keywords: string[]): number {
   }
   return count;
 }
+
+/** The distinct keywords found in already-normalized text (same matching as countKeywordMatches). */
+export function matchedKeywords(text: string, keywords: string[]): string[] {
+  return keywords.filter((keyword) => matcherFor(keyword).test(text));
+}

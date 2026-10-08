@@ -50,3 +50,4 @@ Thumbs.db
 
 # Generated at build time by artifacts/mockup-sandbox/mockupPreviewPlugin.ts
 artifacts/mockup-sandbox/src/.generated/
+artifacts/api-server/.test-out

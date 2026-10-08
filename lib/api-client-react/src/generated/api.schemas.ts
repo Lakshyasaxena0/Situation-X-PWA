@@ -22,6 +22,29 @@ export const AnalyzeRequestDepth = {
   expert: "expert",
 } as const;
 
+/**
+ * Language of the written answer. "auto" (default) follows the language of the question.
+ */
+export type AnalyzeRequestLanguage =
+  (typeof AnalyzeRequestLanguage)[keyof typeof AnalyzeRequestLanguage];
+
+export const AnalyzeRequestLanguage = {
+  auto: "auto",
+  en: "en",
+  hi: "hi",
+  hinglish: "hinglish",
+} as const;
+
+/**
+ * Optional birth moment and place. When given, the dashas are those of the person's own chart instead of the chart of the moment of the question.
+ */
+export interface BirthDetails {
+  /** Birth moment as an ISO 8601 date-time with its UTC offset, e.g. 1995-04-12T08:30:00+05:30 */
+  datetime: string;
+  latitude: number;
+  longitude: number;
+}
+
 export interface AnalyzeRequest {
   /** The situation to analyze (min 10 characters) */
   situation: string;
@@ -31,6 +54,110 @@ export interface AnalyzeRequest {
   longitude?: number;
   /** How deeply the AI should reason. "auto" (default) picks the level from how complex the question is. Deeper levels cost more credits. */
   depth?: AnalyzeRequestDepth;
+  /** Language of the written answer. "auto" (default) follows the language of the question. */
+  language?: AnalyzeRequestLanguage;
+  /** Use the AI for the final answer (default true). When false the engine and astrology answer is returned and no AI credits are charged. */
+  useAi?: boolean;
+  /** Use the astrology lens (default true). When false the astrology is not used in the answer and is not charged. */
+  useAstrology?: boolean;
+  birth?: BirthDetails;
+}
+
+export type ModuleReportKey =
+  (typeof ModuleReportKey)[keyof typeof ModuleReportKey];
+
+export const ModuleReportKey = {
+  AJIT: "AJIT",
+  MANU: "MANU",
+  FILTER: "FILTER",
+  SIVI: "SIVI",
+  ASTRO: "ASTRO",
+  AI: "AI",
+} as const;
+
+export type ModuleReportArea =
+  (typeof ModuleReportArea)[keyof typeof ModuleReportArea];
+
+export const ModuleReportArea = {
+  intent: "intent",
+  emotion: "emotion",
+  paths: "paths",
+  astrology: "astrology",
+  synthesis: "synthesis",
+} as const;
+
+/**
+ * What one module did for this question
+ */
+export interface ModuleReport {
+  key: ModuleReportKey;
+  name: string;
+  area: ModuleReportArea;
+  active: boolean;
+  verdict: string;
+  evidence: string[];
+}
+
+export interface TimingDashaLevel {
+  planet: string;
+  startDate: string;
+  endDate: string;
+  durationYears?: number;
+}
+
+export interface CharaPeriod {
+  sign: string;
+  signIndex?: number;
+  startDate: string;
+  endDate: string;
+  years: number;
+}
+
+export type CharaDashaDirection =
+  (typeof CharaDashaDirection)[keyof typeof CharaDashaDirection];
+
+export const CharaDashaDirection = {
+  direct: "direct",
+  reverse: "reverse",
+} as const;
+
+export interface CharaDasha {
+  school: string;
+  direction: CharaDashaDirection;
+  mahadasha: CharaPeriod;
+  antardasha: CharaPeriod;
+  sequence: CharaPeriod[];
+  notes: string[];
+}
+
+export type TimingResultBasis =
+  (typeof TimingResultBasis)[keyof typeof TimingResultBasis];
+
+export const TimingResultBasis = {
+  birth: "birth",
+  question: "question",
+} as const;
+
+export type TimingResultVimshottari = {
+  mahadasha: TimingDashaLevel;
+  antardasha: TimingDashaLevel;
+  pratyantardasha: TimingDashaLevel;
+  sookshmadasha: TimingDashaLevel;
+};
+
+/**
+ * Running dashas and whether they touch the house the question is about
+ */
+export interface TimingResult {
+  timeBased: boolean;
+  basis: TimingResultBasis;
+  vimshottari: TimingResultVimshottari;
+  chara?: CharaDasha | null;
+  house: number;
+  houseSign: string;
+  houseLord: string;
+  activations: string[];
+  summary: string;
 }
 
 export type IntentResultIntent =
@@ -287,6 +414,14 @@ export interface AstroInfluence {
   signal: AstroInfluenceSignal;
 }
 
+/**
+ * The place the chart was cast for
+ */
+export type AstroResultLocation = {
+  latitude: number;
+  longitude: number;
+};
+
 export interface AstroResult {
   influence: AstroInfluence;
   interpretation: string;
@@ -295,7 +430,19 @@ export interface AstroResult {
   prashna?: PrashnaReading;
   vedicD9?: VedicChart;
   vedicD10?: VedicChart;
+  timing?: TimingResult;
+  /** The place the chart was cast for */
+  location?: AstroResultLocation;
 }
+
+/**
+ * The settings this analysis was run with
+ */
+export type AnalysisResultOptions = {
+  useAi?: boolean;
+  useAstrology?: boolean;
+  language?: string;
+};
 
 export type SynthesisVerdict =
   (typeof SynthesisVerdict)[keyof typeof SynthesisVerdict];
@@ -320,6 +467,7 @@ export type SynthesisSource =
 
 export const SynthesisSource = {
   "ai+astro": "ai+astro",
+  ai: "ai",
   engine: "engine",
 } as const;
 
@@ -364,6 +512,8 @@ export interface Synthesis {
   advice: string;
   timeframeDays: number;
   source: SynthesisSource;
+  usedAi?: boolean;
+  usedAstrology?: boolean;
   calibration?: Calibration;
   /** The AI's own merit-based score (0-100), before the astrology was weighed in */
   logicScore?: number;
@@ -437,6 +587,10 @@ export interface AnalysisResult {
   overallScore: number;
   summary: string;
   synthesis?: Synthesis;
+  /** What each module did for this question (active or not, its verdict and evidence) */
+  modules?: ModuleReport[];
+  /** The settings this analysis was run with */
+  options?: AnalysisResultOptions;
   credits?: CreditsUsed;
   /** When the app will ask how the prediction turned out */
   followUpAt?: string;
@@ -635,6 +789,10 @@ export interface LedgerEntry {
 export interface CreditsResponse {
   balance: number;
   billingActive: boolean;
+  /** Credits received so far (welcome gift, plans, top-ups, purchases) */
+  granted?: number;
+  /** Credits used so far (analysis charges minus refunds) */
+  used?: number;
   ledger: LedgerEntry[];
 }
 

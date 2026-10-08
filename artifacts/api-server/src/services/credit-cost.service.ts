@@ -1,10 +1,11 @@
 import type { EngineResponse } from "./engine.service.js";
+import { DEFAULT_OPTIONS, type AnalysisOptions } from "./analysis-options.js";
 
 /**
  * What one analysis costs, in credits.
  *
  * The price follows the work actually done for the question:
- *   - every module that takes part in the answer is charged (ASTRO is always part of it);
+ *   - every module that takes part in the answer is charged (ASTRO unless switched off in Settings);
  *   - the Prashna chart reading costs more when more charts (D1, D3, D9, D10) are needed;
  *   - the AI is charged by the level of reasoning used (standard / deep / expert).
  *
@@ -18,7 +19,7 @@ export type ReasoningDepth = (typeof REASONING_DEPTHS)[number];
 export type DepthRequest = ReasoningDepth | "auto";
 
 export const MODULE_COSTS = {
-  astro: 4,           // Prashna chart + dasha + transits (mandatory, always charged)
+  astro: 4,           // Prashna chart + dasha + transits (charged unless astrology is switched off)
   astroExtraChart: 2, // each additional divisional chart beyond D1 that the question needs
   ajit: 1,            // intent detection
   manu: 1,            // emotion detection
@@ -73,19 +74,26 @@ export function suggestDepth(situation: string, engine: EngineResponse): Reasoni
   return points >= 4 ? "expert" : points >= 2 ? "deep" : "standard";
 }
 
-export function computeCost(situation: string, engine: EngineResponse, request: DepthRequest = "auto"): CreditCost {
+export function computeCost(
+  situation: string,
+  engine: EngineResponse,
+  request: DepthRequest = "auto",
+  options: Pick<AnalysisOptions, "useAi" | "useAstrology"> = DEFAULT_OPTIONS,
+): CreditCost {
   const depth = request === "auto" ? suggestDepth(situation, engine) : request;
   const lines: CostLine[] = [];
 
   const extraCharts = Math.max(0, (engine.astro.prashna?.chartsUsed.length ?? 1) - 1);
-  lines.push({
-    key: "astro",
-    label: "ASTRO - Prashna chart",
-    credits: MODULE_COSTS.astro + extraCharts * MODULE_COSTS.astroExtraChart,
-    note: extraCharts > 0
-      ? `Always included. ${extraCharts + 1} charts read for this question.`
-      : "Always included. Chart read for this question.",
-  });
+  if (options.useAstrology) {
+    lines.push({
+      key: "astro",
+      label: "ASTRO - Prashna chart",
+      credits: MODULE_COSTS.astro + extraCharts * MODULE_COSTS.astroExtraChart,
+      note: extraCharts > 0
+        ? `${extraCharts + 1} charts read for this question.`
+        : "Chart read for this question.",
+    });
+  }
   if (engine.intent.intent !== "unclear") {
     lines.push({ key: "ajit", label: "AJIT - intent", credits: MODULE_COSTS.ajit, note: `Question understood as: ${engine.intent.intent}.` });
   }
@@ -93,15 +101,17 @@ export function computeCost(situation: string, engine: EngineResponse, request: 
     lines.push({ key: "manu", label: "MANU - emotion", credits: MODULE_COSTS.manu, note: `Emotional tone detected: ${engine.emotion.emotion}.` });
   }
   lines.push({ key: "sivi", label: "SIVI - path simulation", credits: MODULE_COSTS.sivi, note: "Compares the possible paths." });
-  lines.push({
-    key: "ai",
-    label: `AI - ${DEPTH_LABELS[depth]}`,
-    credits: AI_COSTS[depth],
-    note: request === "auto" ? "Level chosen from how complex the question is." : "Level chosen by you.",
-  });
+  if (options.useAi) {
+    lines.push({
+      key: "ai",
+      label: `AI - ${DEPTH_LABELS[depth]}`,
+      credits: AI_COSTS[depth],
+      note: request === "auto" ? "Level chosen from how complex the question is." : "Level chosen by you.",
+    });
+  }
 
   const total = lines.reduce((sum, l) => sum + l.credits, 0);
-  return { total, aiCredits: AI_COSTS[depth], depth, depthChosen: request === "auto" ? "auto" : "user", lines };
+  return { total, aiCredits: options.useAi ? AI_COSTS[depth] : 0, depth, depthChosen: request === "auto" ? "auto" : "user", lines };
 }
 
 /** Cost after the AI could not answer: the user keeps the engine + astrology answer and the AI part is refunded. */

@@ -1,6 +1,6 @@
 import { Link, useLocation } from "wouter";
 import { useClerk, useUser } from "@clerk/react";
-import { History, MessageSquare, Menu, FlaskConical, LogOut, CreditCard, Gift } from "lucide-react";
+import { History, MessageSquare, Menu, FlaskConical, LogOut, CreditCard, Gift, Settings as SettingsIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Sheet,
@@ -8,6 +8,7 @@ import {
   SheetTrigger,
 } from "@/components/ui/sheet";
 import { SaturnXLogo } from "@/components/SaturnXLogo";
+import { BrandName } from "@/components/BrandName";
 import { FollowUpPrompt } from "@/components/FollowUpPrompt";
 import { CreditBadge } from "@/components/CreditBadge";
 import { InstallPrompt } from "@/components/InstallPrompt";
@@ -29,6 +30,7 @@ export function Shell({ children }: ShellProps) {
     { href: "/feedback", label: "Feedback", icon: MessageSquare },
     { href: "/pricing", label: "Plans & credits", icon: CreditCard },
     { href: "/invite", label: "Invite a friend", icon: Gift },
+    { href: "/settings", label: "Settings", icon: SettingsIcon },
   ];
 
   function isActive(href: string) {
@@ -62,7 +64,7 @@ export function Shell({ children }: ShellProps) {
       <header className="md:hidden flex items-center justify-between px-4 py-3 border-b border-border bg-background sticky top-0 z-50">
         <div className="flex items-center gap-2">
           <SaturnXLogo size={28} />
-          <span className="font-semibold text-foreground tracking-tight">Situation X</span>
+          <BrandName />
         </div>
         <Sheet open={isOpen} onOpenChange={setIsOpen}>
           <SheetTrigger asChild>
@@ -73,7 +75,7 @@ export function Shell({ children }: ShellProps) {
           <SheetContent side="left" className="w-[260px] bg-background border-border p-6 flex flex-col gap-6">
             <div className="flex items-center gap-2 mt-2">
               <SaturnXLogo size={32} />
-              <span className="font-semibold text-foreground">Situation X</span>
+              <BrandName />
             </div>
             <nav className="flex flex-col gap-1">
               <NavLinks />
@@ -101,7 +103,7 @@ export function Shell({ children }: ShellProps) {
       <aside className="hidden md:flex w-[220px] flex-col border-r border-border bg-background h-screen sticky top-0 shrink-0">
         <div className="px-5 py-5 flex items-center gap-2.5 border-b border-border">
           <SaturnXLogo size={30} />
-          <span className="font-semibold text-foreground tracking-tight">Situation X</span>
+          <BrandName />
         </div>
 
         <nav className="flex-1 px-3 py-4 flex flex-col gap-1">

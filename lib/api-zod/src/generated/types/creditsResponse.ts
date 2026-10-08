@@ -10,5 +10,9 @@ import type { LedgerEntry } from "./ledgerEntry";
 export interface CreditsResponse {
   balance: number;
   billingActive: boolean;
+  /** Credits received so far (welcome gift, plans, top-ups, purchases) */
+  granted?: number;
+  /** Credits used so far (analysis charges minus refunds) */
+  used?: number;
   ledger: LedgerEntry[];
 }

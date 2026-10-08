@@ -14,7 +14,7 @@ export type IntentResult = {
   score: number;
 };
 
-const KEYWORDS: Record<IntentType, string[]> = {
+export const KEYWORDS: Record<IntentType, string[]> = {
   decision: ["should i", "kya karu", "what should", "decid", "choose", "option", "select", "konsa"],
   relationship: ["love", "relationship", "girlfriend", "boyfriend", "partner", "marriage", "breakup", "ex", "ladki", "ladka"],
   conflict: ["fight", "argument", "problem", "issue", "misunderstanding", "clash", "dispute", "ladhai"],

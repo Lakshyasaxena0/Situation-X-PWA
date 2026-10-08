@@ -215,6 +215,12 @@ function strengthLabel(score: number): "low" | "medium" | "high" {
 }
 
 /** Builds the reading from the cast charts. Pure and deterministic. */
+/** The house, topic and natural significators used for a kind of question (also used for dasha timing). */
+export function houseProfile(intent: IntentType): { topic: string; primaryHouse: number; karakas: string[] } {
+  const { topic, primaryHouse, karakas } = PROFILES[intent];
+  return { topic, primaryHouse, karakas };
+}
+
 export function readPrashna(intent: IntentType, sky: PrashnaSky): PrashnaReading {
   const profile = PROFILES[intent] ?? PROFILES.unclear;
   const { d1, d3, d9, d10 } = sky.charts;

@@ -1,4 +1,8 @@
 import { useEffect, useState } from "react";
+import { useLocation } from "wouter";
+import type { AnalysisResult } from "@workspace/api-client-react";
+import { AnalysisDisplay } from "@/components/AnalysisDisplay";
+import { analysisSession } from "@/lib/analysisSession";
 import {
   useGetAnalysisHistory,
   useDeleteAnalysis,
@@ -13,25 +17,26 @@ import { motion, AnimatePresence } from "framer-motion";
 type RiskLevel = "low" | "medium" | "high";
 
 function riskColor(level?: RiskLevel) {
-  if (level === "low") return "text-green-400 bg-green-400/10";
-  if (level === "high") return "text-red-400 bg-red-400/10";
-  return "text-orange-400 bg-orange-400/10";
+  if (level === "low") return "text-green-700 bg-green-400/10";
+  if (level === "high") return "text-red-700 bg-red-400/10";
+  return "text-orange-700 bg-orange-400/10";
 }
 
 function intentColor(intent?: string) {
   const map: Record<string, string> = {
-    relationship: "text-pink-400 bg-pink-400/10",
-    career: "text-blue-400 bg-blue-400/10",
-    conflict: "text-red-400 bg-red-400/10",
-    decision: "text-orange-400 bg-orange-400/10",
-    health: "text-green-400 bg-green-400/10",
-    unclear: "text-slate-400 bg-slate-400/10",
+    relationship: "text-pink-700 bg-pink-400/10",
+    career: "text-blue-700 bg-blue-400/10",
+    conflict: "text-red-700 bg-red-400/10",
+    decision: "text-orange-700 bg-orange-400/10",
+    health: "text-green-700 bg-green-400/10",
+    unclear: "text-slate-700 bg-slate-400/10",
   };
   return map[intent ?? ""] ?? "text-muted-foreground bg-muted";
 }
 
 export default function History() {
   const queryClient = useQueryClient();
+  const [, navigate] = useLocation();
   const [expandedId, setExpandedId] = useState<number | null>(null);
   const [page, setPage] = useState(0);
   const limit = 15;
@@ -69,7 +74,7 @@ export default function History() {
 
   return (
     <Shell>
-      <div className="max-w-3xl mx-auto px-4 py-8">
+      <div className="max-w-2xl mx-auto px-4 py-8">
         <div className="mb-6">
           <h1 className="text-2xl font-bold text-foreground">History</h1>
           <p className="text-sm text-muted-foreground mt-1">
@@ -132,7 +137,7 @@ export default function History() {
                     }}
                   >
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm text-foreground truncate font-medium">{item.situation}</p>
+                      <p className={`text-sm text-foreground font-medium ${isExpanded ? "whitespace-pre-wrap break-words" : "truncate"}`}>{item.situation}</p>
                       <div className="flex items-center gap-2 mt-2 flex-wrap">
                         <span className={`text-xs px-2 py-0.5 rounded font-mono capitalize ${intentColor(intentStr)}`}>
                           {intentStr || "unknown"}
@@ -152,7 +157,7 @@ export default function History() {
                         type="button"
                         aria-label="Delete analysis"
                         onClick={(e) => handleDelete(item.id, e)}
-                        className="p-1.5 rounded hover:bg-destructive/20 text-muted-foreground hover:text-red-400 transition-colors"
+                        className="p-1.5 rounded hover:bg-destructive/20 text-muted-foreground hover:text-red-700 transition-colors"
                       >
                         <Trash2 className="w-3.5 h-3.5" />
                       </button>
@@ -161,21 +166,35 @@ export default function History() {
                   </div>
 
                   {isExpanded && (
-                    <div className="px-4 pb-4 border-t border-border">
-                      <p className="text-sm text-muted-foreground mt-3">{item.summary}</p>
-                      {item.fullAnalysis != null && (
-                        (() => {
-                          const fa = item.fullAnalysis as unknown as Record<string, unknown>;
-                          const verdict = fa?.["finalVerdict"] as Record<string, unknown> | undefined;
-                          if (!verdict) return null;
-                          return (
-                            <div className="mt-3 p-3 bg-muted/30 rounded text-xs text-muted-foreground">
-                              <strong className="text-foreground">Recommended: </strong>
-                              {verdict["recommendedAction"] as string}
+                    <div className="px-4 pb-5 border-t border-border">
+                      {(() => {
+                        const fa = (item.fullAnalysis ?? null) as Record<string, unknown> | null;
+                        if (!fa || !fa["finalVerdict"]) {
+                          return <p className="text-sm text-muted-foreground mt-3">{item.summary}</p>;
+                        }
+                        const full = { ...fa, id: item.id, situation: item.situation, createdAt: item.createdAt } as unknown as AnalysisResult;
+                        return (
+                          <>
+                            <div className="mt-3 flex flex-wrap items-center justify-between gap-2">
+                              <span className="text-xs text-muted-foreground">
+                                {new Date(item.createdAt).toLocaleString(undefined, { dateStyle: "medium", timeStyle: "short" })}
+                              </span>
+                              <Button
+                                type="button"
+                                variant="outline"
+                                size="sm"
+                                onClick={() => {
+                                  analysisSession.set({ situation: item.situation, result: full });
+                                  navigate("/oracle");
+                                }}
+                              >
+                                Open on Analysis page
+                              </Button>
                             </div>
-                          );
-                        })()
-                      )}
+                            <AnalysisDisplay result={full} />
+                          </>
+                        );
+                      })()}
                     </div>
                   )}
                 </motion.div>

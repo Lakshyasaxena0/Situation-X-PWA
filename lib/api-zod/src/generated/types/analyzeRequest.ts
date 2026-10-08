@@ -6,6 +6,8 @@
  * OpenAPI spec version: 0.1.0
  */
 import type { AnalyzeRequestDepth } from "./analyzeRequestDepth";
+import type { AnalyzeRequestLanguage } from "./analyzeRequestLanguage";
+import type { BirthDetails } from "./birthDetails";
 
 export interface AnalyzeRequest {
   /** The situation to analyze (min 10 characters) */
@@ -16,4 +18,11 @@ export interface AnalyzeRequest {
   longitude?: number;
   /** How deeply the AI should reason. "auto" (default) picks the level from how complex the question is. Deeper levels cost more credits. */
   depth?: AnalyzeRequestDepth;
+  /** Language of the written answer. "auto" (default) follows the language of the question. */
+  language?: AnalyzeRequestLanguage;
+  /** Use the AI for the final answer (default true). When false the engine and astrology answer is returned and no AI credits are charged. */
+  useAi?: boolean;
+  /** Use the astrology lens (default true). When false the astrology is not used in the answer and is not charged. */
+  useAstrology?: boolean;
+  birth?: BirthDetails;
 }

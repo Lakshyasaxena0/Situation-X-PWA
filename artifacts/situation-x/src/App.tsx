@@ -11,6 +11,8 @@ import History from "@/pages/history";
 import Feedback from "@/pages/feedback";
 import Pricing from "@/pages/pricing";
 import Invite from "@/pages/invite";
+import Settings from "@/pages/settings";
+import { clearAnalysisSession } from "@/lib/analysisSession";
 import { ReferralRedeemer } from "@/components/ReferralRedeemer";
 import { capturePendingReferral } from "@/lib/referralLink";
 
@@ -59,6 +61,7 @@ function ClerkQueryClientCacheInvalidator() {
       const userId = user?.id ?? null;
       if (prevUserIdRef.current !== undefined && prevUserIdRef.current !== userId) {
         qc.clear();
+        clearAnalysisSession();
       }
       prevUserIdRef.current = userId;
     });
@@ -146,6 +149,19 @@ function InvitePage() {
   );
 }
 
+function SettingsPage() {
+  return (
+    <>
+      <Show when="signed-in">
+        <Settings />
+      </Show>
+      <Show when="signed-out">
+        <Redirect to="/" />
+      </Show>
+    </>
+  );
+}
+
 function ClerkProviderWithRoutes() {
   const [, setLocation] = useLocation();
 
@@ -169,6 +185,7 @@ function ClerkProviderWithRoutes() {
             <Route path="/feedback" component={FeedbackPage} />
             <Route path="/pricing" component={PricingPage} />
             <Route path="/invite" component={InvitePage} />
+            <Route path="/settings" component={SettingsPage} />
             <Route path="/sign-in/*?" component={SignInPage} />
             <Route path="/sign-up/*?" component={SignUpPage} />
             <Route component={NotFound} />
@@ -182,11 +199,9 @@ function ClerkProviderWithRoutes() {
 
 function App() {
   return (
-    <div className="dark">
-      <WouterRouter base={basePath}>
-        <ClerkProviderWithRoutes />
-      </WouterRouter>
-    </div>
+    <WouterRouter base={basePath}>
+      <ClerkProviderWithRoutes />
+    </WouterRouter>
   );
 }
 

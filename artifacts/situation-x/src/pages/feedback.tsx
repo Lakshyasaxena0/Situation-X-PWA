@@ -31,7 +31,7 @@ function StarRating({ value, onChange }: { value: number; onChange: (v: number) 
         >
           <Star
             className={`w-5 h-5 transition-colors ${
-              n <= (hovered || value) ? "text-orange-400 fill-orange-400" : "text-muted-foreground"
+              n <= (hovered || value) ? "text-orange-700 fill-orange-400" : "text-muted-foreground"
             }`}
           />
         </button>
@@ -161,7 +161,7 @@ export default function Feedback() {
                   onClick={() => setHelpful(true)}
                   className={`px-4 py-1.5 rounded text-sm font-medium border transition-colors ${
                     helpful === true
-                      ? "bg-green-500/20 border-green-500/50 text-green-400"
+                      ? "bg-green-500/20 border-green-500/50 text-green-700"
                       : "border-border text-muted-foreground hover:bg-muted"
                   }`}
                 >
@@ -172,7 +172,7 @@ export default function Feedback() {
                   onClick={() => setHelpful(false)}
                   className={`px-4 py-1.5 rounded text-sm font-medium border transition-colors ${
                     helpful === false
-                      ? "bg-red-500/20 border-red-500/50 text-red-400"
+                      ? "bg-red-500/20 border-red-500/50 text-red-700"
                       : "border-border text-muted-foreground hover:bg-muted"
                   }`}
                 >
@@ -239,7 +239,7 @@ export default function Feedback() {
                       {[1, 2, 3, 4, 5].map((n) => (
                         <Star
                           key={n}
-                          className={`w-3.5 h-3.5 ${n <= f.rating ? "text-orange-400 fill-orange-400" : "text-muted-foreground"}`}
+                          className={`w-3.5 h-3.5 ${n <= f.rating ? "text-orange-700 fill-orange-400" : "text-muted-foreground"}`}
                         />
                       ))}
                     </div>
@@ -247,7 +247,7 @@ export default function Feedback() {
                       <span className="text-xs text-muted-foreground">accuracy: {f.accuracy}/5</span>
                     )}
                     {f.helpful != null && (
-                      <span className={`text-xs ${f.helpful ? "text-green-400" : "text-red-400"}`}>
+                      <span className={`text-xs ${f.helpful ? "text-green-700" : "text-red-700"}`}>
                         {f.helpful ? "helpful" : "not helpful"}
                       </span>
                     )}
@@ -264,7 +264,7 @@ export default function Feedback() {
                   type="button"
                   aria-label="Delete feedback"
                   onClick={() => deleteFeedback.mutate({ id: Number(f.id) })}
-                  className="p-1.5 rounded hover:bg-destructive/20 text-muted-foreground hover:text-red-400 transition-colors shrink-0"
+                  className="p-1.5 rounded hover:bg-destructive/20 text-muted-foreground hover:text-red-700 transition-colors shrink-0"
                 >
                   <Trash2 className="w-3.5 h-3.5" />
                 </button>

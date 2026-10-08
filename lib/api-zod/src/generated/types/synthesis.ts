@@ -24,6 +24,8 @@ export interface Synthesis {
   advice: string;
   timeframeDays: number;
   source: SynthesisSource;
+  usedAi?: boolean;
+  usedAstrology?: boolean;
   calibration?: Calibration;
   /** The AI's own merit-based score (0-100), before the astrology was weighed in */
   logicScore?: number;

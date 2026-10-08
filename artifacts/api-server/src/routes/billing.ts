@@ -18,7 +18,7 @@ import {
   type Quote,
 } from "../services/billing.service.js";
 import { AI_COSTS, DEPTH_LABELS, MODULE_COSTS } from "../services/credit-cost.service.js";
-import { billingActiveFor, getBalance, recentLedger } from "../services/credits.service.js";
+import { billingActiveFor, creditTotals, getBalance, recentLedger } from "../services/credits.service.js";
 import { activateOrder, getSubscriptionStatus } from "../services/subscription.service.js";
 import {
   attachRewardToOrder,
@@ -105,8 +105,8 @@ router.get("/billing/status", async (_req, res, next) => {
 router.get("/billing/credits", async (_req, res, next) => {
   try {
     const userId = currentUserId(res);
-    const [balance, ledger] = await Promise.all([getBalance(userId), recentLedger(userId, 25)]);
-    res.json({ balance, billingActive: billingActiveFor(userId), ledger });
+    const [balance, ledger, totals] = await Promise.all([getBalance(userId), recentLedger(userId, 25), creditTotals(userId)]);
+    res.json({ balance, billingActive: billingActiveFor(userId), granted: totals.granted, used: totals.used, ledger });
   } catch (err) {
     next(err);
   }

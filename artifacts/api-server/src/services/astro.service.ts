@@ -14,6 +14,8 @@ import type { IntentType } from "./ajit.service.js";
 import type { EmotionType } from "./manu.service.js";
 import { castPrashnaCharts, type VedicChart, type VedicDashaTree } from "./vedic.service.js";
 import { readPrashna, type PrashnaReading } from "./prashna.service.js";
+import { vimshottariAt, type DashaLevel, type VimshottariDasha } from "./dasha.service.js";
+import { analyzeTiming, type BirthInput, type TimingResult } from "./timing.service.js";
 import {
   BODY_NAMES,
   julianDayFromDate,
@@ -39,19 +41,7 @@ export type DivisionalChart = {
   planets: Record<string, { sign: string; signIndex: number }>;
 };
 
-export type DashaLevel = {
-  planet: string;
-  startDate: string;       // YYYY-MM-DD
-  endDate: string;
-  durationYears: number;
-};
-
-export type VimshottariDasha = {
-  mahadasha: DashaLevel;
-  antardasha: DashaLevel;
-  pratyantardasha: DashaLevel;
-  sookshmadasha: DashaLevel;
-};
+export type { DashaLevel, VimshottariDasha } from "./dasha.service.js";
 
 export type AstroInfluence = {
   dominantPlanet: string;
@@ -75,6 +65,8 @@ export type AstroResult = {
   vedicD10: VedicChart;
   /** Which house and which divisional charts were used for this question, and why. */
   prashna: PrashnaReading;
+  /** Running dashas (Vimshottari + Chara) and whether they touch the house of the question. */
+  timing: TimingResult;
   calculatedAt: string;
   location: { latitude: number; longitude: number };
 };
@@ -100,20 +92,6 @@ const NAKSHATRAS = [
 
 // Nakshatra lords in the Vimshottari sequence (repeats every 9)
 const NAKSHATRA_LORDS = [
-  "Ketu", "Venus", "Sun", "Moon", "Mars",
-  "Rahu", "Jupiter", "Saturn", "Mercury",
-];
-
-// Dasha duration in years for each planet (total = 120 years)
-const DASHA_YEARS: Record<string, number> = {
-  Ketu: 7, Venus: 20, Sun: 6, Moon: 10, Mars: 7,
-  Rahu: 18, Jupiter: 16, Saturn: 19, Mercury: 17,
-};
-
-const TOTAL_DASHA_YEARS = 120;
-
-// Fixed Vimshottari sequence order
-const PLANET_ORDER = [
   "Ketu", "Venus", "Sun", "Moon", "Mars",
   "Rahu", "Jupiter", "Saturn", "Mercury",
 ];
@@ -219,117 +197,6 @@ function getD10(
 // Based on Moon's current nakshatra and position within it
 // -----------------------------------------------------------------------
 
-function msToDateString(ms: number): string {
-  return new Date(ms).toISOString().split("T")[0];
-}
-
-function computeVimshottariDasha(
-  moonLon: number,
-  now: Date
-): VimshottariDasha {
-  const nakshatraIndex = Math.floor(moonLon / NAKSHATRA_SPAN);
-  const lordIndex = nakshatraIndex % 9;
-  const mahaPlanet = NAKSHATRA_LORDS[lordIndex];
-  const mahaIndex = PLANET_ORDER.indexOf(mahaPlanet);
-
-  // Fraction of current nakshatra elapsed
-  const degInNakshatra = moonLon - nakshatraIndex * NAKSHATRA_SPAN;
-  const fractionElapsed = degInNakshatra / NAKSHATRA_SPAN;
-
-  const mahaYears = DASHA_YEARS[mahaPlanet];
-  const mahaMs = mahaYears * 365.25 * 24 * 3600 * 1000;
-  const elapsedMs = fractionElapsed * mahaMs;
-
-  const mahaStartMs = now.getTime() - elapsedMs;
-  const mahaEndMs = mahaStartMs + mahaMs;
-
-  // ---- Antardasha ----
-  let antarStartMs = mahaStartMs;
-  let antarPlanet = mahaPlanet;
-  let antarEndMs = mahaStartMs;
-  let antarYears = mahaYears;
-
-  for (let i = 0; i < 9; i++) {
-    const planet = PLANET_ORDER[(mahaIndex + i) % 9];
-    const years = (DASHA_YEARS[planet] * mahaYears) / TOTAL_DASHA_YEARS;
-    const ms = years * 365.25 * 24 * 3600 * 1000;
-    antarEndMs = antarStartMs + ms;
-    if (now.getTime() >= antarStartMs && now.getTime() < antarEndMs) {
-      antarPlanet = planet;
-      antarYears = years;
-      break;
-    }
-    antarStartMs = antarEndMs;
-  }
-  const antarIndex = PLANET_ORDER.indexOf(antarPlanet);
-
-  // ---- Pratyantardasha ----
-  let pratStartMs = antarStartMs;
-  let pratPlanet = antarPlanet;
-  let pratEndMs = antarStartMs;
-  let pratYears = antarYears;
-
-  for (let i = 0; i < 9; i++) {
-    const planet = PLANET_ORDER[(antarIndex + i) % 9];
-    const years = (DASHA_YEARS[planet] * antarYears) / TOTAL_DASHA_YEARS;
-    const ms = years * 365.25 * 24 * 3600 * 1000;
-    pratEndMs = pratStartMs + ms;
-    if (now.getTime() >= pratStartMs && now.getTime() < pratEndMs) {
-      pratPlanet = planet;
-      pratYears = years;
-      break;
-    }
-    pratStartMs = pratEndMs;
-  }
-  const pratIndex = PLANET_ORDER.indexOf(pratPlanet);
-
-  // ---- Sookshma dasha ----
-  let sookStartMs = pratStartMs;
-  let sookPlanet = pratPlanet;
-  let sookEndMs = pratStartMs;
-  let sookYears = pratYears;
-
-  for (let i = 0; i < 9; i++) {
-    const planet = PLANET_ORDER[(pratIndex + i) % 9];
-    const years = (DASHA_YEARS[planet] * pratYears) / TOTAL_DASHA_YEARS;
-    const ms = years * 365.25 * 24 * 3600 * 1000;
-    sookEndMs = sookStartMs + ms;
-    if (now.getTime() >= sookStartMs && now.getTime() < sookEndMs) {
-      sookPlanet = planet;
-      sookYears = years;
-      break;
-    }
-    sookStartMs = sookEndMs;
-  }
-
-  return {
-    mahadasha: {
-      planet: mahaPlanet,
-      startDate: msToDateString(mahaStartMs),
-      endDate: msToDateString(mahaEndMs),
-      durationYears: mahaYears,
-    },
-    antardasha: {
-      planet: antarPlanet,
-      startDate: msToDateString(antarStartMs),
-      endDate: msToDateString(antarEndMs),
-      durationYears: parseFloat(antarYears.toFixed(3)),
-    },
-    pratyantardasha: {
-      planet: pratPlanet,
-      startDate: msToDateString(pratStartMs),
-      endDate: msToDateString(pratEndMs),
-      durationYears: parseFloat(pratYears.toFixed(5)),
-    },
-    sookshmadasha: {
-      planet: sookPlanet,
-      startDate: msToDateString(sookStartMs),
-      endDate: msToDateString(sookEndMs),
-      durationYears: parseFloat(sookYears.toFixed(7)),
-    },
-  };
-}
-
 // -----------------------------------------------------------------------
 // STEP 7: PRASHNA CHART + READING (replaces natal charts; no birth data needed)
 // -----------------------------------------------------------------------
@@ -351,7 +218,7 @@ function dashaToTree(dasha: VimshottariDasha): VedicDashaTree {
 export function analyzeAstro(
   intent: IntentType,
   _emotion: EmotionType,
-  options?: { latitude?: number; longitude?: number; at?: Date }
+  options?: { latitude?: number; longitude?: number; at?: Date; birth?: BirthInput; text?: string }
 ): AstroResult {
   const now = options?.at ?? new Date(); // The sky at the moment of the question
 
@@ -369,11 +236,13 @@ export function analyzeAstro(
   const d10 = getD10(positions);
 
   // Vimshottari Dasha running from the Moon at this moment
-  const dasha = computeVimshottariDasha(positions["Moon"].longitude, now);
+  const dasha = vimshottariAt(positions["Moon"].longitude, now, now);
 
   // Prashna: cast D1, D3, D9, D10 for this moment and read the ones relevant to the question
   const sky = castPrashnaCharts(now, latitude, longitude);
   const prashna = readPrashna(intent, sky);
+
+  const timing = analyzeTiming(intent, options?.text ?? "", { at: now, latitude, longitude }, options?.birth);
 
   const influence: AstroInfluence = {
     dominantPlanet: prashna.dominantPlanet,
@@ -398,6 +267,7 @@ export function analyzeAstro(
     vedicD9: sky.charts.d9,
     vedicD10: sky.charts.d10,
     prashna,
+    timing,
     calculatedAt: now.toISOString(),
     location: { latitude, longitude },
   };

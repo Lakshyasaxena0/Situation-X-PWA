@@ -11,7 +11,7 @@ export function CreditBadge({ className = "" }: { className?: string }) {
     <Link href="/pricing">
       <div
         className={`flex items-center justify-between gap-2 rounded border px-3 py-2 text-xs transition-colors hover:bg-muted/50 ${
-          low ? "border-orange-400/40 text-orange-300" : "border-border text-muted-foreground"
+          low ? "border-orange-400/40 text-orange-700" : "border-border text-muted-foreground"
         } ${className}`}
         title="Your credits. Click to add more."
       >

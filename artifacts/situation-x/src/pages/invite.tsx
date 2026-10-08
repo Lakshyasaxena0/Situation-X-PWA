@@ -62,7 +62,7 @@ export default function Invite() {
             <Loader2 className="w-5 h-5 animate-spin text-muted-foreground" />
           </div>
         )}
-        {isError && <p className="mt-6 text-sm text-red-400">Could not load your invite code. Please refresh the page.</p>}
+        {isError && <p className="mt-6 text-sm text-red-700">Could not load your invite code. Please refresh the page.</p>}
 
         {data && (
           <>
@@ -73,7 +73,7 @@ export default function Invite() {
 
             {data.nextDiscountPct > 0 && (
               <div className="mt-5 flex items-center gap-3 rounded-lg border border-emerald-500/30 bg-emerald-500/10 px-4 py-3 text-sm">
-                <BadgePercent className="w-4 h-4 text-emerald-400 shrink-0" />
+                <BadgePercent className="w-4 h-4 text-emerald-700 shrink-0" />
                 <span className="text-foreground">
                   You have {data.discountsAvailable} {data.discountsAvailable === 1 ? "discount" : "discounts"} waiting. {data.nextDiscountPct}% off is applied
                   automatically at your next checkout (one discount per purchase).

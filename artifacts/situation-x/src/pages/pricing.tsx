@@ -109,7 +109,7 @@ function PlanCard({
           <dd>{rupees(quote.grossPaise)}</dd>
         </div>
         {quote.discountPaise > 0 && (
-          <div className="flex justify-between text-emerald-400">
+          <div className="flex justify-between text-emerald-700">
             <dt>{quote.discountPct}% plan discount</dt>
             <dd>− {rupees(quote.discountPaise)}</dd>
           </div>
@@ -121,7 +121,7 @@ function PlanCard({
           </div>
         )}
         {inviteDiscountPct > 0 && (
-          <div className="flex justify-between text-emerald-400">
+          <div className="flex justify-between text-emerald-700">
             <dt>{inviteDiscountPct}% invite discount</dt>
             <dd>− {rupees(Math.round((quote.totalPaise * inviteDiscountPct) / 100))}</dd>
           </div>
@@ -302,7 +302,7 @@ export default function Pricing() {
             <Loader2 className="w-5 h-5 animate-spin text-muted-foreground" />
           </div>
         )}
-        {plansError && <p className="mt-8 text-sm text-red-400">Could not load the plans. Please refresh the page.</p>}
+        {plansError && <p className="mt-8 text-sm text-red-700">Could not load the plans. Please refresh the page.</p>}
 
         {plans.length > 0 && (
           <>
@@ -423,7 +423,7 @@ export default function Pricing() {
                     {reasonLabel[l.reason] ?? l.reason}
                     <span className="ml-2 text-xs text-muted-foreground">{formatDate(l.createdAt)}</span>
                   </span>
-                  <span className={l.delta > 0 ? "text-emerald-400" : "text-muted-foreground"}>
+                  <span className={l.delta > 0 ? "text-emerald-700" : "text-muted-foreground"}>
                     {l.delta > 0 ? "+" : ""}
                     {l.delta}
                     <span className="ml-2 text-xs text-muted-foreground">balance {l.balanceAfter}</span>

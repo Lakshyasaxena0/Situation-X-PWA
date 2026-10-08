@@ -475,8 +475,178 @@ components:
           type: string
           enum: [auto, standard, deep, expert]
           description: How deeply the AI should reason. "auto" (default) picks the level from how complex the question is. Deeper levels cost more credits.
+        language:
+          type: string
+          enum: [auto, en, hi, hinglish]
+          description: Language of the written answer. "auto" (default) follows the language of the question.
+        useAi:
+          type: boolean
+          description: Use the AI for the final answer (default true). When false the engine and astrology answer is returned and no AI credits are charged.
+        useAstrology:
+          type: boolean
+          description: Use the astrology lens (default true). When false the astrology is not used in the answer and is not charged.
+        birth:
+          $ref: "#/components/schemas/BirthDetails"
       required:
         - situation
+
+    BirthDetails:
+      type: object
+      description: Optional birth moment and place. When given, the dashas are those of the person's own chart instead of the chart of the moment of the question.
+      properties:
+        datetime:
+          type: string
+          description: Birth moment as an ISO 8601 date-time with its UTC offset, e.g. 1995-04-12T08:30:00+05:30
+        latitude:
+          type: number
+        longitude:
+          type: number
+      required:
+        - datetime
+        - latitude
+        - longitude
+
+    ModuleReport:
+      type: object
+      description: What one module did for this question
+      properties:
+        key:
+          type: string
+          enum: [AJIT, MANU, FILTER, SIVI, ASTRO, AI]
+        name:
+          type: string
+        area:
+          type: string
+          enum: [intent, emotion, paths, astrology, synthesis]
+        active:
+          type: boolean
+        verdict:
+          type: string
+        evidence:
+          type: array
+          items:
+            type: string
+      required:
+        - key
+        - name
+        - area
+        - active
+        - verdict
+        - evidence
+
+    TimingDashaLevel:
+      type: object
+      properties:
+        planet:
+          type: string
+        startDate:
+          type: string
+        endDate:
+          type: string
+        durationYears:
+          type: number
+      required:
+        - planet
+        - startDate
+        - endDate
+
+    CharaPeriod:
+      type: object
+      properties:
+        sign:
+          type: string
+        signIndex:
+          type: integer
+        startDate:
+          type: string
+        endDate:
+          type: string
+        years:
+          type: number
+      required:
+        - sign
+        - startDate
+        - endDate
+        - years
+
+    CharaDasha:
+      type: object
+      properties:
+        school:
+          type: string
+        direction:
+          type: string
+          enum: [direct, reverse]
+        mahadasha:
+          $ref: "#/components/schemas/CharaPeriod"
+        antardasha:
+          $ref: "#/components/schemas/CharaPeriod"
+        sequence:
+          type: array
+          items:
+            $ref: "#/components/schemas/CharaPeriod"
+        notes:
+          type: array
+          items:
+            type: string
+      required:
+        - school
+        - direction
+        - mahadasha
+        - antardasha
+        - sequence
+        - notes
+
+    TimingResult:
+      type: object
+      description: Running dashas and whether they touch the house the question is about
+      properties:
+        timeBased:
+          type: boolean
+        basis:
+          type: string
+          enum: [birth, question]
+        vimshottari:
+          type: object
+          properties:
+            mahadasha:
+              $ref: "#/components/schemas/TimingDashaLevel"
+            antardasha:
+              $ref: "#/components/schemas/TimingDashaLevel"
+            pratyantardasha:
+              $ref: "#/components/schemas/TimingDashaLevel"
+            sookshmadasha:
+              $ref: "#/components/schemas/TimingDashaLevel"
+          required:
+            - mahadasha
+            - antardasha
+            - pratyantardasha
+            - sookshmadasha
+        chara:
+          oneOf:
+            - $ref: "#/components/schemas/CharaDasha"
+            - type: "null"
+        house:
+          type: integer
+        houseSign:
+          type: string
+        houseLord:
+          type: string
+        activations:
+          type: array
+          items:
+            type: string
+        summary:
+          type: string
+      required:
+        - timeBased
+        - basis
+        - vimshottari
+        - house
+        - houseSign
+        - houseLord
+        - activations
+        - summary
 
     IntentResult:
       type: object
@@ -778,6 +948,19 @@ components:
           $ref: "#/components/schemas/VedicChart"
         vedicD10:
           $ref: "#/components/schemas/VedicChart"
+        timing:
+          $ref: "#/components/schemas/TimingResult"
+        location:
+          type: object
+          description: The place the chart was cast for
+          properties:
+            latitude:
+              type: number
+            longitude:
+              type: number
+          required:
+            - latitude
+            - longitude
       required:
         - influence
         - interpretation
@@ -805,6 +988,21 @@ components:
           type: string
         synthesis:
           $ref: "#/components/schemas/Synthesis"
+        modules:
+          type: array
+          description: What each module did for this question (active or not, its verdict and evidence)
+          items:
+            $ref: "#/components/schemas/ModuleReport"
+        options:
+          type: object
+          description: The settings this analysis was run with
+          properties:
+            useAi:
+              type: boolean
+            useAstrology:
+              type: boolean
+            language:
+              type: string
         credits:
           $ref: "#/components/schemas/CreditsUsed"
         followUpAt:
@@ -846,7 +1044,11 @@ components:
           type: integer
         source:
           type: string
-          enum: [ai+astro, engine]
+          enum: [ai+astro, ai, engine]
+        usedAi:
+          type: boolean
+        usedAstrology:
+          type: boolean
         calibration:
           $ref: "#/components/schemas/Calibration"
         logicScore:
@@ -1242,6 +1444,12 @@ components:
           type: integer
         billingActive:
           type: boolean
+        granted:
+          type: integer
+          description: Credits received so far (welcome gift, plans, top-ups, purchases)
+        used:
+          type: integer
+          description: Credits used so far (analysis charges minus refunds)
         ledger:
           type: array
           items:
