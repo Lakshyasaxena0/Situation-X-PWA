@@ -1,4 +1,4 @@
-import { SaturnXLogo } from "@/components/SaturnXLogo";
+import { SaturnXLogo, SituationFullLogo } from "@/components/SaturnXLogo";
 
 const base = import.meta.env.BASE_URL?.replace(/\/$/, "") ?? "";
 
@@ -30,10 +30,10 @@ export default function Landing() {
       {/* Hero */}
       <main className="flex-1 flex flex-col items-center justify-center px-6 py-20 text-center">
         <div className="mb-8">
-          <SaturnXLogo size={96} />
+          <SituationFullLogo width={380} />
         </div>
 
-        <h1 className="text-5xl font-bold tracking-tight text-foreground mb-4">
+        <h1 className="sr-only">
           Situation X
         </h1>
         <p className="text-xl text-muted-foreground max-w-lg mb-2">

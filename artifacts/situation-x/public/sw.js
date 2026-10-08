@@ -8,11 +8,11 @@
  * It never stores or answers /api/ calls, sign-in, AI or payment traffic: those always go to the server,
  * so nothing about a user's readings, credits or payments can be served stale or from another account.
  */
-const VERSION = "v1";
+const VERSION = "v2";
 const STATIC_CACHE = "sx-static-" + VERSION;
 const BASE = new URL("./", self.location).pathname; // "/" (or the sub-path the site is served from)
 const OFFLINE_URL = BASE + "offline.html";
-const PRECACHE = [OFFLINE_URL, BASE + "icon-192.png", BASE + "favicon.svg"];
+const PRECACHE = [OFFLINE_URL, BASE + "icon-192.png", BASE + "favicon.png"];
 
 self.addEventListener("install", (event) => {
   event.waitUntil(caches.open(STATIC_CACHE).then((cache) => cache.addAll(PRECACHE)).then(() => self.skipWaiting()));
