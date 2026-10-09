@@ -55,7 +55,7 @@ export function Shell({ children }: ShellProps) {
         >
           <div className={`flex items-center gap-3 px-3 py-2.5 rounded transition-all text-sm ${
             isActive(item.href)
-              ? "bg-primary/15 text-primary border border-primary/25"
+              ? "bg-primary/15 text-foreground font-semibold border border-primary/40"
               : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
           }`}>
             <item.icon className="w-4 h-4" />

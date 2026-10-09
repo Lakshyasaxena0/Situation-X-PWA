@@ -213,3 +213,35 @@
     inset: -1px;
   }
 }
+
+/* Opacity colours written plainly. Some browsers (older Android WebViews, for one) drop Tailwind's colour-mixed
+   `bg-primary/15` and paint the whole thing solid, which hid the text on the active menu item. */
+.bg-accent\/5 { background-color: hsl(var(--accent) / 0.05); }
+.bg-muted\/30 { background-color: hsl(var(--muted) / 0.3); }
+.bg-muted\/40 { background-color: hsl(var(--muted) / 0.4); }
+.bg-muted\/50 { background-color: hsl(var(--muted) / 0.5); }
+.bg-muted\/60 { background-color: hsl(var(--muted) / 0.6); }
+.bg-primary\/10 { background-color: hsl(var(--primary) / 0.1); }
+.bg-primary\/15 { background-color: hsl(var(--primary) / 0.15); }
+.bg-primary\/20 { background-color: hsl(var(--primary) / 0.2); }
+.bg-primary\/5 { background-color: hsl(var(--primary) / 0.05); }
+.bg-primary\/80 { background-color: hsl(var(--primary) / 0.8); }
+.bg-red-500\/10 { background-color: rgb(239 68 68 / 0.1); }
+.bg-red-500\/5 { background-color: rgb(239 68 68 / 0.05); }
+.bg-secondary\/10 { background-color: hsl(var(--secondary) / 0.1); }
+.border-border\/50 { border-color: hsl(var(--border) / 0.5); }
+.border-border\/60 { border-color: hsl(var(--border) / 0.6); }
+.border-primary\/25 { border-color: hsl(var(--primary) / 0.25); }
+.border-primary\/30 { border-color: hsl(var(--primary) / 0.3); }
+.border-primary\/40 { border-color: hsl(var(--primary) / 0.4); }
+.border-primary\/60 { border-color: hsl(var(--primary) / 0.6); }
+.border-secondary\/30 { border-color: hsl(var(--secondary) / 0.3); }
+.hover\:bg-destructive\/20:hover { background-color: hsl(var(--destructive) / 0.2); }
+.hover\:bg-muted\/30:hover { background-color: hsl(var(--muted) / 0.3); }
+.hover\:bg-muted\/50:hover { background-color: hsl(var(--muted) / 0.5); }
+.hover\:bg-primary\/15:hover { background-color: hsl(var(--primary) / 0.15); }
+.border-destructive\/50 { border-color: hsl(var(--destructive) / 0.5); }
+.border-muted\/40 { border-color: hsl(var(--muted) / 0.4); }
+.border-primary\/50 { border-color: hsl(var(--primary) / 0.5); }
+.hover\:bg-accent\/50:hover { background-color: hsl(var(--accent) / 0.5); }
+.hover\:border-destructive\/30:hover { border-color: hsl(var(--destructive) / 0.3); }
