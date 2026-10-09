@@ -7,7 +7,6 @@
  */
 import type { AnalyzeRequestDepth } from "./analyzeRequestDepth";
 import type { AnalyzeRequestLanguage } from "./analyzeRequestLanguage";
-import type { BirthDetails } from "./birthDetails";
 
 export interface AnalyzeRequest {
   /** The situation to analyze (min 10 characters) */
@@ -24,5 +23,4 @@ export interface AnalyzeRequest {
   useAi?: boolean;
   /** Use the astrology lens (default true). When false the astrology is not used in the answer and is not charged. */
   useAstrology?: boolean;
-  birth?: BirthDetails;
 }

@@ -35,16 +35,6 @@ export const AnalyzeRequestLanguage = {
   hinglish: "hinglish",
 } as const;
 
-/**
- * Optional birth moment and place. When given, the dashas are those of the person's own chart instead of the chart of the moment of the question.
- */
-export interface BirthDetails {
-  /** Birth moment as an ISO 8601 date-time with its UTC offset, e.g. 1995-04-12T08:30:00+05:30 */
-  datetime: string;
-  latitude: number;
-  longitude: number;
-}
-
 export interface AnalyzeRequest {
   /** The situation to analyze (min 10 characters) */
   situation: string;
@@ -60,7 +50,39 @@ export interface AnalyzeRequest {
   useAi?: boolean;
   /** Use the astrology lens (default true). When false the astrology is not used in the answer and is not charged. */
   useAstrology?: boolean;
-  birth?: BirthDetails;
+}
+
+export type TranslateRequestLanguage =
+  (typeof TranslateRequestLanguage)[keyof typeof TranslateRequestLanguage];
+
+export const TranslateRequestLanguage = {
+  en: "en",
+  hi: "hi",
+  hinglish: "hinglish",
+} as const;
+
+export interface TranslateRequest {
+  language: TranslateRequestLanguage;
+}
+
+export type TranslateResponseLanguage =
+  (typeof TranslateResponseLanguage)[keyof typeof TranslateResponseLanguage];
+
+export const TranslateResponseLanguage = {
+  en: "en",
+  hi: "hi",
+  hinglish: "hinglish",
+} as const;
+
+/**
+ * Translated sentences (summary, finalVerdict, synthesis, simulation, modules, astro)
+ */
+export type TranslateResponseTexts = { [key: string]: unknown };
+
+export interface TranslateResponse {
+  language: TranslateResponseLanguage;
+  /** Translated sentences (summary, finalVerdict, synthesis, simulation, modules, astro) */
+  texts: TranslateResponseTexts;
 }
 
 export type ModuleReportKey =
@@ -93,6 +115,8 @@ export interface ModuleReport {
   key: ModuleReportKey;
   name: string;
   area: ModuleReportArea;
+  /** What the module looks at and how it understands the question */
+  role?: string;
   active: boolean;
   verdict: string;
   evidence: string[];
@@ -134,7 +158,6 @@ export type TimingResultBasis =
   (typeof TimingResultBasis)[keyof typeof TimingResultBasis];
 
 export const TimingResultBasis = {
-  birth: "birth",
   question: "question",
 } as const;
 

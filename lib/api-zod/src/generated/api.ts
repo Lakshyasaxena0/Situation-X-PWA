@@ -57,20 +57,6 @@ export const EstimateAnalysisCostBody = zod.object({
     .describe(
       "Use the astrology lens (default true). When false the astrology is not used in the answer and is not charged.",
     ),
-  birth: zod
-    .object({
-      datetime: zod
-        .string()
-        .describe(
-          "Birth moment as an ISO 8601 date-time with its UTC offset, e.g. 1995-04-12T08:30:00+05:30",
-        ),
-      latitude: zod.number(),
-      longitude: zod.number(),
-    })
-    .optional()
-    .describe(
-      "Optional birth moment and place. When given, the dashas are those of the person's own chart instead of the chart of the moment of the question.",
-    ),
 });
 
 export const EstimateAnalysisCostResponse = zod.object({
@@ -135,20 +121,6 @@ export const AnalyzeSituationBody = zod.object({
     .optional()
     .describe(
       "Use the astrology lens (default true). When false the astrology is not used in the answer and is not charged.",
-    ),
-  birth: zod
-    .object({
-      datetime: zod
-        .string()
-        .describe(
-          "Birth moment as an ISO 8601 date-time with its UTC offset, e.g. 1995-04-12T08:30:00+05:30",
-        ),
-      latitude: zod.number(),
-      longitude: zod.number(),
-    })
-    .optional()
-    .describe(
-      "Optional birth moment and place. When given, the dashas are those of the person's own chart instead of the chart of the moment of the question.",
     ),
 });
 
@@ -504,7 +476,7 @@ export const AnalyzeSituationResponse = zod.object({
     timing: zod
       .object({
         timeBased: zod.boolean(),
-        basis: zod.enum(["birth", "question"]),
+        basis: zod.enum(["question"]),
         vimshottari: zod.object({
           mahadasha: zod.object({
             planet: zod.string(),
@@ -654,6 +626,12 @@ export const AnalyzeSituationResponse = zod.object({
             "astrology",
             "synthesis",
           ]),
+          role: zod
+            .string()
+            .optional()
+            .describe(
+              "What the module looks at and how it understands the question",
+            ),
           active: zod.boolean(),
           verdict: zod.string(),
           evidence: zod.array(zod.string()),
@@ -1071,7 +1049,7 @@ export const GetAnalysisHistoryResponse = zod.object({
             timing: zod
               .object({
                 timeBased: zod.boolean(),
-                basis: zod.enum(["birth", "question"]),
+                basis: zod.enum(["question"]),
                 vimshottari: zod.object({
                   mahadasha: zod.object({
                     planet: zod.string(),
@@ -1230,6 +1208,12 @@ export const GetAnalysisHistoryResponse = zod.object({
                     "astrology",
                     "synthesis",
                   ]),
+                  role: zod
+                    .string()
+                    .optional()
+                    .describe(
+                      "What the module looks at and how it understands the question",
+                    ),
                   active: zod.boolean(),
                   verdict: zod.string(),
                   evidence: zod.array(zod.string()),
@@ -1281,6 +1265,26 @@ export const GetAnalysisHistoryResponse = zod.object({
   total: zod.number(),
   limit: zod.number(),
   offset: zod.number(),
+});
+
+/**
+ * @summary Write the text of a finished analysis in another language (cached per language)
+ */
+export const TranslateAnalysisParams = zod.object({
+  id: zod.coerce.number(),
+});
+
+export const TranslateAnalysisBody = zod.object({
+  language: zod.enum(["en", "hi", "hinglish"]),
+});
+
+export const TranslateAnalysisResponse = zod.object({
+  language: zod.enum(["en", "hi", "hinglish"]),
+  texts: zod
+    .record(zod.string(), zod.unknown())
+    .describe(
+      "Translated sentences (summary, finalVerdict, synthesis, simulation, modules, astro)",
+    ),
 });
 
 /**
@@ -1651,7 +1655,7 @@ export const GetAnalysisByIdResponse = zod.object({
         timing: zod
           .object({
             timeBased: zod.boolean(),
-            basis: zod.enum(["birth", "question"]),
+            basis: zod.enum(["question"]),
             vimshottari: zod.object({
               mahadasha: zod.object({
                 planet: zod.string(),
@@ -1803,6 +1807,12 @@ export const GetAnalysisByIdResponse = zod.object({
                 "astrology",
                 "synthesis",
               ]),
+              role: zod
+                .string()
+                .optional()
+                .describe(
+                  "What the module looks at and how it understands the question",
+                ),
               active: zod.boolean(),
               verdict: zod.string(),
               evidence: zod.array(zod.string()),

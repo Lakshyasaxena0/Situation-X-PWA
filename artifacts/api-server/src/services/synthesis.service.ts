@@ -3,6 +3,7 @@ import { groqConfigured, groqJsonCompletion } from "../lib/groq.js";
 import type { ReasoningDepth } from "./credit-cost.service.js";
 import { applyCalibration, type Calibration } from "./calibration.service.js";
 import { logger } from "../lib/logger.js";
+import type { TimingResult } from "./timing.service.js";
 import { DEFAULT_OPTIONS, LANGUAGE_NAMES, type AnalysisOptions } from "./analysis-options.js";
 
 /**
@@ -209,22 +210,19 @@ function describePrashna(engine: EngineResponse): string {
   ].join("\n");
 }
 
-function describeTiming(engine: EngineResponse): string {
-  const t = engine.astro.timing;
+function describeTiming(t: TimingResult): string {
   const v = t.vimshottari;
   const lines = [
-    `Dasha timing (${t.basis === "birth" ? "from the person's own birth chart" : "from the chart of the moment of the question, NOT a birth chart; treat it as indicative only"}):`,
+    "Dasha timing, worked out from the Prashna chart (the moment of the question) because the question asks about timing:",
     `  - Vimshottari: ${v.mahadasha.planet} until ${v.mahadasha.endDate} / ${v.antardasha.planet} until ${v.antardasha.endDate} / ${v.pratyantardasha.planet} until ${v.pratyantardasha.endDate}`,
   ];
   if (t.chara) lines.push(`  - Chara (Jaimini): ${t.chara.mahadasha.sign} until ${t.chara.mahadasha.endDate} / ${t.chara.antardasha.sign} until ${t.chara.antardasha.endDate}`);
   lines.push(`  - House of the question: ${t.house} (${t.houseSign}, lord ${t.houseLord}).`);
   for (const a of t.activations) lines.push(`  - ${a}`);
   if (t.activations.length === 0) lines.push("  - No running period directly touches that house.");
-  if (t.timeBased) {
-    lines.push(
-      "  - THE QUESTION ASKS ABOUT TIMING: use these periods, when they end and which of them touch the house of the question to give a realistic window (in timeframeDays) and say what would make it earlier or later. Never give an exact date as a certainty.",
-    );
-  }
+  lines.push(
+    "  - THE QUESTION ASKS ABOUT TIMING: use these periods, when they end and which of them touch the house of the question to give a realistic window (in timeframeDays) and say what would make it earlier or later. Never give an exact date as a certainty.",
+  );
   return lines.join("\n");
 }
 
@@ -235,9 +233,8 @@ function describeTransits(engine: EngineResponse): string {
     .join(", ");
   return [
     `Current transits: ${planets}`,
-    `Current dasha: ${a.dasha.mahadasha.planet} / ${a.dasha.antardasha.planet} / ${a.dasha.pratyantardasha.planet} (until ${a.dasha.pratyantardasha.endDate})`,
     `Astro module result: dominant planet ${a.influence.dominantPlanet}, signal ${a.influence.signal}, stability ${a.influence.stability}, risk ${a.influence.risk}`,
-    describeTiming(engine),
+    ...(a.timing ? [describeTiming(a.timing)] : ["Dashas are not part of this reading: the question does not ask about timing."]),
   ].join("\n");
 }
 
@@ -259,7 +256,7 @@ export function buildPrompt(
   const language = LANGUAGE_NAMES[options.language];
 
   const step2 = useAstro
-    ? `STEP 2 - THE ASTROLOGY VERDICT. A Prashna (horary) chart was cast for the moment of the question${engine.astro.timing.basis === "birth" ? " and the person's birth chart was used for the dashas" : "; the person gave no birth details"}. Treat it as a second opinion about timing, momentum and hidden obstacles. Do not dismiss it and do not defer to it blindly.
+    ? `STEP 2 - THE ASTROLOGY VERDICT. A Prashna (horary) chart was cast for the moment of the question; the person gave no birth details. Treat it as a second opinion about timing, momentum and hidden obstacles. Do not dismiss it and do not defer to it blindly.
 ${describeTransits(engine)}
 ${describePrashna(engine)}
 Astrology score (0-100): ${astro}  (same scale: 70+ YES, 45-69 CONDITIONAL, below 45 NO)

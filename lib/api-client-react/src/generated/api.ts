@@ -40,6 +40,8 @@ import type {
   RedeemReferralResponse,
   ReferralSummary,
   SubscriptionStatus,
+  TranslateRequest,
+  TranslateResponse,
   VerifyPaymentRequest,
 } from "./api.schemas";
 
@@ -400,6 +402,93 @@ export function useGetAnalysisHistory<
 
   return { ...query, queryKey: queryOptions.queryKey };
 }
+
+/**
+ * @summary Write the text of a finished analysis in another language (cached per language)
+ */
+export const getTranslateAnalysisUrl = (id: number) => {
+  return `/api/analysis/history/${id}/translate`;
+};
+
+export const translateAnalysis = async (
+  id: number,
+  translateRequest: TranslateRequest,
+  options?: RequestInit,
+): Promise<TranslateResponse> => {
+  return customFetch<TranslateResponse>(getTranslateAnalysisUrl(id), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(translateRequest),
+  });
+};
+
+export const getTranslateAnalysisMutationOptions = <
+  TError = ErrorType<ErrorResponse>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof translateAnalysis>>,
+    TError,
+    { id: number; data: BodyType<TranslateRequest> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof translateAnalysis>>,
+  TError,
+  { id: number; data: BodyType<TranslateRequest> },
+  TContext
+> => {
+  const mutationKey = ["translateAnalysis"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof translateAnalysis>>,
+    { id: number; data: BodyType<TranslateRequest> }
+  > = (props) => {
+    const { id, data } = props ?? {};
+
+    return translateAnalysis(id, data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type TranslateAnalysisMutationResult = NonNullable<
+  Awaited<ReturnType<typeof translateAnalysis>>
+>;
+export type TranslateAnalysisMutationBody = BodyType<TranslateRequest>;
+export type TranslateAnalysisMutationError = ErrorType<ErrorResponse>;
+
+/**
+ * @summary Write the text of a finished analysis in another language (cached per language)
+ */
+export const useTranslateAnalysis = <
+  TError = ErrorType<ErrorResponse>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof translateAnalysis>>,
+    TError,
+    { id: number; data: BodyType<TranslateRequest> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof translateAnalysis>>,
+  TError,
+  { id: number; data: BodyType<TranslateRequest> },
+  TContext
+> => {
+  return useMutation(getTranslateAnalysisMutationOptions(options));
+};
 
 /**
  * @summary Get analysis by ID

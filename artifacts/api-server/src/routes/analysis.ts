@@ -10,10 +10,10 @@ import {
 import { runEngine } from "../services/engine.service.js";
 import { currentUserId } from "../middlewares/requireUser.js";
 import { getCalibration } from "../services/calibration.service.js";
+import { extractTexts, translateTexts, translationAvailable } from "../services/translate.service.js";
 import { synthesize } from "../services/synthesis.service.js";
 import { computeCost, withoutAi, type CreditCost } from "../services/credit-cost.service.js";
 import type { AnalysisOptions } from "../services/analysis-options.js";
-import type { BirthInput } from "../services/timing.service.js";
 import { attachAnalysis, billingActiveFor, debitCredits, getBalance, refundCharge, type DebitResult } from "../services/credits.service.js";
 
 const MAX_SITUATION_LENGTH = 2000; // matches the UI textarea limit
@@ -27,7 +27,6 @@ type Parsed = {
   longitude?: number;
   depth: "auto" | "standard" | "deep" | "expert";
   options: AnalysisOptions;
-  birth?: BirthInput;
 };
 type ParseOutcome = { ok: true; data: Parsed } | { ok: false; status: number; body: { error: string; message: string } };
 
@@ -57,24 +56,12 @@ function parseSituationRequest(body: unknown): ParseOutcome {
     return { ok: false, status: 400, body: { error: "invalid_location", message: "longitude must be between -180 and 180." } };
   }
 
-  let birth: BirthInput | undefined;
-  const b = parseResult.data.birth;
-  if (b) {
-    const at = new Date(b.datetime);
-    if (Number.isNaN(at.getTime()) || at.getTime() > Date.now() || at.getUTCFullYear() < 1800) {
-      return { ok: false, status: 400, body: { error: "invalid_birth", message: "Birth date and time must be a valid moment in the past." } };
-    }
-    if (!Number.isFinite(b.latitude) || Math.abs(b.latitude) > 90 || !Number.isFinite(b.longitude) || Math.abs(b.longitude) > 180) {
-      return { ok: false, status: 400, body: { error: "invalid_birth", message: "Birth place coordinates are out of range." } };
-    }
-    birth = { at, latitude: b.latitude, longitude: b.longitude };
-  }
   const options: AnalysisOptions = {
     useAi: parseResult.data.useAi ?? true,
     useAstrology: parseResult.data.useAstrology ?? true,
     language: parseResult.data.language ?? "auto",
   };
-  return { ok: true, data: { situation, latitude, longitude, depth, options, birth } };
+  return { ok: true, data: { situation, latitude, longitude, depth, options } };
 }
 
 router.post("/analysis/estimate", async (req, res) => {
@@ -84,9 +71,9 @@ router.post("/analysis/estimate", async (req, res) => {
     return;
   }
   try {
-    const { situation, latitude, longitude, depth, options, birth } = parsed.data;
+    const { situation, latitude, longitude, depth, options } = parsed.data;
     const userId = currentUserId(res);
-    const cost = computeCost(situation, runEngine(situation, { latitude, longitude, birth, useAstrology: options.useAstrology }), depth, options);
+    const cost = computeCost(situation, runEngine(situation, { latitude, longitude, useAstrology: options.useAstrology }), depth, options);
     const billingActive = billingActiveFor(userId);
     const balance = await getBalance(userId);
     res.json({ ...cost, billingActive, balance, enough: !billingActive || balance >= cost.total });
@@ -102,14 +89,14 @@ router.post("/analysis/analyze", async (req, res) => {
     res.status(parsed.status).json(parsed.body);
     return;
   }
-  const { situation, latitude, longitude, depth, options, birth } = parsed.data;
+  const { situation, latitude, longitude, depth, options } = parsed.data;
   const userId = currentUserId(res);
   const billingActive = billingActiveFor(userId);
   let charge: { ledgerId: number; balance: number } | null = null;
 
   try {
     // Step 1: Run the local engine pipeline (AJIT → MANU → Ethical Filter → ASTRO → SIVI)
-    const engineResult = runEngine(situation, { latitude, longitude, birth, useAstrology: options.useAstrology });
+    const engineResult = runEngine(situation, { latitude, longitude, useAstrology: options.useAstrology });
 
     // The price is fixed by the modules involved and the reasoning level, so it is charged up front
     // (atomically, never below zero) and the AI part is given back if the AI cannot answer.
@@ -160,6 +147,7 @@ router.post("/analysis/analyze", async (req, res) => {
         key: "AI" as const,
         name: "AI - reasoning",
         area: "synthesis" as const,
+        role: "Reads your whole situation and reasons about it like an advisor (options, risks, what is unknown), scores it on the merits, then weighs the astrology as a second opinion.",
         active: aiAnswered,
         verdict: aiAnswered
           ? `Own judgment ${synthesis.logicScore}/100${synthesis.astroAlignment ? `; astrology ${synthesis.astroAlignment} it` : ""}; final ${synthesis.score}/100 (${synthesis.verdict}).`
@@ -263,6 +251,53 @@ router.get("/analysis/history/:id", async (req, res) => {
 
   const { userId: _owner, ...publicItem } = item;
   res.json({ ...publicItem, createdAt: item.createdAt.toISOString() });
+});
+
+const TRANSLATE_LANGUAGES = ["en", "hi", "hinglish"] as const;
+type TranslateLanguage = (typeof TRANSLATE_LANGUAGES)[number];
+
+router.post("/analysis/history/:id/translate", async (req, res) => {
+  const id = Number(req.params.id);
+  const language = (req.body as { language?: unknown } | undefined)?.language;
+  if (!Number.isInteger(id) || id <= 0 || !TRANSLATE_LANGUAGES.includes(language as TranslateLanguage)) {
+    res.status(400).json({ error: "invalid_request", message: "Choose a valid analysis and a language (en, hi or hinglish)." });
+    return;
+  }
+  const lang = language as TranslateLanguage;
+  try {
+    const [item] = await db
+      .select()
+      .from(analysesTable)
+      .where(and(eq(analysesTable.id, id), eq(analysesTable.userId, currentUserId(res))));
+    if (!item) {
+      res.status(404).json({ error: "not_found", message: "Analysis not found" });
+      return;
+    }
+    const fa = (item.fullAnalysis ?? {}) as Record<string, unknown>;
+    const cached = (fa.translations as Record<string, unknown> | undefined)?.[lang];
+    if (cached) {
+      res.json({ language: lang, texts: cached });
+      return;
+    }
+    if (!translationAvailable()) {
+      res.status(503).json({ error: "translation_unavailable", message: "Translation is not available right now." });
+      return;
+    }
+    const texts = await translateTexts(extractTexts(fa), lang);
+    if (!texts) {
+      res.status(503).json({ error: "translation_failed", message: "Could not translate this time. Please try again." });
+      return;
+    }
+    const translations = { ...((fa.translations as Record<string, unknown> | undefined) ?? {}), [lang]: texts };
+    await db
+      .update(analysesTable)
+      .set({ fullAnalysis: { ...fa, translations } as unknown as Record<string, unknown> })
+      .where(and(eq(analysesTable.id, id), eq(analysesTable.userId, currentUserId(res))));
+    res.json({ language: lang, texts });
+  } catch (err) {
+    req.log.error({ err }, "Translation failed");
+    res.status(500).json({ error: "translation_failed", message: "Could not translate this time. Please try again." });
+  }
 });
 
 router.delete("/analysis/history/:id", async (req, res) => {

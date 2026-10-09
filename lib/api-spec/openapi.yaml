@@ -111,6 +111,43 @@ paths:
               schema:
                 $ref: "#/components/schemas/AnalysisHistoryResponse"
 
+  /analysis/history/{id}/translate:
+    post:
+      operationId: translateAnalysis
+      tags: [analysis]
+      summary: Write the text of a finished analysis in another language (cached per language)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TranslateRequest"
+      responses:
+        "200":
+          description: The translated texts, in the same structure as the analysis
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TranslateResponse"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "503":
+          description: Translation is not available right now
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
   /analysis/history/{id}:
     get:
       operationId: getAnalysisById
@@ -485,26 +522,31 @@ components:
         useAstrology:
           type: boolean
           description: Use the astrology lens (default true). When false the astrology is not used in the answer and is not charged.
-        birth:
-          $ref: "#/components/schemas/BirthDetails"
       required:
         - situation
 
-    BirthDetails:
+    TranslateRequest:
       type: object
-      description: Optional birth moment and place. When given, the dashas are those of the person's own chart instead of the chart of the moment of the question.
       properties:
-        datetime:
+        language:
           type: string
-          description: Birth moment as an ISO 8601 date-time with its UTC offset, e.g. 1995-04-12T08:30:00+05:30
-        latitude:
-          type: number
-        longitude:
-          type: number
+          enum: [en, hi, hinglish]
       required:
-        - datetime
-        - latitude
-        - longitude
+        - language
+
+    TranslateResponse:
+      type: object
+      properties:
+        language:
+          type: string
+          enum: [en, hi, hinglish]
+        texts:
+          type: object
+          additionalProperties: true
+          description: Translated sentences (summary, finalVerdict, synthesis, simulation, modules, astro)
+      required:
+        - language
+        - texts
 
     ModuleReport:
       type: object
@@ -518,6 +560,9 @@ components:
         area:
           type: string
           enum: [intent, emotion, paths, astrology, synthesis]
+        role:
+          type: string
+          description: What the module looks at and how it understands the question
         active:
           type: boolean
         verdict:
@@ -605,7 +650,7 @@ components:
           type: boolean
         basis:
           type: string
-          enum: [birth, question]
+          enum: [question]
         vimshottari:
           type: object
           properties:

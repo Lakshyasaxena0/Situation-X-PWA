@@ -10,6 +10,5 @@ export type TimingResultBasis =
   (typeof TimingResultBasis)[keyof typeof TimingResultBasis];
 
 export const TimingResultBasis = {
-  birth: "birth",
   question: "question",
 } as const;

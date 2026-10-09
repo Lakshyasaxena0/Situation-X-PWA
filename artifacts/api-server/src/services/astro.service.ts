@@ -15,7 +15,7 @@ import type { EmotionType } from "./manu.service.js";
 import { castPrashnaCharts, type VedicChart, type VedicDashaTree } from "./vedic.service.js";
 import { readPrashna, type PrashnaReading } from "./prashna.service.js";
 import { vimshottariAt, type DashaLevel, type VimshottariDasha } from "./dasha.service.js";
-import { analyzeTiming, type BirthInput, type TimingResult } from "./timing.service.js";
+import { analyzeTiming, isTimeBased, type TimingResult } from "./timing.service.js";
 import {
   BODY_NAMES,
   julianDayFromDate,
@@ -65,8 +65,8 @@ export type AstroResult = {
   vedicD10: VedicChart;
   /** Which house and which divisional charts were used for this question, and why. */
   prashna: PrashnaReading;
-  /** Running dashas (Vimshottari + Chara) and whether they touch the house of the question. */
-  timing: TimingResult;
+  /** Running dashas (Vimshottari + Chara) of the Prashna chart. Only present when the question asks about timing. */
+  timing?: TimingResult;
   calculatedAt: string;
   location: { latitude: number; longitude: number };
 };
@@ -218,7 +218,7 @@ function dashaToTree(dasha: VimshottariDasha): VedicDashaTree {
 export function analyzeAstro(
   intent: IntentType,
   _emotion: EmotionType,
-  options?: { latitude?: number; longitude?: number; at?: Date; birth?: BirthInput; text?: string }
+  options?: { latitude?: number; longitude?: number; at?: Date; text?: string }
 ): AstroResult {
   const now = options?.at ?? new Date(); // The sky at the moment of the question
 
@@ -242,7 +242,8 @@ export function analyzeAstro(
   const sky = castPrashnaCharts(now, latitude, longitude);
   const prashna = readPrashna(intent, sky);
 
-  const timing = analyzeTiming(intent, options?.text ?? "", { at: now, latitude, longitude }, options?.birth);
+  // Dashas are consulted only when the question is about timing ("when", "kab tak", "how long").
+  const timing = isTimeBased(options?.text ?? "") ? analyzeTiming(intent, { at: now, latitude, longitude }) : undefined;
 
   const influence: AstroInfluence = {
     dominantPlanet: prashna.dominantPlanet,
@@ -252,7 +253,7 @@ export function analyzeAstro(
   };
 
   const dashaStr = `${dasha.mahadasha.planet} / ${dasha.antardasha.planet} / ${dasha.pratyantardasha.planet}`;
-  const interpretation = `${prashna.summary} Moon-based dasha now: ${dashaStr}.`;
+  const interpretation = timing ? `${prashna.summary} Dasha of the question chart now: ${dashaStr}.` : prashna.summary;
 
   return {
     influence,

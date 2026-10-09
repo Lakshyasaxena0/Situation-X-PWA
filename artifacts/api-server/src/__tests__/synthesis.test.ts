@@ -24,6 +24,15 @@ test("Prompt: the AI is told to reason in steps, uses the astrology and timing, 
   assert.match(p, /astrologyAssessment/);
 });
 
+test("Prompt: dashas are left out when the question is not about timing", () => {
+  const plainText = "Should I accept the offer from the other company? I am worried about the salary.";
+  const e = runEngine(plainText, {});
+  const p = buildPrompt(plainText, e, NO_CALIBRATION, "standard");
+  assert.doesNotMatch(p, /Vimshottari/);
+  assert.doesNotMatch(p, /Chara/);
+  assert.match(p, /Dashas are not part of this reading/);
+});
+
 test("Prompt: with astrology off the AI is not given any chart", () => {
   const p = buildPrompt(text, engine, NO_CALIBRATION, "standard", { useAi: true, useAstrology: false, language: "en" });
   assert.match(p, /ASTROLOGY IS SWITCHED OFF/);

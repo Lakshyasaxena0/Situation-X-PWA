@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { Shell } from "@/components/layout/Shell";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 import { PlacePicker } from "@/components/PlacePicker";
 import { clearAnalysisSession } from "@/lib/analysisSession";
@@ -21,17 +20,6 @@ const DEPTHS: { value: Depth; label: string; hint: string }[] = [
   { value: "deep", label: "Deep", hint: "8 credits" },
   { value: "expert", label: "Expert", hint: "14 credits" },
 ];
-
-const UTC_OFFSETS = [-480, -420, -360, -300, -240, 0, 60, 120, 180, 240, 270, 330, 345, 360, 480, 540, 600].map((m) => {
-  const sign = m < 0 ? "-" : "+";
-  const abs = Math.abs(m);
-  return { value: m, label: `UTC${sign}${String(Math.floor(abs / 60)).padStart(2, "0")}:${String(abs % 60).padStart(2, "0")}${m === 330 ? " (India)" : ""}` };
-});
-
-function deviceOffsetMinutes(): number {
-  const m = -new Date().getTimezoneOffset();
-  return UTC_OFFSETS.some((o) => o.value === m) ? m : 330;
-}
 
 function Section({ title, hint, children }: { title: string; hint?: string; children: React.ReactNode }) {
   return (
@@ -78,31 +66,6 @@ function Chips<T extends string>({ options, value, onChange, label }: { options:
 export default function Settings() {
   const [s, update] = useSettings();
   const [saved, setSaved] = useState("");
-  const [birthError, setBirthError] = useState("");
-
-  const birth = s.birth;
-  const [birthDate, setBirthDate] = useState(birth?.date ?? "");
-  const [birthTime, setBirthTime] = useState(birth?.time ?? "");
-  const [offset, setOffset] = useState(birth?.utcOffsetMinutes ?? deviceOffsetMinutes());
-
-  function saveBirth(place = s.birth?.place) {
-    if (!birthDate || !birthTime) {
-      setBirthError("Enter the birth date and time, then choose the birth place.");
-      return;
-    }
-    if (new Date(`${birthDate}T${birthTime}:00`).getTime() > Date.now()) {
-      setBirthError("Birth date cannot be in the future.");
-      return;
-    }
-    if (!place) {
-      setBirthError("Choose the birth place.");
-      return;
-    }
-    setBirthError("");
-    update({ birth: { date: birthDate, time: birthTime, utcOffsetMinutes: offset, place } });
-    setSaved("Birth details saved on this device.");
-  }
-
   return (
     <Shell>
       <div className="max-w-2xl mx-auto px-4 py-8 space-y-5">
@@ -140,55 +103,6 @@ export default function Settings() {
                 </Button>
               )}
             </Section>
-
-            <Section title="Birth details (optional)" hint="Vimshottari and Chara dasha need a birth chart to be about you. Without birth details they are computed for the moment you ask, which is only indicative. Add them for better answers to &quot;when&quot; questions.">
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                <label className="text-xs text-muted-foreground space-y-1">
-                  Birth date
-                  <Input type="date" max={new Date().toISOString().slice(0, 10)} value={birthDate} onChange={(e) => setBirthDate(e.target.value)} className="h-9 bg-card" />
-                </label>
-                <label className="text-xs text-muted-foreground space-y-1">
-                  Birth time
-                  <Input type="time" value={birthTime} onChange={(e) => setBirthTime(e.target.value)} className="h-9 bg-card" />
-                </label>
-                <label className="text-xs text-muted-foreground space-y-1">
-                  Time zone at birth place
-                  <select className="h-9 w-full rounded-md border border-input bg-card px-2 text-sm text-foreground" value={offset} onChange={(e) => setOffset(Number(e.target.value))}>
-                    {UTC_OFFSETS.map((o) => (
-                      <option key={o.value} value={o.value}>
-                        {o.label}
-                      </option>
-                    ))}
-                  </select>
-                </label>
-              </div>
-              <div>
-                <div className="text-xs text-muted-foreground mb-1.5">Birth place</div>
-                <PlacePicker idPrefix="birth" value={s.birth?.place ?? null} onChange={(place) => saveBirth(place)} />
-              </div>
-              <div className="flex flex-wrap gap-2">
-                <Button type="button" size="sm" onClick={() => saveBirth()}>
-                  Save birth details
-                </Button>
-                {s.birth && (
-                  <Button
-                    type="button"
-                    size="sm"
-                    variant="outline"
-                    onClick={() => {
-                      update({ birth: null });
-                      setBirthDate("");
-                      setBirthTime("");
-                      setSaved("Birth details removed.");
-                    }}
-                  >
-                    Remove
-                  </Button>
-                )}
-              </div>
-              {birthError && <p className="text-xs text-red-700">{birthError}</p>}
-              {s.birth && <p className="text-xs text-muted-foreground">Using your birth chart ({s.birth.date} {s.birth.time}, {s.birth.place.name}) for dashas. Birth details stay on this device and are sent only with your analysis request.</p>}
-            </Section>
           </>
         )}
 
@@ -211,8 +125,6 @@ export default function Settings() {
               size="sm"
               onClick={() => {
                 settingsStore.set(DEFAULT_SETTINGS);
-                setBirthDate("");
-                setBirthTime("");
                 setSaved("Settings reset to the defaults.");
               }}
             >

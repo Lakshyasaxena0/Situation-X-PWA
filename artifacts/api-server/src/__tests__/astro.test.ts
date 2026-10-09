@@ -2,7 +2,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { julianDayFromDate, lahiriAyanamsa, siderealLongitudes, tropicalAscendant } from "../services/ephemeris.service.js";
 import { analyzeAstro } from "../services/astro.service.js";
-import { analyzeTiming, isTimeBased } from "../services/timing.service.js";
+import { isTimeBased } from "../services/timing.service.js";
 import { runEngine } from "../services/engine.service.js";
 
 test("Ascendant: Greenwich, 2000-01-01 12:00 UT is about 24.5 Aries (tropical)", () => {
@@ -33,9 +33,24 @@ test("analyzeAstro uses the location for the lagna and records it", () => {
   const b = analyzeAstro("career", "calm", { latitude: 51.5, longitude: -0.12, at });
   assert.deepEqual(a.location, { latitude: 19.076, longitude: 72.8777 });
   assert.ok(a.vedicD1.ascendantDegree !== b.vedicD1.ascendantDegree || a.vedicD1.ascendant !== b.vedicD1.ascendant);
-  // The running Vimshottari mahadasha comes from the Moon's nakshatra at that moment
-  assert.ok(a.dasha.mahadasha.planet.length > 0);
-  assert.equal(a.timing.vimshottari.mahadasha.planet, a.dasha.mahadasha.planet);
+});
+
+test("Dashas are worked out only for time-based questions", () => {
+  const at = new Date("2024-06-01T06:00:00Z");
+  const plain = analyzeAstro("career", "calm", { at, text: "Should I accept the offer from the other company?" });
+  assert.equal(plain.timing, undefined);
+  assert.doesNotMatch(plain.interpretation, /[Dd]asha/);
+  const timed = analyzeAstro("career", "calm", { at, text: "When will I get a new job?" });
+  assert.ok(timed.timing);
+  assert.equal(timed.timing!.basis, "question");
+  assert.match(timed.interpretation, /Dasha of the question chart/);
+  const v = timed.timing!.vimshottari;
+  assert.ok(new Date(v.mahadasha.startDate) <= at && at <= new Date(v.mahadasha.endDate));
+  assert.ok(new Date(v.antardasha.startDate) <= at && at <= new Date(v.antardasha.endDate));
+  assert.equal(timed.timing!.house, 10);
+  assert.ok(timed.timing!.chara === null || timed.timing!.chara.sequence.length === 12);
+  // The Prashna chart's own Moon decides the Vimshottari mahadasha
+  assert.equal(v.mahadasha.planet, timed.dasha.mahadasha.planet);
 });
 
 test("Time-based question detection", () => {
@@ -43,21 +58,6 @@ test("Time-based question detection", () => {
   assert.ok(isTimeBased("meri shaadi kab hogi"));
   assert.ok(isTimeBased("How long will this take?"));
   assert.ok(!isTimeBased("Should I accept the offer from the other company?"));
-});
-
-test("Timing: uses the birth chart when birth details are given", () => {
-  const at = new Date("2024-06-01T06:00:00Z");
-  const q = { at, latitude: 28.6139, longitude: 77.209 };
-  const question = analyzeTiming("career", "when will I get promoted", q);
-  assert.equal(question.basis, "question");
-  assert.equal(question.timeBased, true);
-  const born = analyzeTiming("career", "when will I get promoted", q, { at: new Date("1995-04-12T03:00:00Z"), latitude: 26.85, longitude: 80.95 });
-  assert.equal(born.basis, "birth");
-  assert.ok(born.chara === null || born.chara.sequence.length === 12);
-  assert.equal(born.house, 10);
-  // Vimshottari periods always cover "now"
-  assert.ok(new Date(born.vimshottari.mahadasha.startDate) <= at && at <= new Date(born.vimshottari.mahadasha.endDate));
-  assert.ok(new Date(born.vimshottari.antardasha.startDate) <= at && at <= new Date(born.vimshottari.antardasha.endDate));
 });
 
 test("Engine: module reports say which modules were active and what they concluded", () => {

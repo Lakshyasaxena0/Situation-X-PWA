@@ -1,5 +1,5 @@
 import type { QueryKey, UseMutationOptions, UseMutationResult, UseQueryOptions, UseQueryResult } from "@tanstack/react-query";
-import type { AnalysisHistoryResponse, AnalysisRecord, AnalysisResult, AnalyzeRequest, BillingPlansResponse, CostEstimate, CreateFeedbackRequest, CreateOrderRequest, CreateOrderResponse, CreditsResponse, DeleteResponse, DueFollowUpsResponse, ErrorResponse, FeedbackItem, FeedbackListResponse, GetAnalysisHistoryParams, GetFeedbackListParams, HealthStatus, InsufficientCreditsResponse, RedeemReferralRequest, RedeemReferralResponse, ReferralSummary, SubscriptionStatus, VerifyPaymentRequest } from "./api.schemas";
+import type { AnalysisHistoryResponse, AnalysisRecord, AnalysisResult, AnalyzeRequest, BillingPlansResponse, CostEstimate, CreateFeedbackRequest, CreateOrderRequest, CreateOrderResponse, CreditsResponse, DeleteResponse, DueFollowUpsResponse, ErrorResponse, FeedbackItem, FeedbackListResponse, GetAnalysisHistoryParams, GetFeedbackListParams, HealthStatus, InsufficientCreditsResponse, RedeemReferralRequest, RedeemReferralResponse, ReferralSummary, SubscriptionStatus, TranslateRequest, TranslateResponse, VerifyPaymentRequest } from "./api.schemas";
 import { customFetch } from "../custom-fetch";
 import type { ErrorType, BodyType } from "../custom-fetch";
 type AwaitedInput<T> = PromiseLike<T> | T;
@@ -105,6 +105,37 @@ export declare function useGetAnalysisHistory<TData = Awaited<ReturnType<typeof 
 }): UseQueryResult<TData, TError> & {
     queryKey: QueryKey;
 };
+/**
+ * @summary Write the text of a finished analysis in another language (cached per language)
+ */
+export declare const getTranslateAnalysisUrl: (id: number) => string;
+export declare const translateAnalysis: (id: number, translateRequest: TranslateRequest, options?: RequestInit) => Promise<TranslateResponse>;
+export declare const getTranslateAnalysisMutationOptions: <TError = ErrorType<ErrorResponse>, TContext = unknown>(options?: {
+    mutation?: UseMutationOptions<Awaited<ReturnType<typeof translateAnalysis>>, TError, {
+        id: number;
+        data: BodyType<TranslateRequest>;
+    }, TContext>;
+    request?: SecondParameter<typeof customFetch>;
+}) => UseMutationOptions<Awaited<ReturnType<typeof translateAnalysis>>, TError, {
+    id: number;
+    data: BodyType<TranslateRequest>;
+}, TContext>;
+export type TranslateAnalysisMutationResult = NonNullable<Awaited<ReturnType<typeof translateAnalysis>>>;
+export type TranslateAnalysisMutationBody = BodyType<TranslateRequest>;
+export type TranslateAnalysisMutationError = ErrorType<ErrorResponse>;
+/**
+ * @summary Write the text of a finished analysis in another language (cached per language)
+ */
+export declare const useTranslateAnalysis: <TError = ErrorType<ErrorResponse>, TContext = unknown>(options?: {
+    mutation?: UseMutationOptions<Awaited<ReturnType<typeof translateAnalysis>>, TError, {
+        id: number;
+        data: BodyType<TranslateRequest>;
+    }, TContext>;
+    request?: SecondParameter<typeof customFetch>;
+}) => UseMutationResult<Awaited<ReturnType<typeof translateAnalysis>>, TError, {
+    id: number;
+    data: BodyType<TranslateRequest>;
+}, TContext>;
 /**
  * @summary Get analysis by ID
  */

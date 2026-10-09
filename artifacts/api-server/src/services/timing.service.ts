@@ -7,13 +7,11 @@ import { houseProfile } from "./prashna.service.js";
 import { charaDashaAt, signAspects, vimshottariAt, type CharaDasha, type VimshottariDasha } from "./dasha.service.js";
 import { julianDayFromDate, lahiriAyanamsa, normalizeDegrees, siderealLongitudes, tropicalAscendant } from "./ephemeris.service.js";
 
-export type BirthInput = { at: Date; latitude: number; longitude: number };
-
 export type TimingResult = {
-  /** True when the question asks "when" / "how long". */
-  timeBased: boolean;
-  /** "birth": dashas of the person's own chart. "question": dashas of the chart cast for the moment of the question. */
-  basis: "birth" | "question";
+  /** Always true: the dashas are only worked out for questions that ask "when" / "how long". */
+  timeBased: true;
+  /** The dashas are those of the Prashna chart (the moment of the question). */
+  basis: "question";
   vimshottari: VimshottariDasha;
   chara: CharaDasha | null;
   house: number;
@@ -41,16 +39,12 @@ function chartAt(at: Date, latitude: number, longitude: number) {
 
 export function analyzeTiming(
   intent: IntentType,
-  text: string,
   question: { at: Date; latitude: number; longitude: number },
-  birth?: BirthInput,
 ): TimingResult {
-  const basis = birth ? "birth" : "question";
-  const chartMoment = birth?.at ?? question.at;
-  const { sid, lagna } = birth ? chartAt(birth.at, birth.latitude, birth.longitude) : chartAt(question.at, question.latitude, question.longitude);
+  const { sid, lagna } = chartAt(question.at, question.latitude, question.longitude);
 
-  const vim = vimshottariAt(sid.Moon, chartMoment, question.at);
-  const chara = charaDashaAt({ longitudes: sid as unknown as Record<string, number>, lagnaLongitude: lagna }, chartMoment, question.at);
+  const vim = vimshottariAt(sid.Moon, question.at, question.at);
+  const chara = charaDashaAt({ longitudes: sid as unknown as Record<string, number>, lagnaLongitude: lagna }, question.at, question.at);
 
   const profile = houseProfile(intent);
   const lagnaIdx = Math.floor(lagna / 30);
@@ -82,12 +76,10 @@ export function analyzeTiming(
     }
   }
 
-  const timeBased = isTimeBased(text);
-  const whose = basis === "birth" ? "your birth chart" : "the chart of the moment of the question (no birth details given)";
   const summary =
-    `Dashas from ${whose}. Vimshottari now: ${vim.mahadasha.planet} / ${vim.antardasha.planet} / ${vim.pratyantardasha.planet}` +
+    `Dashas of the Prashna chart (the moment of the question). Vimshottari now: ${vim.mahadasha.planet} / ${vim.antardasha.planet} / ${vim.pratyantardasha.planet}` +
     (chara ? `; Chara: ${chara.mahadasha.sign} / ${chara.antardasha.sign}.` : ".") +
     (activations.length ? ` ${activations.length} of them touch the ${RASHI_NAMES[houseIdx]} house of this question.` : " None of the running periods directly touches the house of this question.");
 
-  return { timeBased, basis, vimshottari: vim, chara, house: profile.primaryHouse, houseSign: RASHI_NAMES[houseIdx], houseLord, activations, summary };
+  return { timeBased: true, basis: "question", vimshottari: vim, chara, house: profile.primaryHouse, houseSign: RASHI_NAMES[houseIdx], houseLord, activations, summary };
 }

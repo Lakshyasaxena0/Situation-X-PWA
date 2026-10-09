@@ -1,9 +1,10 @@
 import { Link } from "wouter";
-import { useState } from "react";
-import type { AnalysisResult, CostLine, ModuleReport, TimingResult } from "@workspace/api-client-react";
+import { useEffect, useRef, useState } from "react";
+import { useTranslateAnalysis, type AnalysisResult, type CostLine, type ModuleReport, type TimingResult } from "@workspace/api-client-react";
 import { InviteCta } from "@/components/InviteCta";
 import { motion } from "framer-motion";
-import { ChevronDown, ChevronUp, CheckCircle2, MinusCircle } from "lucide-react";
+import { ChevronDown, ChevronUp, CheckCircle2, MinusCircle, Loader2 } from "lucide-react";
+import { applyTexts, type Texts } from "@/lib/translation";
 import { useSettings } from "@/lib/settings";
 
 type RiskLevel = "low" | "medium" | "high";
@@ -69,7 +70,8 @@ function ModuleReports({ reports }: { reports: ModuleReport[] }) {
               <div className="text-sm font-semibold text-foreground">
                 {m.name} <span className={`ml-1 text-[10px] font-mono uppercase ${m.active ? "text-green-700" : "text-muted-foreground"}`}>{m.active ? "active" : "not triggered"}</span>
               </div>
-              <p className="text-sm text-muted-foreground">{m.verdict}</p>
+              {m.role && <p className="text-xs text-muted-foreground italic mb-1">{m.role}</p>}
+              <p className="text-sm text-foreground">{m.verdict}</p>
               {m.evidence.length > 0 && (
                 <ul className="mt-1 list-disc pl-4 text-xs text-muted-foreground space-y-0.5">
                   {m.evidence.map((e, i) => (
@@ -130,8 +132,8 @@ function TimingSection({ timing }: { timing: TimingResult }) {
   return (
     <div className="space-y-3">
       <div className="text-xs font-mono text-muted-foreground border-t border-border pt-3">
-        DASHA TIMING &middot; {timing.basis === "birth" ? "from your birth chart" : "from the chart of this moment (no birth details given)"}
-        {timing.timeBased && <span className="ml-2 text-primary-foreground bg-primary px-1.5 py-0.5 rounded">time-based question</span>}
+        DASHA TIMING &middot; Prashna chart of this moment
+        <span className="ml-2 text-primary-foreground bg-primary px-1.5 py-0.5 rounded">time-based question</span>
       </div>
       <p className="text-sm text-muted-foreground">{timing.summary}</p>
 
@@ -196,11 +198,6 @@ function TimingSection({ timing }: { timing: TimingResult }) {
           </ul>
         </div>
       )}
-      {timing.basis === "question" && (
-        <p className="text-[11px] text-muted-foreground">
-          Add your birth details in <Link href="/settings" className="text-primary underline underline-offset-2">Settings</Link> to get the dashas of your own chart, which matter most for &ldquo;when&rdquo; questions.
-        </p>
-      )}
     </div>
   );
 }
@@ -243,7 +240,7 @@ function AstroCard({ result, reports }: { result: AnalysisResult; reports: Modul
       {open && (
         <div className="mt-4 space-y-4">
           <p className="text-sm text-muted-foreground">{astro.interpretation}</p>
-          {astro.timing && <TimingSection timing={astro.timing} />}
+          {astro.timing ? <TimingSection timing={astro.timing} /> : <p className="text-xs text-muted-foreground border-t border-border pt-3">Dashas (Vimshottari and Chara) are used only when a question asks about timing, such as &ldquo;when&rdquo; or &ldquo;how long&rdquo;.</p>}
 
           {astro.vedicD1 && (
             <div className="space-y-4">
@@ -298,12 +295,93 @@ function reportsFor(result: AnalysisResult, area: ModuleReport["area"]): ModuleR
   return (result.modules ?? []).filter((m) => m.area === area);
 }
 
-export function AnalysisDisplay({ result }: { result: AnalysisResult }) {
+type LangChoice = "original" | "en" | "hi" | "hinglish";
+const LANG_CHOICES: { value: LangChoice; label: string }[] = [
+  { value: "original", label: "As written" },
+  { value: "en", label: "English" },
+  { value: "hi", label: "हिन्दी" },
+  { value: "hinglish", label: "Hinglish" },
+];
+
+/** Lets the person read the finished analysis in another language (the sentences are translated; numbers stay). */
+function LanguageSwitch({ result, lang, setLang, busy, error }: { result: AnalysisResult; lang: LangChoice; setLang: (l: LangChoice) => void; busy: boolean; error: string }) {
+  if (!result.id) return null;
+  return (
+    <div className="flex flex-wrap items-center gap-2 rounded-md bg-muted/60 px-3 py-2">
+      <span className="text-xs text-muted-foreground">Read this in:</span>
+      <div className="flex flex-wrap gap-1.5" role="radiogroup" aria-label="Language of this analysis">
+        {LANG_CHOICES.map((o) => (
+          <button
+            key={o.value}
+            type="button"
+            role="radio"
+            aria-checked={lang === o.value}
+            disabled={busy}
+            onClick={() => setLang(o.value)}
+            className={`px-2.5 py-1 rounded border text-xs transition-colors ${lang === o.value ? "border-primary bg-primary/20 text-foreground font-semibold" : "border-border text-muted-foreground hover:text-foreground"}`}
+          >
+            {o.label}
+          </button>
+        ))}
+      </div>
+      {busy && <Loader2 className="w-3.5 h-3.5 animate-spin text-muted-foreground" />}
+      {error && <span className="text-xs text-red-700">{error}</span>}
+    </div>
+  );
+}
+
+export function AnalysisDisplay({ result: original }: { result: AnalysisResult }) {
+  const [settings] = useSettings();
+  const translate = useTranslateAnalysis();
+  const [lang, setLang] = useState<LangChoice>("original");
+  const [cache, setCache] = useState<Record<string, Texts>>({});
+  const [error, setError] = useState("");
+
+  // A different analysis starts again from its own text.
+  useEffect(() => {
+    setLang("original");
+    setCache({});
+    setError("");
+  }, [original.id]);
+
+  // Changing the language in Settings while an analysis is on screen switches this analysis too.
+  const firstSettingsRun = useRef(true);
+  useEffect(() => {
+    if (firstSettingsRun.current) {
+      firstSettingsRun.current = false;
+      return;
+    }
+    choose(settings.language === "auto" ? "original" : settings.language);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [settings.language]);
+
+  function choose(next: LangChoice) {
+    setError("");
+    setLang(next);
+    if (next === "original" || cache[next] || !original.id) return;
+    translate.mutate(
+      { id: original.id, data: { language: next } },
+      {
+        onSuccess: (data) => setCache((c) => ({ ...c, [next]: data.texts as Texts })),
+        onError: () => {
+          setError("Could not translate right now. Showing the original.");
+          setLang("original");
+        },
+      },
+    );
+  }
+
+  const result = lang === "original" ? original : applyTexts(original, cache[lang]);
+  return <AnalysisBody result={result} header={<LanguageSwitch result={original} lang={lang} setLang={choose} busy={translate.isPending} error={error} />} />;
+}
+
+function AnalysisBody({ result, header }: { result: AnalysisResult; header: React.ReactNode }) {
   const syn = result.synthesis;
   const astroOn = result.options?.useAstrology !== false;
   const aiReport = (result.modules ?? []).find((m) => m.key === "AI");
   return (
     <div className="space-y-4 mt-6">
+      {header}
       <EngineCard code="AJIT" title="Intent Analysis">
         <div className="flex items-center gap-3 flex-wrap">
           <span className="text-lg font-bold text-foreground capitalize">{result.intent.intent}</span>

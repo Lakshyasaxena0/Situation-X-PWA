@@ -15,6 +15,8 @@ export interface ModuleReport {
   key: ModuleReportKey;
   name: string;
   area: ModuleReportArea;
+  /** What the module looks at and how it understands the question */
+  role?: string;
   active: boolean;
   verdict: string;
   evidence: string[];

@@ -27,19 +27,6 @@ export declare const EstimateAnalysisCostBody: zod.ZodObject<{
     language: zod.ZodOptional<zod.ZodEnum<["auto", "en", "hi", "hinglish"]>>;
     useAi: zod.ZodOptional<zod.ZodBoolean>;
     useAstrology: zod.ZodOptional<zod.ZodBoolean>;
-    birth: zod.ZodOptional<zod.ZodObject<{
-        datetime: zod.ZodString;
-        latitude: zod.ZodNumber;
-        longitude: zod.ZodNumber;
-    }, "strip", zod.ZodTypeAny, {
-        latitude: number;
-        longitude: number;
-        datetime: string;
-    }, {
-        latitude: number;
-        longitude: number;
-        datetime: string;
-    }>>;
 }, "strip", zod.ZodTypeAny, {
     situation: string;
     latitude?: number | undefined;
@@ -48,11 +35,6 @@ export declare const EstimateAnalysisCostBody: zod.ZodObject<{
     language?: "auto" | "en" | "hi" | "hinglish" | undefined;
     useAi?: boolean | undefined;
     useAstrology?: boolean | undefined;
-    birth?: {
-        latitude: number;
-        longitude: number;
-        datetime: string;
-    } | undefined;
 }, {
     situation: string;
     latitude?: number | undefined;
@@ -61,11 +43,6 @@ export declare const EstimateAnalysisCostBody: zod.ZodObject<{
     language?: "auto" | "en" | "hi" | "hinglish" | undefined;
     useAi?: boolean | undefined;
     useAstrology?: boolean | undefined;
-    birth?: {
-        latitude: number;
-        longitude: number;
-        datetime: string;
-    } | undefined;
 }>;
 export declare const EstimateAnalysisCostResponse: zod.ZodObject<{
     total: zod.ZodNumber;
@@ -131,19 +108,6 @@ export declare const AnalyzeSituationBody: zod.ZodObject<{
     language: zod.ZodOptional<zod.ZodEnum<["auto", "en", "hi", "hinglish"]>>;
     useAi: zod.ZodOptional<zod.ZodBoolean>;
     useAstrology: zod.ZodOptional<zod.ZodBoolean>;
-    birth: zod.ZodOptional<zod.ZodObject<{
-        datetime: zod.ZodString;
-        latitude: zod.ZodNumber;
-        longitude: zod.ZodNumber;
-    }, "strip", zod.ZodTypeAny, {
-        latitude: number;
-        longitude: number;
-        datetime: string;
-    }, {
-        latitude: number;
-        longitude: number;
-        datetime: string;
-    }>>;
 }, "strip", zod.ZodTypeAny, {
     situation: string;
     latitude?: number | undefined;
@@ -152,11 +116,6 @@ export declare const AnalyzeSituationBody: zod.ZodObject<{
     language?: "auto" | "en" | "hi" | "hinglish" | undefined;
     useAi?: boolean | undefined;
     useAstrology?: boolean | undefined;
-    birth?: {
-        latitude: number;
-        longitude: number;
-        datetime: string;
-    } | undefined;
 }, {
     situation: string;
     latitude?: number | undefined;
@@ -165,11 +124,6 @@ export declare const AnalyzeSituationBody: zod.ZodObject<{
     language?: "auto" | "en" | "hi" | "hinglish" | undefined;
     useAi?: boolean | undefined;
     useAstrology?: boolean | undefined;
-    birth?: {
-        latitude: number;
-        longitude: number;
-        datetime: string;
-    } | undefined;
 }>;
 export declare const AnalyzeSituationResponse: zod.ZodObject<{
     id: zod.ZodNumber;
@@ -1379,7 +1333,7 @@ export declare const AnalyzeSituationResponse: zod.ZodObject<{
         }>>;
         timing: zod.ZodOptional<zod.ZodObject<{
             timeBased: zod.ZodBoolean;
-            basis: zod.ZodEnum<["birth", "question"]>;
+            basis: zod.ZodEnum<["question"]>;
             vimshottari: zod.ZodObject<{
                 mahadasha: zod.ZodObject<{
                     planet: zod.ZodString;
@@ -1617,7 +1571,7 @@ export declare const AnalyzeSituationResponse: zod.ZodObject<{
             house: number;
             summary: string;
             timeBased: boolean;
-            basis: "birth" | "question";
+            basis: "question";
             vimshottari: {
                 mahadasha: {
                     planet: string;
@@ -1677,7 +1631,7 @@ export declare const AnalyzeSituationResponse: zod.ZodObject<{
             house: number;
             summary: string;
             timeBased: boolean;
-            basis: "birth" | "question";
+            basis: "question";
             vimshottari: {
                 mahadasha: {
                     planet: string;
@@ -1964,7 +1918,7 @@ export declare const AnalyzeSituationResponse: zod.ZodObject<{
             house: number;
             summary: string;
             timeBased: boolean;
-            basis: "birth" | "question";
+            basis: "question";
             vimshottari: {
                 mahadasha: {
                     planet: string;
@@ -2245,7 +2199,7 @@ export declare const AnalyzeSituationResponse: zod.ZodObject<{
             house: number;
             summary: string;
             timeBased: boolean;
-            basis: "birth" | "question";
+            basis: "question";
             vimshottari: {
                 mahadasha: {
                     planet: string;
@@ -2409,6 +2363,7 @@ export declare const AnalyzeSituationResponse: zod.ZodObject<{
         key: zod.ZodEnum<["AJIT", "MANU", "FILTER", "SIVI", "ASTRO", "AI"]>;
         name: zod.ZodString;
         area: zod.ZodEnum<["intent", "emotion", "paths", "astrology", "synthesis"]>;
+        role: zod.ZodOptional<zod.ZodString>;
         active: zod.ZodBoolean;
         verdict: zod.ZodString;
         evidence: zod.ZodArray<zod.ZodString, "many">;
@@ -2419,6 +2374,7 @@ export declare const AnalyzeSituationResponse: zod.ZodObject<{
         area: "intent" | "emotion" | "synthesis" | "paths" | "astrology";
         active: boolean;
         evidence: string[];
+        role?: string | undefined;
     }, {
         key: "AJIT" | "MANU" | "FILTER" | "SIVI" | "ASTRO" | "AI";
         name: string;
@@ -2426,6 +2382,7 @@ export declare const AnalyzeSituationResponse: zod.ZodObject<{
         area: "intent" | "emotion" | "synthesis" | "paths" | "astrology";
         active: boolean;
         evidence: string[];
+        role?: string | undefined;
     }>, "many">>;
     options: zod.ZodOptional<zod.ZodObject<{
         useAi: zod.ZodOptional<zod.ZodBoolean>;
@@ -2711,7 +2668,7 @@ export declare const AnalyzeSituationResponse: zod.ZodObject<{
             house: number;
             summary: string;
             timeBased: boolean;
-            basis: "birth" | "question";
+            basis: "question";
             vimshottari: {
                 mahadasha: {
                     planet: string;
@@ -2859,6 +2816,7 @@ export declare const AnalyzeSituationResponse: zod.ZodObject<{
         area: "intent" | "emotion" | "synthesis" | "paths" | "astrology";
         active: boolean;
         evidence: string[];
+        role?: string | undefined;
     }[] | undefined;
     followUpAt?: string | undefined;
 }, {
@@ -3083,7 +3041,7 @@ export declare const AnalyzeSituationResponse: zod.ZodObject<{
             house: number;
             summary: string;
             timeBased: boolean;
-            basis: "birth" | "question";
+            basis: "question";
             vimshottari: {
                 mahadasha: {
                     planet: string;
@@ -3231,6 +3189,7 @@ export declare const AnalyzeSituationResponse: zod.ZodObject<{
         area: "intent" | "emotion" | "synthesis" | "paths" | "astrology";
         active: boolean;
         evidence: string[];
+        role?: string | undefined;
     }[] | undefined;
     followUpAt?: string | undefined;
 }>;
@@ -4466,7 +4425,7 @@ export declare const GetAnalysisHistoryResponse: zod.ZodObject<{
                 }>>;
                 timing: zod.ZodOptional<zod.ZodObject<{
                     timeBased: zod.ZodBoolean;
-                    basis: zod.ZodEnum<["birth", "question"]>;
+                    basis: zod.ZodEnum<["question"]>;
                     vimshottari: zod.ZodObject<{
                         mahadasha: zod.ZodObject<{
                             planet: zod.ZodString;
@@ -4704,7 +4663,7 @@ export declare const GetAnalysisHistoryResponse: zod.ZodObject<{
                     house: number;
                     summary: string;
                     timeBased: boolean;
-                    basis: "birth" | "question";
+                    basis: "question";
                     vimshottari: {
                         mahadasha: {
                             planet: string;
@@ -4764,7 +4723,7 @@ export declare const GetAnalysisHistoryResponse: zod.ZodObject<{
                     house: number;
                     summary: string;
                     timeBased: boolean;
-                    basis: "birth" | "question";
+                    basis: "question";
                     vimshottari: {
                         mahadasha: {
                             planet: string;
@@ -5051,7 +5010,7 @@ export declare const GetAnalysisHistoryResponse: zod.ZodObject<{
                     house: number;
                     summary: string;
                     timeBased: boolean;
-                    basis: "birth" | "question";
+                    basis: "question";
                     vimshottari: {
                         mahadasha: {
                             planet: string;
@@ -5332,7 +5291,7 @@ export declare const GetAnalysisHistoryResponse: zod.ZodObject<{
                     house: number;
                     summary: string;
                     timeBased: boolean;
-                    basis: "birth" | "question";
+                    basis: "question";
                     vimshottari: {
                         mahadasha: {
                             planet: string;
@@ -5496,6 +5455,7 @@ export declare const GetAnalysisHistoryResponse: zod.ZodObject<{
                 key: zod.ZodEnum<["AJIT", "MANU", "FILTER", "SIVI", "ASTRO", "AI"]>;
                 name: zod.ZodString;
                 area: zod.ZodEnum<["intent", "emotion", "paths", "astrology", "synthesis"]>;
+                role: zod.ZodOptional<zod.ZodString>;
                 active: zod.ZodBoolean;
                 verdict: zod.ZodString;
                 evidence: zod.ZodArray<zod.ZodString, "many">;
@@ -5506,6 +5466,7 @@ export declare const GetAnalysisHistoryResponse: zod.ZodObject<{
                 area: "intent" | "emotion" | "synthesis" | "paths" | "astrology";
                 active: boolean;
                 evidence: string[];
+                role?: string | undefined;
             }, {
                 key: "AJIT" | "MANU" | "FILTER" | "SIVI" | "ASTRO" | "AI";
                 name: string;
@@ -5513,6 +5474,7 @@ export declare const GetAnalysisHistoryResponse: zod.ZodObject<{
                 area: "intent" | "emotion" | "synthesis" | "paths" | "astrology";
                 active: boolean;
                 evidence: string[];
+                role?: string | undefined;
             }>, "many">>;
             options: zod.ZodOptional<zod.ZodObject<{
                 useAi: zod.ZodOptional<zod.ZodBoolean>;
@@ -5798,7 +5760,7 @@ export declare const GetAnalysisHistoryResponse: zod.ZodObject<{
                     house: number;
                     summary: string;
                     timeBased: boolean;
-                    basis: "birth" | "question";
+                    basis: "question";
                     vimshottari: {
                         mahadasha: {
                             planet: string;
@@ -5946,6 +5908,7 @@ export declare const GetAnalysisHistoryResponse: zod.ZodObject<{
                 area: "intent" | "emotion" | "synthesis" | "paths" | "astrology";
                 active: boolean;
                 evidence: string[];
+                role?: string | undefined;
             }[] | undefined;
             followUpAt?: string | undefined;
         }, {
@@ -6170,7 +6133,7 @@ export declare const GetAnalysisHistoryResponse: zod.ZodObject<{
                     house: number;
                     summary: string;
                     timeBased: boolean;
-                    basis: "birth" | "question";
+                    basis: "question";
                     vimshottari: {
                         mahadasha: {
                             planet: string;
@@ -6318,6 +6281,7 @@ export declare const GetAnalysisHistoryResponse: zod.ZodObject<{
                 area: "intent" | "emotion" | "synthesis" | "paths" | "astrology";
                 active: boolean;
                 evidence: string[];
+                role?: string | undefined;
             }[] | undefined;
             followUpAt?: string | undefined;
         }>>;
@@ -6553,7 +6517,7 @@ export declare const GetAnalysisHistoryResponse: zod.ZodObject<{
                     house: number;
                     summary: string;
                     timeBased: boolean;
-                    basis: "birth" | "question";
+                    basis: "question";
                     vimshottari: {
                         mahadasha: {
                             planet: string;
@@ -6701,6 +6665,7 @@ export declare const GetAnalysisHistoryResponse: zod.ZodObject<{
                 area: "intent" | "emotion" | "synthesis" | "paths" | "astrology";
                 active: boolean;
                 evidence: string[];
+                role?: string | undefined;
             }[] | undefined;
             followUpAt?: string | undefined;
         } | undefined;
@@ -6935,7 +6900,7 @@ export declare const GetAnalysisHistoryResponse: zod.ZodObject<{
                     house: number;
                     summary: string;
                     timeBased: boolean;
-                    basis: "birth" | "question";
+                    basis: "question";
                     vimshottari: {
                         mahadasha: {
                             planet: string;
@@ -7083,6 +7048,7 @@ export declare const GetAnalysisHistoryResponse: zod.ZodObject<{
                 area: "intent" | "emotion" | "synthesis" | "paths" | "astrology";
                 active: boolean;
                 evidence: string[];
+                role?: string | undefined;
             }[] | undefined;
             followUpAt?: string | undefined;
         } | undefined;
@@ -7325,7 +7291,7 @@ export declare const GetAnalysisHistoryResponse: zod.ZodObject<{
                     house: number;
                     summary: string;
                     timeBased: boolean;
-                    basis: "birth" | "question";
+                    basis: "question";
                     vimshottari: {
                         mahadasha: {
                             planet: string;
@@ -7473,6 +7439,7 @@ export declare const GetAnalysisHistoryResponse: zod.ZodObject<{
                 area: "intent" | "emotion" | "synthesis" | "paths" | "astrology";
                 active: boolean;
                 evidence: string[];
+                role?: string | undefined;
             }[] | undefined;
             followUpAt?: string | undefined;
         } | undefined;
@@ -7712,7 +7679,7 @@ export declare const GetAnalysisHistoryResponse: zod.ZodObject<{
                     house: number;
                     summary: string;
                     timeBased: boolean;
-                    basis: "birth" | "question";
+                    basis: "question";
                     vimshottari: {
                         mahadasha: {
                             planet: string;
@@ -7860,10 +7827,38 @@ export declare const GetAnalysisHistoryResponse: zod.ZodObject<{
                 area: "intent" | "emotion" | "synthesis" | "paths" | "astrology";
                 active: boolean;
                 evidence: string[];
+                role?: string | undefined;
             }[] | undefined;
             followUpAt?: string | undefined;
         } | undefined;
     }[];
+}>;
+/**
+ * @summary Write the text of a finished analysis in another language (cached per language)
+ */
+export declare const TranslateAnalysisParams: zod.ZodObject<{
+    id: zod.ZodNumber;
+}, "strip", zod.ZodTypeAny, {
+    id: number;
+}, {
+    id: number;
+}>;
+export declare const TranslateAnalysisBody: zod.ZodObject<{
+    language: zod.ZodEnum<["en", "hi", "hinglish"]>;
+}, "strip", zod.ZodTypeAny, {
+    language: "en" | "hi" | "hinglish";
+}, {
+    language: "en" | "hi" | "hinglish";
+}>;
+export declare const TranslateAnalysisResponse: zod.ZodObject<{
+    language: zod.ZodEnum<["en", "hi", "hinglish"]>;
+    texts: zod.ZodRecord<zod.ZodString, zod.ZodUnknown>;
+}, "strip", zod.ZodTypeAny, {
+    language: "en" | "hi" | "hinglish";
+    texts: Record<string, unknown>;
+}, {
+    language: "en" | "hi" | "hinglish";
+    texts: Record<string, unknown>;
 }>;
 /**
  * @summary Get analysis by ID
@@ -9091,7 +9086,7 @@ export declare const GetAnalysisByIdResponse: zod.ZodObject<{
             }>>;
             timing: zod.ZodOptional<zod.ZodObject<{
                 timeBased: zod.ZodBoolean;
-                basis: zod.ZodEnum<["birth", "question"]>;
+                basis: zod.ZodEnum<["question"]>;
                 vimshottari: zod.ZodObject<{
                     mahadasha: zod.ZodObject<{
                         planet: zod.ZodString;
@@ -9329,7 +9324,7 @@ export declare const GetAnalysisByIdResponse: zod.ZodObject<{
                 house: number;
                 summary: string;
                 timeBased: boolean;
-                basis: "birth" | "question";
+                basis: "question";
                 vimshottari: {
                     mahadasha: {
                         planet: string;
@@ -9389,7 +9384,7 @@ export declare const GetAnalysisByIdResponse: zod.ZodObject<{
                 house: number;
                 summary: string;
                 timeBased: boolean;
-                basis: "birth" | "question";
+                basis: "question";
                 vimshottari: {
                     mahadasha: {
                         planet: string;
@@ -9676,7 +9671,7 @@ export declare const GetAnalysisByIdResponse: zod.ZodObject<{
                 house: number;
                 summary: string;
                 timeBased: boolean;
-                basis: "birth" | "question";
+                basis: "question";
                 vimshottari: {
                     mahadasha: {
                         planet: string;
@@ -9957,7 +9952,7 @@ export declare const GetAnalysisByIdResponse: zod.ZodObject<{
                 house: number;
                 summary: string;
                 timeBased: boolean;
-                basis: "birth" | "question";
+                basis: "question";
                 vimshottari: {
                     mahadasha: {
                         planet: string;
@@ -10121,6 +10116,7 @@ export declare const GetAnalysisByIdResponse: zod.ZodObject<{
             key: zod.ZodEnum<["AJIT", "MANU", "FILTER", "SIVI", "ASTRO", "AI"]>;
             name: zod.ZodString;
             area: zod.ZodEnum<["intent", "emotion", "paths", "astrology", "synthesis"]>;
+            role: zod.ZodOptional<zod.ZodString>;
             active: zod.ZodBoolean;
             verdict: zod.ZodString;
             evidence: zod.ZodArray<zod.ZodString, "many">;
@@ -10131,6 +10127,7 @@ export declare const GetAnalysisByIdResponse: zod.ZodObject<{
             area: "intent" | "emotion" | "synthesis" | "paths" | "astrology";
             active: boolean;
             evidence: string[];
+            role?: string | undefined;
         }, {
             key: "AJIT" | "MANU" | "FILTER" | "SIVI" | "ASTRO" | "AI";
             name: string;
@@ -10138,6 +10135,7 @@ export declare const GetAnalysisByIdResponse: zod.ZodObject<{
             area: "intent" | "emotion" | "synthesis" | "paths" | "astrology";
             active: boolean;
             evidence: string[];
+            role?: string | undefined;
         }>, "many">>;
         options: zod.ZodOptional<zod.ZodObject<{
             useAi: zod.ZodOptional<zod.ZodBoolean>;
@@ -10423,7 +10421,7 @@ export declare const GetAnalysisByIdResponse: zod.ZodObject<{
                 house: number;
                 summary: string;
                 timeBased: boolean;
-                basis: "birth" | "question";
+                basis: "question";
                 vimshottari: {
                     mahadasha: {
                         planet: string;
@@ -10571,6 +10569,7 @@ export declare const GetAnalysisByIdResponse: zod.ZodObject<{
             area: "intent" | "emotion" | "synthesis" | "paths" | "astrology";
             active: boolean;
             evidence: string[];
+            role?: string | undefined;
         }[] | undefined;
         followUpAt?: string | undefined;
     }, {
@@ -10795,7 +10794,7 @@ export declare const GetAnalysisByIdResponse: zod.ZodObject<{
                 house: number;
                 summary: string;
                 timeBased: boolean;
-                basis: "birth" | "question";
+                basis: "question";
                 vimshottari: {
                     mahadasha: {
                         planet: string;
@@ -10943,6 +10942,7 @@ export declare const GetAnalysisByIdResponse: zod.ZodObject<{
             area: "intent" | "emotion" | "synthesis" | "paths" | "astrology";
             active: boolean;
             evidence: string[];
+            role?: string | undefined;
         }[] | undefined;
         followUpAt?: string | undefined;
     }>>;
@@ -11178,7 +11178,7 @@ export declare const GetAnalysisByIdResponse: zod.ZodObject<{
                 house: number;
                 summary: string;
                 timeBased: boolean;
-                basis: "birth" | "question";
+                basis: "question";
                 vimshottari: {
                     mahadasha: {
                         planet: string;
@@ -11326,6 +11326,7 @@ export declare const GetAnalysisByIdResponse: zod.ZodObject<{
             area: "intent" | "emotion" | "synthesis" | "paths" | "astrology";
             active: boolean;
             evidence: string[];
+            role?: string | undefined;
         }[] | undefined;
         followUpAt?: string | undefined;
     } | undefined;
@@ -11560,7 +11561,7 @@ export declare const GetAnalysisByIdResponse: zod.ZodObject<{
                 house: number;
                 summary: string;
                 timeBased: boolean;
-                basis: "birth" | "question";
+                basis: "question";
                 vimshottari: {
                     mahadasha: {
                         planet: string;
@@ -11708,6 +11709,7 @@ export declare const GetAnalysisByIdResponse: zod.ZodObject<{
             area: "intent" | "emotion" | "synthesis" | "paths" | "astrology";
             active: boolean;
             evidence: string[];
+            role?: string | undefined;
         }[] | undefined;
         followUpAt?: string | undefined;
     } | undefined;

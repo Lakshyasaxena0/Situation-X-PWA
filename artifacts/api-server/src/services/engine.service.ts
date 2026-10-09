@@ -5,7 +5,6 @@ import { analyzeAstro, type AstroResult } from "./astro.service.js";
 import { KEYWORDS as INTENT_KEYWORDS } from "./ajit.service.js";
 import { EMOTION_KEYWORDS } from "./manu.service.js";
 import { matchedKeywords, normalizeText } from "./text.js";
-import type { BirthInput } from "./timing.service.js";
 
 export type EngineResponse = {
   intent: IntentResult;
@@ -26,6 +25,8 @@ export type ModuleReport = {
   name: string;
   /** Which part of the analysis this module feeds. */
   area: "intent" | "emotion" | "paths" | "astrology" | "synthesis";
+  /** What this module looks at and how it understands the question (plain language). */
+  role: string;
   active: boolean;
   /** What the module concluded about this question. */
   verdict: string;
@@ -35,8 +36,6 @@ export type ModuleReport = {
 export type EngineOptions = {
   latitude?: number;
   longitude?: number;
-  /** Birth moment and place; makes the dashas those of the person's own chart. */
-  birth?: BirthInput;
   /** When false the astrology is still cast but is reported as switched off and takes no part in the answer. */
   useAstrology?: boolean;
 };
@@ -80,6 +79,7 @@ function buildModuleReports(
   return [
     {
       key: "FILTER",
+      role: "Scans your text for harmful words (revenge, blackmail, manipulate, harm) and removes them before any other module reads it, so the analysis never builds on a harmful intent.",
       name: "Ethical filter",
       area: "intent",
       active: removed.length > 0,
@@ -88,6 +88,7 @@ function buildModuleReports(
     },
     {
       key: "AJIT",
+      role: "Reads your words for topic keywords (career, love, conflict, decision, health) and decides what the question is about. It counts keywords, it does not understand meaning, so the AI re-reads your full text itself.",
       name: "AJIT - intent detection",
       area: "intent",
       active: intent.intent !== "unclear",
@@ -99,6 +100,7 @@ function buildModuleReports(
     },
     {
       key: "MANU",
+      role: "Looks for emotion words (stress, worry, anger, sadness, confusion, calm) to estimate your emotional state and how strong it is. Strong emotion makes the engine favour slower, lower-risk paths.",
       name: "MANU - emotion mapping",
       area: "emotion",
       active: emotion.score > 0,
@@ -110,6 +112,7 @@ function buildModuleReports(
     },
     {
       key: "SIVI",
+      role: "Takes the intent and the emotion and compares three possible courses of action by risk and stability, then picks the safest-yet-useful one.",
       name: "SIVI - path simulation",
       area: "paths",
       active: true,
@@ -123,6 +126,7 @@ function buildModuleReports(
     },
     {
       key: "ASTRO",
+      role: "Casts the Prashna chart for the moment you ask, reads the house and planets that rule your kind of question, and scores it. Dashas (Vimshottari and Chara) are added only when you ask about timing.",
       name: "ASTRO - Prashna chart",
       area: "astrology",
       active: useAstrology,
@@ -149,7 +153,7 @@ function deriveFinalVerdict(simulation: SimulationResult, emotion: EmotionResult
 
 export function runEngine(input: string, options: EngineOptions = {}): EngineResponse {
   if (!input || input.length < 10) throw new Error("Input must be at least 10 characters long.");
-  const { latitude, longitude, birth, useAstrology = true } = options;
+  const { latitude, longitude, useAstrology = true } = options;
 
   const { text: cleanInput, removed } = applyEthicalFilter(input);
   const intentResult = analyzeIntent(cleanInput);
@@ -158,7 +162,7 @@ export function runEngine(input: string, options: EngineOptions = {}): EngineRes
   const finalVerdict = deriveFinalVerdict(simulationResult, emotionResult);
   // ASTRO casts the Prashna charts (D1, D3, D9, D10) for the moment of the question and reads
   // the ones that matter for the intent AJIT detected. No birth details are involved.
-  const astroResult = analyzeAstro(intentResult.intent, emotionResult.emotion, { latitude, longitude, birth, text: input });
+  const astroResult = analyzeAstro(intentResult.intent, emotionResult.emotion, { latitude, longitude, text: input });
 
   return {
     intent: intentResult,

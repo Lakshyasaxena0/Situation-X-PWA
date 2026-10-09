@@ -86,7 +86,7 @@ export default function Oracle() {
         <div className="mb-6 flex items-start justify-between gap-3">
           <div>
             <h1 className="text-2xl font-bold text-foreground">Analysis</h1>
-            <p className="text-sm text-muted-foreground mt-1">Describe your situation. The system will run AJIT, MANU, SIVI, and ASTRO analysis.</p>
+            <p className="text-sm text-muted-foreground mt-1">Describe your situation in your own words. Four modules read it (intent, emotion, possible paths and the Prashna chart) and the AI weighs everything into one answer. Each result shows what every module saw.</p>
           </div>
           {(result || situation) && (
             <Button type="button" variant="outline" size="sm" onClick={() => { clearAnalysisSession(); analyze.reset(); }}>
@@ -118,7 +118,6 @@ export default function Oracle() {
             <span>Astrology: <strong className="text-foreground">{settings.useAstrology ? "on" : "off"}</strong></span>
             <span>Language: <strong className="text-foreground">{settings.language === "auto" ? "same as question" : settings.language === "en" ? "English" : settings.language === "hi" ? "Hindi" : "Hinglish"}</strong></span>
             {settings.useAstrology && <span>Place: <strong className="text-foreground">{placeName}</strong></span>}
-            {settings.useAstrology && <span>Birth details: <strong className="text-foreground">{settings.birth ? "added" : "not added"}</strong></span>}
             <Link href="/settings" className="ml-auto inline-flex items-center gap-1 text-primary underline underline-offset-2">
               <SettingsIcon className="w-3 h-3" /> Change in Settings
             </Link>
