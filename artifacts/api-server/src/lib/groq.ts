@@ -5,6 +5,7 @@
  *   GROQ_API_KEY      required; without it the app answers from the engine + astrology only
  *   GROQ_MODEL        optional; default "llama-3.3-70b-versatile"
  *   GROQ_BASE_URL     optional; default "https://api.groq.com/openai/v1"
+ *   GROQ_FALLBACK_MODELS optional; comma list tried when the model is rate limited (default llama-3.3-70b-versatile, openai/gpt-oss-20b)
  *   GROQ_TIMEOUT_MS   optional; default 20000 (a slow call falls back instead of hanging the request)
  */
 
@@ -54,6 +55,25 @@ function post(body: Record<string, unknown>): Promise<Response> {
   });
 }
 
+/** Seconds Groq says to wait ("Please try again in 22.215s" / "in 1m3.5s"), or the Retry-After header. */
+export function retryAfterSeconds(detail: string, header?: string | null): number | null {
+  const h = Number(header);
+  if (header && Number.isFinite(h) && h >= 0) return h;
+  const m = /try again in\s+(?:(\d+)m)?\s*(\d+(?:\.\d+)?)s/i.exec(detail);
+  if (!m) return null;
+  return Number(m[1] ?? 0) * 60 + Number(m[2]);
+}
+
+/** Other models tried when the main one is out of tokens for the minute (each model has its own limit). */
+function fallbackModels(): string[] {
+  const env = process.env.GROQ_FALLBACK_MODELS?.split(",").map((m) => m.trim()).filter(Boolean);
+  return env?.length ? env : ["llama-3.3-70b-versatile", "openai/gpt-oss-20b"];
+}
+
+/** The longest we will wait for a rate limit to clear before giving up (the person is waiting). */
+const MAX_RATE_WAIT_S = 25;
+const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
+
 /**
  * Sends one prompt and returns the model's reply text (expected to be a JSON object).
  * Throws on network errors, timeouts and non-2xx answers; the caller decides the fallback.
@@ -61,6 +81,10 @@ function post(body: Record<string, unknown>): Promise<Response> {
  *
  * If the configured model is unknown to this Groq account (HTTP 404 / model_not_found), the models the
  * account can actually use are looked up once and the best match is used from then on.
+ *
+ * If the model is out of tokens for the minute (HTTP 429, common on the free plan), the other models
+ * are tried (each has its own limit); if all are limited and the wait is short, it waits once and
+ * retries the main model, so a busy minute does not turn into an engine-only answer.
  */
 export async function groqJsonCompletion(
   prompt: string,
@@ -90,6 +114,30 @@ export async function groqJsonCompletion(
       res = await send();
     }
   }
+
+  if (res.status === 429) {
+    const main = request.model;
+    let wait = retryAfterSeconds(await res.clone().text().catch(() => ""), res.headers.get("retry-after"));
+    for (const alt of fallbackModels().filter((m) => m !== main)) {
+      request.model = alt;
+      const r = await send();
+      if (r.ok) {
+        res = r;
+        break;
+      }
+      if (r.status === 429) {
+        const w = retryAfterSeconds(await r.clone().text().catch(() => ""), r.headers.get("retry-after"));
+        if (w !== null && (wait === null || w < wait)) wait = w;
+      }
+      res = r;
+    }
+    if (!res.ok && res.status === 429 && wait !== null && wait <= MAX_RATE_WAIT_S) {
+      await sleep(Math.ceil(wait * 1000) + 500);
+      request.model = main;
+      res = await send();
+    }
+  }
+
   if (!res.ok) {
     // Groq explains what is wrong (unknown model, bad key...) in the body: keep it for the logs.
     const detail = (await res.text().catch(() => "")).replace(/\s+/g, " ").slice(0, 300);
