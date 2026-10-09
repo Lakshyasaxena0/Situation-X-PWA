@@ -107,7 +107,7 @@ export default function Settings() {
           </>
         )}
 
-        <Section title="Questions first" hint="Before the analysis the app can ask a few short questions, one at a time, to clear up what matters (for example how long a silence lasted). Free; you can skip them any time.">
+        <Section title="Questions first" hint="Before the analysis the AI can ask a few short questions, one at a time, so it understands your situation better. Free; you can skip them any time.">
           <ToggleRow label="Ask me questions first" hint="Up to 4 quick questions. Off: the analysis runs straight away." checked={s.askQuestions} onChange={(askQuestions) => update({ askQuestions })} />
         </Section>
 

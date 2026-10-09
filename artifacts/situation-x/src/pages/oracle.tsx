@@ -128,7 +128,6 @@ export default function Oracle() {
         <div className="mb-6 flex items-start justify-between gap-3">
           <div>
             <h1 className="text-2xl font-bold text-foreground">Analysis</h1>
-            <p className="text-sm text-muted-foreground mt-1">Describe your situation in your own words. Modules read it (intent, emotion, possible paths, the Prashna chart and, if you mention a silence, what it may mean) and the AI weighs everything into one answer. Each result shows what every module saw.</p>
           </div>
           {(result || situation) && (
             <Button type="button" variant="outline" size="sm" onClick={() => { clearAnalysisSession(); analyze.reset(); }}>

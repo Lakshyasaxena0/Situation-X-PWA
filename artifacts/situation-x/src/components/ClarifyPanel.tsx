@@ -39,6 +39,8 @@ export function ClarifyPanel({
         <span>{Math.min(round + 1, max)} of up to {max} &middot; free</span>
       </div>
 
+      <p className="text-xs text-muted-foreground">These questions help the AI understand your situation better before it answers.</p>
+
       {answered.length > 0 && (
         <ul className="space-y-1 text-xs text-muted-foreground">
           {answered.map((a, i) => (
