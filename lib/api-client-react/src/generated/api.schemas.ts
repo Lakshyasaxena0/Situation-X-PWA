@@ -301,6 +301,38 @@ export interface SituationContext {
   constraints: string[];
 }
 
+export type SafetyNoticeAction =
+  (typeof SafetyNoticeAction)[keyof typeof SafetyNoticeAction];
+
+export const SafetyNoticeAction = {
+  allow: "allow",
+  support: "support",
+  redirect: "redirect",
+  block: "block",
+} as const;
+
+export type SafetyNoticeCategory =
+  (typeof SafetyNoticeCategory)[keyof typeof SafetyNoticeCategory];
+
+export const SafetyNoticeCategory = {
+  none: "none",
+  self_harm: "self_harm",
+  self_harm_method: "self_harm_method",
+  harm_others: "harm_others",
+  weapons: "weapons",
+  minor_sexual: "minor_sexual",
+  manipulation: "manipulation",
+} as const;
+
+/**
+ * What the ethical filter decided about the message. "support" and "redirect" analyses carry a message that is shown to the person; blocked requests are refused with HTTP 422 and are never analysed or charged.
+ */
+export interface SafetyNotice {
+  action: SafetyNoticeAction;
+  category: SafetyNoticeCategory;
+  message?: string;
+}
+
 export type SimulationResultSource =
   (typeof SimulationResultSource)[keyof typeof SimulationResultSource];
 
@@ -389,6 +421,8 @@ export interface PrashnaFactor {
   label: string;
   effect: number;
   detail: string;
+  /** Which part of the reading this factor belongs to (used for learned weighting) */
+  family?: string;
 }
 
 export interface PrashnaChartUse {
@@ -424,6 +458,11 @@ export const PrashnaReadingRisk = {
   high: "high",
 } as const;
 
+export type PrashnaReadingFocus = {
+  themes?: string[];
+  houses?: number[];
+};
+
 /**
  * Prashna (horary) chart cast for the moment of the question, read for the question type
  */
@@ -433,6 +472,8 @@ export interface PrashnaReading {
   longitude?: number;
   lagna: string;
   lagnaLord: string;
+  /** Degrees into the rising sign */
+  lagnaDegree?: number;
   moonSign: string;
   moonNakshatra: string;
   moonWaxing: boolean;
@@ -446,6 +487,8 @@ export interface PrashnaReading {
   risk?: PrashnaReadingRisk;
   dominantPlanet?: string;
   summary: string;
+  focus?: PrashnaReadingFocus;
+  tuningId?: number | null;
 }
 
 export type AstroInfluenceStability =
@@ -483,6 +526,20 @@ export interface AstroInfluence {
 }
 
 /**
+ * The rising sign at the moment of the question (the only part of the chart that is shown)
+ */
+export type AstroResultAscendant = {
+  sign: string;
+  degree: number;
+  lord?: string;
+};
+
+export type AstroResultTuning = {
+  id?: number | null;
+  astroShare?: number | null;
+};
+
+/**
  * The place the chart was cast for
  */
 export type AstroResultLocation = {
@@ -493,11 +550,10 @@ export type AstroResultLocation = {
 export interface AstroResult {
   influence: AstroInfluence;
   interpretation: string;
-  vedicD1?: VedicChart;
-  vedicD3?: VedicChart;
+  /** The rising sign at the moment of the question (the only part of the chart that is shown) */
+  ascendant?: AstroResultAscendant;
+  tuning?: AstroResultTuning;
   prashna?: PrashnaReading;
-  vedicD9?: VedicChart;
-  vedicD10?: VedicChart;
   timing?: TimingResult;
   /** The place the chart was cast for */
   location?: AstroResultLocation;
@@ -650,6 +706,7 @@ export interface AnalysisResult {
   intent: IntentResult;
   emotion: EmotionResult;
   simulation: SimulationResult;
+  safety?: SafetyNotice;
   finalVerdict: FinalVerdict;
   astro: AstroResult;
   overallScore: number;
@@ -943,7 +1000,7 @@ export interface DeleteResponse {
 }
 
 /**
- * Follow-up - did things turn out the way the reading suggested?
+ * Follow-up - did things turn out the way the reading suggested? (older clients; the server derives it from actionTaken and result when those are sent)
  */
 export type CreateFeedbackRequestOutcome =
   (typeof CreateFeedbackRequestOutcome)[keyof typeof CreateFeedbackRequestOutcome];
@@ -952,6 +1009,45 @@ export const CreateFeedbackRequestOutcome = {
   matched: "matched",
   partly: "partly",
   different: "different",
+} as const;
+
+/**
+ * What the person did - the suggested step, another step, or nothing
+ */
+export type CreateFeedbackRequestActionTaken =
+  (typeof CreateFeedbackRequestActionTaken)[keyof typeof CreateFeedbackRequestActionTaken];
+
+export const CreateFeedbackRequestActionTaken = {
+  followed: "followed",
+  other: "other",
+  nothing: "nothing",
+} as const;
+
+/**
+ * How things actually turned out
+ */
+export type CreateFeedbackRequestResult =
+  (typeof CreateFeedbackRequestResult)[keyof typeof CreateFeedbackRequestResult];
+
+export const CreateFeedbackRequestResult = {
+  better: "better",
+  same: "same",
+  worse: "worse",
+} as const;
+
+export type CreateFeedbackRequestReasonTagsItem =
+  (typeof CreateFeedbackRequestReasonTagsItem)[keyof typeof CreateFeedbackRequestReasonTagsItem];
+
+export const CreateFeedbackRequestReasonTagsItem = {
+  advice_right: "advice_right",
+  missed_perspective: "missed_perspective",
+  missed_facts: "missed_facts",
+  too_generic: "too_generic",
+  timing_off: "timing_off",
+  astrology_helped: "astrology_helped",
+  astrology_off: "astrology_off",
+  steps_helpful: "steps_helpful",
+  steps_unrealistic: "steps_unrealistic",
 } as const;
 
 export interface CreateFeedbackRequest {
@@ -973,8 +1069,17 @@ export interface CreateFeedbackRequest {
   comment?: string;
   /** Was this analysis helpful? */
   helpful?: boolean;
-  /** Follow-up - did things turn out the way the reading suggested? */
+  /** Follow-up - did things turn out the way the reading suggested? (older clients; the server derives it from actionTaken and result when those are sent) */
   outcome?: CreateFeedbackRequestOutcome;
+  /** What the person did - the suggested step, another step, or nothing */
+  actionTaken?: CreateFeedbackRequestActionTaken;
+  /** How things actually turned out */
+  result?: CreateFeedbackRequestResult;
+  /**
+   * What was right or missed
+   * @maxItems 9
+   */
+  reasonTags?: CreateFeedbackRequestReasonTagsItem[];
 }
 
 export interface FeedbackItem {
@@ -986,6 +1091,9 @@ export interface FeedbackItem {
   comment?: string;
   helpful?: boolean;
   outcome?: string;
+  actionTaken?: string;
+  result?: string;
+  reasonTags?: string[];
   createdAt: string;
 }
 

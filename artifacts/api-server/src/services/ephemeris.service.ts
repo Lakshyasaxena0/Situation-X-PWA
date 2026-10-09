@@ -155,3 +155,78 @@ export function tropicalAscendant(jd: number, latitude: number, longitude: numbe
   const x = -(Math.sin(lst) * Math.cos(eps) + Math.tan(phi) * Math.sin(eps));
   return normalizeDegrees(Math.atan2(y, x) * R2D);
 }
+
+// ---------------------------------------------------------------------------------------------
+// Daily motion, declination, sunrise / sunset (used for strengths and the hora of the question)
+// ---------------------------------------------------------------------------------------------
+
+/** Daily motion in degrees per day (negative = retrograde), from the change over +/- 12 hours. */
+export function dailyMotion(name: BodyName, jd: number): number {
+  if (name === "Rahu" || name === "Ketu") return -0.0530;
+  const lon = (t: number): number => {
+    if (name === "Sun") return sunLongitude(t);
+    if (name === "Moon") return moonLongitude(t);
+    return planetGeocentricLongitude(name, t);
+  };
+  let d = lon(jd + 0.5) - lon(jd - 0.5);
+  if (d > 180) d -= 360;
+  if (d < -180) d += 360;
+  return d;
+}
+
+const OBLIQUITY = 23.4393;
+
+/** Declination (degrees) of a point on the ecliptic from its TROPICAL longitude. */
+export function declinationOf(tropicalLongitude: number): number {
+  return Math.asin(Math.sin(OBLIQUITY * D2R) * Math.sin(tropicalLongitude * D2R)) * R2D;
+}
+
+export type SunTimes = {
+  /** Julian day (UT) of the sunrise that begins the Vedic day in force at the question. */
+  sunrise: number;
+  sunset: number;
+  nextSunrise: number;
+  /** 0 = Sunday ... 6 = Saturday, for the day that began at that sunrise. */
+  weekday: number;
+};
+
+/** Sunrise / sunset for the local (mean-time) day that starts at JD `localMidnight` (x.5 in local mean time). */
+function sunRiseSet(localMidnight: number, latitude: number, longitude: number): { rise: number; set: number } {
+  const tz = longitude / 15;
+  const noonUt = localMidnight + 0.5 - tz / 24;
+  const T = (noonUt - J2000) / 36525;
+  const lam = sunLongitude(noonUt);
+  const decl = declinationOf(lam);
+  const eps = OBLIQUITY * D2R;
+  const ra = normalizeDegrees(Math.atan2(Math.cos(eps) * Math.sin(lam * D2R), Math.cos(lam * D2R)) * R2D);
+  const l0 = normalizeDegrees(280.46646 + 36000.76983 * T);
+  let eq = l0 - 0.0057183 - ra;
+  if (eq > 180) eq -= 360;
+  if (eq < -180) eq += 360;
+  const eqMinutes = eq * 4;
+  const cosH = (Math.sin(-0.833 * D2R) - Math.sin(latitude * D2R) * Math.sin(decl * D2R)) / (Math.cos(latitude * D2R) * Math.cos(decl * D2R));
+  // Polar day / night: fall back to 6:00 and 18:00 local solar time.
+  const H = cosH >= 1 || cosH <= -1 ? 90 : Math.acos(cosH) * R2D;
+  const dayStartUt = Math.floor(noonUt - 0.5) + 0.5;
+  return {
+    rise: dayStartUt + (720 - 4 * (longitude + H) - eqMinutes) / 1440,
+    set: dayStartUt + (720 - 4 * (longitude - H) - eqMinutes) / 1440,
+  };
+}
+
+/**
+ * The Vedic day at the moment `jd`: it runs from one sunrise to the next, so before sunrise the
+ * previous day's sunrise is used. Accurate to about a minute, plenty for hora (hour-long) work.
+ */
+export function sunTimesFor(jd: number, latitude: number, longitude: number): SunTimes {
+  const tz = longitude / 15;
+  const localMidnight = Math.floor(jd + tz / 24 - 0.5) + 0.5;
+  let m = localMidnight;
+  let today = sunRiseSet(m, latitude, longitude);
+  if (jd < today.rise) {
+    m -= 1;
+    today = sunRiseSet(m, latitude, longitude);
+  }
+  const next = sunRiseSet(m + 1, latitude, longitude);
+  return { sunrise: today.rise, sunset: today.set, nextSunrise: next.rise, weekday: (Math.floor(m + 0.5) + 1) % 7 };
+}

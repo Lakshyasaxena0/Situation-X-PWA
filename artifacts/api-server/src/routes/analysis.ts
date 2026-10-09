@@ -8,9 +8,12 @@ import {
   DeleteAnalysisParams,
 } from "@workspace/api-zod";
 import { runEngine, siviReport } from "../services/engine.service.js";
+import { publicAstro } from "../services/astro.service.js";
+import { getActiveTuning } from "../services/astro-tuning.service.js";
 import { currentUserId } from "../middlewares/requireUser.js";
 import { getCalibration } from "../services/calibration.service.js";
 import { extractTexts, translateTexts, translationAvailable } from "../services/translate.service.js";
+import { assessSafety } from "../services/safety.service.js";
 import { synthesize } from "../services/synthesis.service.js";
 import { computeCost, pathFollowUpPrice, withoutAi, type CreditCost } from "../services/credit-cost.service.js";
 import type { AnalysisOptions } from "../services/analysis-options.js";
@@ -67,6 +70,10 @@ function parseSituationRequest(body: unknown): ParseOutcome {
   return { ok: true, data: { situation, latitude, longitude, depth, options, fromPath } };
 }
 
+function blockedBody(d: ReturnType<typeof assessSafety>) {
+  return { error: "blocked", category: d.category, message: d.message ?? "This request cannot be analysed." };
+}
+
 const MAX_BASE_LENGTH = 1500; // leaves room for the path text inside the 2000 limit
 
 /**
@@ -106,7 +113,13 @@ router.post("/analysis/estimate", async (req, res) => {
       }
       situation = built;
     }
-    const base = computeCost(situation, runEngine(situation, { latitude, longitude, useAstrology: options.useAstrology }), depth, options);
+    const gate = assessSafety(situation, options.language);
+    if (gate.action === "block") {
+      res.status(422).json(blockedBody(gate));
+      return;
+    }
+    const tuning = await getActiveTuning();
+    const base = computeCost(situation, runEngine(situation, { latitude, longitude, useAstrology: options.useAstrology, language: options.language, tuning }), depth, options);
     const cost = fromPath ? pathFollowUpPrice(base) : base;
     const billingActive = billingActiveFor(userId);
     const balance = await getBalance(userId);
@@ -135,11 +148,19 @@ router.post("/analysis/analyze", async (req, res) => {
     }
     situation = built;
   }
+  // The ethical filter runs first: a request that asks for serious harm is refused before anything is
+  // analysed or charged.
+  const gate = assessSafety(situation, options.language);
+  if (gate.action === "block") {
+    res.status(422).json(blockedBody(gate));
+    return;
+  }
+  const tuning = await getActiveTuning();
   let charge: { ledgerId: number; balance: number } | null = null;
 
   try {
     // Step 1: Run the local engine pipeline (AJIT → MANU → Ethical Filter → ASTRO → SIVI)
-    const engineResult = runEngine(situation, { latitude, longitude, useAstrology: options.useAstrology });
+    const engineResult = runEngine(situation, { latitude, longitude, useAstrology: options.useAstrology, language: options.language, tuning });
 
     // The price is fixed by the modules involved and the reasoning level, so it is charged up front
     // (atomically, never below zero) and the AI part is given back if the AI cannot answer.
@@ -163,7 +184,7 @@ router.post("/analysis/analyze", async (req, res) => {
     // Step 2: AI and astrology work together on the final answer. The AI sees every module's
     // output plus the dasha/transits, and past follow-up accuracy tempers the result.
     const calibration = await getCalibration(engineResult.intent.intent);
-    const { simulation: aiSimulation, ...synthesis } = await synthesize(situation, engineResult, calibration, undefined, cost.depth, options);
+    const { simulation: aiSimulation, withheld, ...synthesis } = await synthesize(situation, engineResult, calibration, undefined, cost.depth, options);
     // When the AI read the whole situation, its paths replace the rule-based ones (SIVI says which it used).
     const simulation = aiSimulation ?? engineResult.simulation;
     const finalVerdict = aiSimulation
@@ -200,7 +221,9 @@ router.post("/analysis/analyze", async (req, res) => {
         active: aiAnswered,
         verdict: aiAnswered
           ? `Own judgment ${synthesis.logicScore}/100${synthesis.astroAlignment ? `; astrology ${synthesis.astroAlignment} it` : ""}; final ${synthesis.score}/100 (${synthesis.verdict}).`
-          : options.useAi
+          : withheld === "safety"
+            ? "The AI's answer was held back by the safety check, so the engine and astrology answer is shown (AI credits refunded)."
+            : options.useAi
             ? "The AI could not answer this time, so the engine and astrology answer is shown (AI credits refunded)."
             : "Switched off in your settings.",
         evidence: synthesis.reasoning ? [synthesis.reasoning] : [],
@@ -214,7 +237,9 @@ router.post("/analysis/analyze", async (req, res) => {
       emotion: engineResult.emotion,
       simulation,
       finalVerdict,
-      astro: engineResult.astro,
+      astro: publicAstro(engineResult.astro),
+      // Only what the person needs to see: a notice when the filter steered or cared for them.
+      safety: { action: engineResult.safety.action, category: engineResult.safety.category, message: engineResult.safety.message },
       overallScore,
       summary,
       synthesis,

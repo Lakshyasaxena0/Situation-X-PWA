@@ -32,7 +32,7 @@ test("analyzeAstro uses the location for the lagna and records it", () => {
   const a = analyzeAstro("career", "calm", { latitude: 19.076, longitude: 72.8777, at });
   const b = analyzeAstro("career", "calm", { latitude: 51.5, longitude: -0.12, at });
   assert.deepEqual(a.location, { latitude: 19.076, longitude: 72.8777 });
-  assert.ok(a.vedicD1.ascendantDegree !== b.vedicD1.ascendantDegree || a.vedicD1.ascendant !== b.vedicD1.ascendant);
+  assert.ok(a.ascendant.degree !== b.ascendant.degree || a.ascendant.sign !== b.ascendant.sign);
 });
 
 test("Dashas are worked out only for time-based questions", () => {

@@ -5,7 +5,10 @@
  * Situation X - AI + Astrology Situation Analysis API
  * OpenAPI spec version: 0.1.0
  */
+import type { CreateFeedbackRequestActionTaken } from "./createFeedbackRequestActionTaken";
 import type { CreateFeedbackRequestOutcome } from "./createFeedbackRequestOutcome";
+import type { CreateFeedbackRequestReasonTagsItem } from "./createFeedbackRequestReasonTagsItem";
+import type { CreateFeedbackRequestResult } from "./createFeedbackRequestResult";
 
 export interface CreateFeedbackRequest {
   /** ID of the analysis being reviewed */
@@ -26,6 +29,15 @@ export interface CreateFeedbackRequest {
   comment?: string;
   /** Was this analysis helpful? */
   helpful?: boolean;
-  /** Follow-up - did things turn out the way the reading suggested? */
+  /** Follow-up - did things turn out the way the reading suggested? (older clients; the server derives it from actionTaken and result when those are sent) */
   outcome?: CreateFeedbackRequestOutcome;
+  /** What the person did - the suggested step, another step, or nothing */
+  actionTaken?: CreateFeedbackRequestActionTaken;
+  /** How things actually turned out */
+  result?: CreateFeedbackRequestResult;
+  /**
+   * What was right or missed
+   * @maxItems 9
+   */
+  reasonTags?: CreateFeedbackRequestReasonTagsItem[];
 }

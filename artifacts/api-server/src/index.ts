@@ -3,6 +3,8 @@ import { logger } from "./lib/logger";
 import { paywallEnabled } from "./services/billing.service";
 import { razorpayConfigured } from "./lib/razorpay";
 import { databaseTarget } from "@workspace/db";
+import { ensureSchema } from "./lib/ensure-schema";
+import { warmUpPrashna } from "./services/prashna.service";
 
 const rawPort = process.env["PORT"];
 
@@ -26,6 +28,9 @@ app.listen(port, (err) => {
 
   logger.info({ port }, "Server listening");
   logger.info({ database: databaseTarget() }, "Database target (password not shown)");
+  void ensureSchema();
+  // The astrology measures each reading against a set of typical skies; build it now, not during the first question.
+  setTimeout(() => logger.info({ ms: warmUpPrashna() }, "Astrology reference skies ready"), 200);
 
   // Billing readiness, so a missing key is noticed at deploy time and not by a customer.
   if (paywallEnabled() && !razorpayConfigured()) {

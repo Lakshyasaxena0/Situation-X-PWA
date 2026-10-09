@@ -1,8 +1,10 @@
+import { HOUSE_SIGNIFICATIONS, PLANET_KARAKATVA } from "./significations.js";
 import type { EngineResponse } from "./engine.service.js";
 import { groqConfigured, groqJsonCompletion } from "../lib/groq.js";
 import type { ReasoningDepth } from "./credit-cost.service.js";
 import { applyCalibration, type Calibration } from "./calibration.service.js";
 import { logger } from "../lib/logger.js";
+import { checkOutputSafety } from "./safety.service.js";
 import { mergeContext, parseAiSimulation, type SimulationResult } from "./sivi.service.js";
 import type { TimingResult } from "./timing.service.js";
 import { DEFAULT_OPTIONS, LANGUAGE_NAMES, type AnalysisOptions } from "./analysis-options.js";
@@ -58,6 +60,8 @@ export type Synthesis = {
   weights?: { logic: number; astro: number };
   /** The AI's own SIVI paths for this situation. The route moves it into `simulation`; it is not sent as part of the synthesis. */
   simulation?: SimulationResult;
+  /** Set when the AI answered but the safety check withheld its answer (the route turns it into a note). */
+  withheld?: "safety";
 };
 
 export const LOGIC_SHARE = 0.6;
@@ -134,8 +138,8 @@ export function astroScoreOf(engine: EngineResponse): number {
 }
 
 /** Fixed, visible weighting of the AI's own judgment and the astrology verdict. */
-export function blendScores(logic: number, astro: number): number {
-  return Math.round(LOGIC_SHARE * logic + ASTRO_SHARE * astro);
+export function blendScores(logic: number, astro: number, astroShare: number = ASTRO_SHARE): number {
+  return Math.round((1 - astroShare) * logic + astroShare * astro);
 }
 
 /** Compares the two lenses by the verdict each would give on its own. */
@@ -194,6 +198,10 @@ export function engineSynthesis(engine: EngineResponse, cal: Calibration, useAst
   };
 }
 
+function shareOf(engine: EngineResponse): number {
+  return engine.astro.tuning?.astroShare ?? ASTRO_SHARE;
+}
+
 function describePrashna(engine: EngineResponse): string {
   const p = engine.astro.prashna;
   const charts = p.chartsUsed.map((c) => `  - ${c.chart} (${c.purpose}): ${c.note}`).join("\n");
@@ -210,6 +218,11 @@ function describePrashna(engine: EngineResponse): string {
     charts,
     `Strongest factors (score ${p.score}, signal ${p.signal}):`,
     factors,
+    `Everything the chart reading looked at (internal notes, for you only):`,
+    ...p.dossier.map((l) => `  - ${l}`),
+    `Reference: house meanings: ${Object.entries(HOUSE_SIGNIFICATIONS).map(([h, m]) => `${h}=${m}`).join(" | ")}.`,
+    `Reference: planet karakatva: ${Object.entries(PLANET_KARAKATVA).map(([n, m]) => `${n}=${m}`).join(" | ")}.`,
+    `HOW TO USE THIS CHART: the person's words may touch several themes. Silently list the significations of the houses and planets involved (a Venn-style overlap): keep what the houses/planets of this question share, drop significations that belong to unrelated themes, and reason only from the overlap. Never show or describe the diagram, the full chart, divisional charts, shadbala numbers or houses tables to the person; at most name the ascendant (sign and degree) and plain-language conclusions.`,
   ].join("\n");
 }
 
@@ -266,7 +279,7 @@ Astrology score (0-100): ${astro}  (same scale: 70+ YES, 45-69 CONDITIONAL, belo
 ${calibrationText}`
     : `STEP 2 - ASTROLOGY IS SWITCHED OFF. The person chose not to use astrology. Do not mention planets, charts, dashas or astrology at all. ${calibrationText}`;
   const step3 = useAstro
-    ? `STEP 3 - RECONCILE. If your judgment and the astrology agree, say so and be firm. If they differ, do not ignore either side: explain the difference and turn it into a concrete plan (for example proceed but later, prepare first, reduce the risk, or wait for specific information). The app blends your logicScore (${Math.round(LOGIC_SHARE * 100)}%) with the astrology score (${Math.round(ASTRO_SHARE * 100)}%); your finalScore may differ from that blend by at most ${MAX_AI_ADJUSTMENT} points, so use it only for adjustments you can justify.`
+    ? `STEP 3 - RECONCILE. If your judgment and the astrology agree, say so and be firm. If they differ, do not ignore either side: explain the difference and turn it into a concrete plan (for example proceed but later, prepare first, reduce the risk, or wait for specific information). The app blends your logicScore (${Math.round((1 - shareOf(engine)) * 100)}%) with the astrology score (${Math.round(shareOf(engine) * 100)}%); your finalScore may differ from that blend by at most ${MAX_AI_ADJUSTMENT} points, so use it only for adjustments you can justify.`
     : `STEP 3 - FINAL ANSWER. Turn your judgment into one clear, practical answer. Your finalScore may differ from your logicScore by at most ${MAX_AI_ADJUSTMENT} points, so use it only for adjustments you can justify.`;
 
   return `You are Situation X: a wise, rigorous and kind advisor. Work out the best possible answer to this person's question using your FULL reasoning ability, ${useAstro ? "weigh the astrology verdict as a genuine second opinion, and give one reconciled final answer." : "and give one clear final answer."}
@@ -282,7 +295,7 @@ Hints from the app's specialised modules (they are keyword-based and can be wron
 - MANU (emotion, a text-based estimate only, never a diagnosis): ${engine.emotion.emotion}, intensity ${engine.emotion.intensity}${engine.emotion.secondary ? `, with ${engine.emotion.secondary} too` : ""}${engine.emotion.masked ? "; the person says they are fine but the message sounds distressed" : ""}${engine.emotion.crisis ? "; THE TEXT MAY POINT TO A PERSON IN DANGER: be gentle, say you are concerned, and kindly encourage reaching a trusted person or a local helpline now, before any advice" : ""}
 - SIVI (rule-based draft of the paths, only from the intent and emotion, so general): best path "${engine.simulation.bestPath.action}" (risk ${engine.simulation.bestPath.risk}, stability ${engine.simulation.bestPath.stability}); alternatives: ${alternatives || "none"}. Build better, situation-specific paths yourself in STEP 1.
 
-STEP 1 - YOUR OWN JUDGMENT. Do this first, from the situation itself, with logic, evidence, common sense, psychology and practical wisdom:
+${engine.safety.guard ? `${engine.safety.guard}\n\n` : ""}STEP 1 - YOUR OWN JUDGMENT. Do this first, from the situation itself, with logic, evidence, common sense, psychology and practical wisdom:
 - What is really being asked? Which facts are stated and which assumptions are you making?
 - What are the realistic options, including waiting, doing nothing, or a middle path?
 - For each: likely upside, downside, reversibility, cost of being wrong, and what is within the person's control.
@@ -400,6 +413,18 @@ export async function synthesize(
   }
   if (!ai) return fallback;
 
+  // The ethical filter also checks what the AI wrote. If anything in it recommends harm, the whole AI
+  // answer is withheld and the module answer is shown instead.
+  const written = [
+    ai.summary, ai.advice ?? "", ai.reasoning ?? "", ai.astrologyAssessment ?? "", ...ai.risks, ...ai.nextSteps, ...ai.keyUnknowns,
+    ...(ai.simulation ? [ai.simulation.comparison, ...[ai.simulation.bestPath, ...ai.simulation.alternatives].flatMap((p) => [p.action, ...p.benefits, ...p.downsides, ...p.uncertainties])] : []),
+  ];
+  const safe = checkOutputSafety(written);
+  if (!safe.ok) {
+    logger.warn({ reasons: safe.reasons }, "AI answer withheld by the safety check");
+    return { ...fallback, withheld: "safety" };
+  }
+
   const aiSimulation = ai.simulation ? mergeContext(ai.simulation, engine.simulation) : undefined;
 
   // Two lenses, fixed weights. The AI may only fine-tune the blend, within a small, justified margin.
@@ -429,7 +454,8 @@ export async function synthesize(
     };
   }
   const astro = astroScoreOf(engine);
-  const blend = blendScores(ai.logicScore, astro);
+  const share = engine.astro.tuning?.astroShare ?? ASTRO_SHARE;
+  const blend = blendScores(ai.logicScore, astro, share);
   const reconciled = clamp(ai.finalScore ?? blend, blend - MAX_AI_ADJUSTMENT, blend + MAX_AI_ADJUSTMENT);
   // Calibration is applied last so the learning loop also tempers the AI's number.
   const score = applyCalibration(reconciled, cal);
@@ -453,7 +479,7 @@ export async function synthesize(
     risks: ai.risks,
     keyUnknowns: ai.keyUnknowns,
     nextSteps: ai.nextSteps,
-    weights: { logic: LOGIC_SHARE, astro: ASTRO_SHARE },
+    weights: { logic: Math.round((1 - share) * 100) / 100, astro: share },
     simulation: aiSimulation,
   };
 }

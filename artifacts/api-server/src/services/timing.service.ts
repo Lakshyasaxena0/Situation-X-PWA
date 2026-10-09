@@ -39,14 +39,14 @@ function chartAt(at: Date, latitude: number, longitude: number) {
 
 export function analyzeTiming(
   intent: IntentType,
-  question: { at: Date; latitude: number; longitude: number },
+  question: { at: Date; latitude: number; longitude: number; text?: string },
 ): TimingResult {
   const { sid, lagna } = chartAt(question.at, question.latitude, question.longitude);
 
   const vim = vimshottariAt(sid.Moon, question.at, question.at);
   const chara = charaDashaAt({ longitudes: sid as unknown as Record<string, number>, lagnaLongitude: lagna }, question.at, question.at);
 
-  const profile = houseProfile(intent);
+  const profile = houseProfile(intent, question.text ?? "");
   const lagnaIdx = Math.floor(lagna / 30);
   const houseIdx = (lagnaIdx + profile.primaryHouse - 1) % 12;
   const houseLord = SIGN_RULERS[houseIdx];

@@ -80,6 +80,12 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/InsufficientCreditsResponse"
+        "422":
+          description: The ethical filter refused the request (it asks for something that could seriously harm someone). Nothing is analysed or charged; the message is a safe reply for the person.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
         "500":
           description: Server error
           content:
@@ -800,6 +806,22 @@ components:
         - knownFacts
         - constraints
 
+    SafetyNotice:
+      type: object
+      description: What the ethical filter decided about the message. "support" and "redirect" analyses carry a message that is shown to the person; blocked requests are refused with HTTP 422 and are never analysed or charged.
+      properties:
+        action:
+          type: string
+          enum: [allow, support, redirect, block]
+        category:
+          type: string
+          enum: [none, self_harm, self_harm_method, harm_others, weapons, minor_sexual, manipulation]
+        message:
+          type: string
+      required:
+        - action
+        - category
+
     SimulationResult:
       type: object
       description: SIVI comparison of the paths open to the person. It compares options; it does not predict the future.
@@ -942,6 +964,9 @@ components:
           type: number
         detail:
           type: string
+        family:
+          type: string
+          description: Which part of the reading this factor belongs to (used for learned weighting)
       required:
         - label
         - effect
@@ -975,6 +1000,9 @@ components:
           type: string
         lagnaLord:
           type: string
+        lagnaDegree:
+          type: number
+          description: Degrees into the rising sign
         moonSign:
           type: string
         moonNakshatra:
@@ -1008,6 +1036,20 @@ components:
           type: string
         summary:
           type: string
+        focus:
+          type: object
+          properties:
+            themes:
+              type: array
+              items:
+                type: string
+            houses:
+              type: array
+              items:
+                type: integer
+        tuningId:
+          type: integer
+          nullable: true
       required:
         - castAt
         - lagna
@@ -1050,16 +1092,30 @@ components:
           $ref: "#/components/schemas/AstroInfluence"
         interpretation:
           type: string
-        vedicD1:
-          $ref: "#/components/schemas/VedicChart"
-        vedicD3:
-          $ref: "#/components/schemas/VedicChart"
+        ascendant:
+          type: object
+          description: The rising sign at the moment of the question (the only part of the chart that is shown)
+          properties:
+            sign:
+              type: string
+            degree:
+              type: number
+            lord:
+              type: string
+          required:
+            - sign
+            - degree
+        tuning:
+          type: object
+          properties:
+            id:
+              type: integer
+              nullable: true
+            astroShare:
+              type: number
+              nullable: true
         prashna:
           $ref: "#/components/schemas/PrashnaReading"
-        vedicD9:
-          $ref: "#/components/schemas/VedicChart"
-        vedicD10:
-          $ref: "#/components/schemas/VedicChart"
         timing:
           $ref: "#/components/schemas/TimingResult"
         location:
@@ -1090,6 +1146,8 @@ components:
           $ref: "#/components/schemas/EmotionResult"
         simulation:
           $ref: "#/components/schemas/SimulationResult"
+        safety:
+          $ref: "#/components/schemas/SafetyNotice"
         finalVerdict:
           $ref: "#/components/schemas/FinalVerdict"
         astro:
@@ -1698,7 +1756,22 @@ components:
         outcome:
           type: string
           enum: [matched, partly, different]
-          description: Follow-up - did things turn out the way the reading suggested?
+          description: Follow-up - did things turn out the way the reading suggested? (older clients; the server derives it from actionTaken and result when those are sent)
+        actionTaken:
+          type: string
+          enum: [followed, other, nothing]
+          description: What the person did - the suggested step, another step, or nothing
+        result:
+          type: string
+          enum: [better, same, worse]
+          description: How things actually turned out
+        reasonTags:
+          type: array
+          maxItems: 9
+          items:
+            type: string
+            enum: [advice_right, missed_perspective, missed_facts, too_generic, timing_off, astrology_helped, astrology_off, steps_helpful, steps_unrealistic]
+          description: What was right or missed
       required:
         - analysisId
         - rating
@@ -1722,6 +1795,14 @@ components:
           type: boolean
         outcome:
           type: string
+        actionTaken:
+          type: string
+        result:
+          type: string
+        reasonTags:
+          type: array
+          items:
+            type: string
         createdAt:
           type: string
       required:

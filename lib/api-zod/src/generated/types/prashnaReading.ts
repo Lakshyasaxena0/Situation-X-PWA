@@ -7,6 +7,7 @@
  */
 import type { PrashnaChartUse } from "./prashnaChartUse";
 import type { PrashnaFactor } from "./prashnaFactor";
+import type { PrashnaReadingFocus } from "./prashnaReadingFocus";
 import type { PrashnaReadingRisk } from "./prashnaReadingRisk";
 import type { PrashnaReadingSignal } from "./prashnaReadingSignal";
 import type { PrashnaReadingStability } from "./prashnaReadingStability";
@@ -20,6 +21,8 @@ export interface PrashnaReading {
   longitude?: number;
   lagna: string;
   lagnaLord: string;
+  /** Degrees into the rising sign */
+  lagnaDegree?: number;
   moonSign: string;
   moonNakshatra: string;
   moonWaxing: boolean;
@@ -33,4 +36,6 @@ export interface PrashnaReading {
   risk?: PrashnaReadingRisk;
   dominantPlanet?: string;
   summary: string;
+  focus?: PrashnaReadingFocus;
+  tuningId?: number | null;
 }

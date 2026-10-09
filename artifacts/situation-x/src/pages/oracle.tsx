@@ -23,7 +23,8 @@ import { Loader2, Settings as SettingsIcon } from "lucide-react";
 // anything else gets the generic text.
 function analysisErrorMessage(error: unknown): string {
   const e = error as { status?: number; data?: { message?: unknown } } | null;
-  if (e?.status === 400 && typeof e.data?.message === "string" && !e.data.message.startsWith("[")) {
+  // 400: a problem with the text; 422: the ethical filter's safe reply (it can be several sentences).
+  if ((e?.status === 400 || e?.status === 422) && typeof e.data?.message === "string" && !e.data.message.startsWith("[")) {
     return e.data.message;
   }
   return "Analysis failed. Please try again.";
@@ -194,7 +195,7 @@ export default function Oracle() {
             </p>
           ) : (
             analyze.isError && (
-              <p className="text-sm text-red-700 text-center">
+              <p className={`text-sm ${(analyze.error as { status?: number } | null)?.status === 422 ? "rounded-md border border-border bg-card p-4 text-foreground leading-relaxed" : "text-red-700 text-center"}`}>
                 {analysisErrorMessage(analyze.error)}
               </p>
             )

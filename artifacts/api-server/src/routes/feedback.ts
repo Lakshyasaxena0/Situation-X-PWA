@@ -3,12 +3,30 @@ import { db, analysesTable, feedbackTable } from "@workspace/db";
 import { and, eq, desc, count } from "drizzle-orm";
 import { CreateFeedbackBody, GetFeedbackListQueryParams } from "@workspace/api-zod";
 import { invalidateCalibrationCache } from "../services/calibration.service.js";
+import { maybeTune, invalidateTuningCache } from "../services/astro-tuning.service.js";
 import { currentUserId } from "../middlewares/requireUser.js";
 
 const router = Router();
 
 const MAX_COMMENT_LENGTH = 2000;
 const MAX_PAGE_SIZE = 100;
+
+export const REASON_TAGS = [
+  "advice_right", "missed_perspective", "missed_facts", "too_generic", "timing_off",
+  "astrology_helped", "astrology_off", "steps_helpful", "steps_unrealistic",
+] as const;
+
+/**
+ * Only a person who followed the suggested step and reports how it went tells us whether the advice worked.
+ * A star rating, or a step that was not taken, says nothing about whether the reading was right.
+ */
+export function outcomeFrom(actionTaken?: string, result?: string, given?: string): string | null {
+  if (actionTaken !== undefined || result !== undefined) {
+    if (actionTaken !== "followed") return null;
+    return result === "better" ? "matched" : result === "same" ? "partly" : result === "worse" ? "different" : null;
+  }
+  return given ?? null;
+}
 
 function parseId(value: unknown): number | null {
   const n = typeof value === "string" ? Number(value) : value;
@@ -21,7 +39,9 @@ router.post("/feedback", async (req, res) => {
     res.status(400).json({ error: "validation_error", message: parsed.error.message });
     return;
   }
-  const { analysisId, rating, accuracy, comment, helpful, outcome } = parsed.data;
+  const { analysisId, rating, accuracy, comment, helpful, actionTaken, result, reasonTags } = parsed.data;
+  const outcome = outcomeFrom(actionTaken, result, parsed.data.outcome);
+  const tags = Array.from(new Set((reasonTags ?? []).filter((t) => (REASON_TAGS as readonly string[]).includes(t))));
 
   // The generated schema allows any number within 1-5; the DB columns are integers.
   if (!Number.isInteger(analysisId) || analysisId < 1) {
@@ -58,10 +78,13 @@ router.post("/feedback", async (req, res) => {
         accuracy: accuracy ?? null,
         comment: comment ?? null,
         helpful: helpful ?? null,
-        outcome: outcome ?? null,
+        outcome,
+        actionTaken: actionTaken ?? null,
+        result: result ?? null,
+        reasonTags: tags.length ? tags : null,
       }).returning();
       // A follow-up answer closes the follow-up so the user is not asked again.
-      if (outcome) {
+      if (outcome || actionTaken || result) {
         await tx
           .update(analysesTable)
           .set({ followUpStatus: "answered" })
@@ -70,7 +93,11 @@ router.post("/feedback", async (req, res) => {
       return row;
     });
     // New outcome data changes the accuracy figures used for calibration.
-    if (outcome) invalidateCalibrationCache();
+    if (outcome) {
+      invalidateCalibrationCache();
+      invalidateTuningCache();
+      void maybeTune();
+    }
 
     res.json({
       id: saved.id,
@@ -81,6 +108,9 @@ router.post("/feedback", async (req, res) => {
       comment: saved.comment,
       helpful: saved.helpful,
       outcome: saved.outcome,
+      actionTaken: saved.actionTaken,
+      result: saved.result,
+      reasonTags: saved.reasonTags ?? [],
       createdAt: saved.createdAt.toISOString(),
     });
   } catch (err) {
@@ -115,7 +145,7 @@ router.get("/feedback", async (req, res) => {
     ]);
 
     res.json({
-      items: items.map(({ userId: _owner, ...f }) => ({ ...f, createdAt: f.createdAt.toISOString() })),
+      items: items.map(({ userId: _owner, ...f }) => ({ ...f, reasonTags: f.reasonTags ?? [], createdAt: f.createdAt.toISOString() })),
       total,
       limit,
       offset,

@@ -10,7 +10,7 @@ import {
 import { useQueryClient } from "@tanstack/react-query";
 import { Shell } from "@/components/layout/Shell";
 import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
+import { FeedbackFields, EMPTY_ANSWERS, answersToRequest, type FeedbackAnswers } from "@/components/FeedbackFields";
 import { Label } from "@/components/ui/label";
 import { Loader2, Star, Trash2 } from "lucide-react";
 import { motion } from "framer-motion";
@@ -45,10 +45,7 @@ export default function Feedback() {
   const { toast } = useToast();
 
   const [analysisId, setAnalysisId] = useState("");
-  const [rating, setRating] = useState(0);
-  const [accuracy, setAccuracy] = useState(0);
-  const [helpful, setHelpful] = useState<boolean | null>(null);
-  const [comment, setComment] = useState("");
+  const [answers, setAnswers] = useState<FeedbackAnswers>(EMPTY_ANSWERS);
 
   const { data: historyData } = useGetAnalysisHistory(
     { limit: 10, offset: 0 },
@@ -65,10 +62,7 @@ export default function Feedback() {
       onSuccess: () => {
         queryClient.invalidateQueries({ queryKey: getGetFeedbackListQueryKey() });
         setAnalysisId("");
-        setRating(0);
-        setAccuracy(0);
-        setHelpful(null);
-        setComment("");
+        setAnswers(EMPTY_ANSWERS);
         toast({ title: "Feedback submitted", description: "Thank you for your feedback." });
       },
       onError: () => {
@@ -90,16 +84,8 @@ export default function Feedback() {
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (!analysisId || rating === 0) return;
-    createFeedback.mutate({
-      data: {
-        analysisId: parseInt(analysisId),
-        rating,
-        accuracy: accuracy || undefined,
-        helpful: helpful ?? undefined,
-        comment: comment || undefined,
-      },
-    });
+    if (!analysisId || answers.rating === 0) return;
+    createFeedback.mutate({ data: { analysisId: parseInt(analysisId), ...answersToRequest(answers) } });
   }
 
   const recentAnalyses = historyData?.items ?? [];
@@ -143,57 +129,11 @@ export default function Feedback() {
               )}
             </div>
 
-            <div>
-              <Label className="text-xs text-muted-foreground mb-2">Overall Rating</Label>
-              <StarRating value={rating} onChange={setRating} />
-            </div>
-
-            <div>
-              <Label className="text-xs text-muted-foreground mb-2">Accuracy</Label>
-              <StarRating value={accuracy} onChange={setAccuracy} />
-            </div>
-
-            <div>
-              <Label className="text-xs text-muted-foreground mb-2">Was this helpful?</Label>
-              <div className="flex gap-2">
-                <button
-                  type="button"
-                  onClick={() => setHelpful(true)}
-                  className={`px-4 py-1.5 rounded text-sm font-medium border transition-colors ${
-                    helpful === true
-                      ? "bg-green-500/20 border-green-500/50 text-green-700"
-                      : "border-border text-muted-foreground hover:bg-muted"
-                  }`}
-                >
-                  Yes
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setHelpful(false)}
-                  className={`px-4 py-1.5 rounded text-sm font-medium border transition-colors ${
-                    helpful === false
-                      ? "bg-red-500/20 border-red-500/50 text-red-700"
-                      : "border-border text-muted-foreground hover:bg-muted"
-                  }`}
-                >
-                  No
-                </button>
-              </div>
-            </div>
-
-            <div>
-              <Label className="text-xs text-muted-foreground mb-1">Comment (optional)</Label>
-              <Textarea
-                value={comment}
-                onChange={(e) => setComment(e.target.value)}
-                placeholder="What was accurate? What could be improved?"
-                className="text-sm bg-card border-card-border min-h-[80px] resize-none"
-              />
-            </div>
+            <FeedbackFields value={answers} onChange={setAnswers} disabled={createFeedback.isPending} />
 
             <Button
               type="submit"
-              disabled={!analysisId || rating === 0 || createFeedback.isPending}
+              disabled={!analysisId || answers.rating === 0 || createFeedback.isPending}
               className="w-full bg-primary text-primary-foreground hover:opacity-90"
             >
               {createFeedback.isPending ? (

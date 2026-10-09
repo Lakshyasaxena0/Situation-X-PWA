@@ -9,17 +9,10 @@ import {
 } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
-import { Loader2, Star, CalendarClock } from "lucide-react";
+import { FeedbackFields, EMPTY_ANSWERS, answersToRequest, type FeedbackAnswers } from "@/components/FeedbackFields";
+import { Loader2, CalendarClock } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
-type Outcome = "matched" | "partly" | "different";
-
-const OUTCOMES: { value: Outcome; label: string }[] = [
-  { value: "matched", label: "Yes, it matched" },
-  { value: "partly", label: "Partly" },
-  { value: "different", label: "No, it was different" },
-];
 
 /**
  * Shown on every page once a prediction's time window has passed. The answers feed
@@ -30,16 +23,12 @@ export function FollowUpPrompt() {
   const { data } = useGetDueFollowUps({ query: { queryKey: getGetDueFollowUpsQueryKey(), staleTime: 60_000, retry: false } });
   const qc = useQueryClient();
   const { toast } = useToast();
-  const [outcome, setOutcome] = useState<Outcome | null>(null);
-  const [accuracy, setAccuracy] = useState(0);
-  const [comment, setComment] = useState("");
+  const [answers, setAnswers] = useState<FeedbackAnswers>(EMPTY_ANSWERS);
 
   const refresh = () => {
     qc.invalidateQueries({ queryKey: getGetDueFollowUpsQueryKey() });
     qc.invalidateQueries({ queryKey: getGetFeedbackListQueryKey() });
-    setOutcome(null);
-    setAccuracy(0);
-    setComment("");
+    setAnswers(EMPTY_ANSWERS);
   };
   const onError = () =>
     toast({ title: "Could not save", description: "Please try again.", variant: "destructive" });
@@ -77,68 +66,18 @@ export function FollowUpPrompt() {
             Reading: <span className="text-foreground">{current.verdict}</span>. {current.summary}
           </p>
 
-          <div className="flex flex-wrap gap-2 mt-3" role="group" aria-label="Did things turn out as the reading suggested?">
-            {OUTCOMES.map((o) => (
-              <Button
-                key={o.value}
-                type="button"
-                size="sm"
-                variant={outcome === o.value ? "default" : "outline"}
-                aria-pressed={outcome === o.value}
-                onClick={() => setOutcome(o.value)}
-                disabled={busy}
-              >
-                {o.label}
-              </Button>
-            ))}
+          <div className="mt-3 space-y-3">
+            <FeedbackFields value={answers} onChange={setAnswers} disabled={busy} />
+            <Button
+              type="button"
+              size="sm"
+              disabled={busy || answers.rating === 0}
+              onClick={() => submit.mutate({ data: { analysisId: current.id, ...answersToRequest(answers) } })}
+            >
+              {submit.isPending && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+              Send
+            </Button>
           </div>
-
-          {outcome && (
-            <div className="mt-3 space-y-3">
-              <div className="flex items-center gap-1" role="group" aria-label="How accurate was it?">
-                <span className="text-xs text-muted-foreground mr-2">Accuracy</span>
-                {[1, 2, 3, 4, 5].map((n) => (
-                  <button
-                    key={n}
-                    type="button"
-                    aria-label={`${n} star${n > 1 ? "s" : ""}`}
-                    onClick={() => setAccuracy(n)}
-                    className="p-0.5"
-                  >
-                    <Star
-                      className={`w-5 h-5 ${n <= accuracy ? "fill-primary text-primary" : "text-muted-foreground"}`}
-                    />
-                  </button>
-                ))}
-              </div>
-              <Textarea
-                value={comment}
-                maxLength={2000}
-                onChange={(e) => setComment(e.target.value)}
-                placeholder="What actually happened? (optional)"
-                className="text-sm min-h-[64px]"
-              />
-              <Button
-                type="button"
-                size="sm"
-                disabled={busy || accuracy === 0}
-                onClick={() =>
-                  submit.mutate({
-                    data: {
-                      analysisId: current.id,
-                      outcome,
-                      accuracy,
-                      rating: accuracy,
-                      comment: comment.trim() || undefined,
-                    },
-                  })
-                }
-              >
-                {submit.isPending && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
-                Send
-              </Button>
-            </div>
-          )}
 
           <div className="flex gap-4 mt-3 text-xs">
             <button

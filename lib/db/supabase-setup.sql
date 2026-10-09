@@ -44,7 +44,20 @@ CREATE TABLE IF NOT EXISTS feedback (
 );
 ALTER TABLE feedback ADD COLUMN IF NOT EXISTS user_id text;
 ALTER TABLE feedback ADD COLUMN IF NOT EXISTS outcome text;
+ALTER TABLE feedback ADD COLUMN IF NOT EXISTS action_taken text;
+ALTER TABLE feedback ADD COLUMN IF NOT EXISTS result text;
+ALTER TABLE feedback ADD COLUMN IF NOT EXISTS reason_tags text[];
 CREATE INDEX IF NOT EXISTS feedback_user_id_idx ON feedback (user_id);
+
+CREATE TABLE IF NOT EXISTS astro_tuning (
+  id serial PRIMARY KEY,
+  created_at timestamp NOT NULL DEFAULT now(),
+  multipliers jsonb NOT NULL,
+  astro_share real NOT NULL,
+  rationale text NOT NULL,
+  sample_size integer NOT NULL,
+  based_on_max_feedback_id integer NOT NULL
+);
 
 -- ---------------------------------------------------------------------------------------------
 -- Subscriptions, payments, credits
@@ -142,6 +155,7 @@ CREATE INDEX IF NOT EXISTS referral_rewards_user_idx ON referral_rewards (user_i
 -- ---------------------------------------------------------------------------------------------
 ALTER TABLE analyses         ENABLE ROW LEVEL SECURITY;
 ALTER TABLE feedback         ENABLE ROW LEVEL SECURITY;
+ALTER TABLE astro_tuning     ENABLE ROW LEVEL SECURITY;
 ALTER TABLE subscriptions    ENABLE ROW LEVEL SECURITY;
 ALTER TABLE payments         ENABLE ROW LEVEL SECURITY;
 ALTER TABLE credit_wallets   ENABLE ROW LEVEL SECURITY;

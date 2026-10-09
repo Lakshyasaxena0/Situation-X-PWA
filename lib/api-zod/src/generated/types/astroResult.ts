@@ -6,19 +6,19 @@
  * OpenAPI spec version: 0.1.0
  */
 import type { AstroInfluence } from "./astroInfluence";
+import type { AstroResultAscendant } from "./astroResultAscendant";
 import type { AstroResultLocation } from "./astroResultLocation";
+import type { AstroResultTuning } from "./astroResultTuning";
 import type { PrashnaReading } from "./prashnaReading";
 import type { TimingResult } from "./timingResult";
-import type { VedicChart } from "./vedicChart";
 
 export interface AstroResult {
   influence: AstroInfluence;
   interpretation: string;
-  vedicD1?: VedicChart;
-  vedicD3?: VedicChart;
+  /** The rising sign at the moment of the question (the only part of the chart that is shown) */
+  ascendant?: AstroResultAscendant;
+  tuning?: AstroResultTuning;
   prashna?: PrashnaReading;
-  vedicD9?: VedicChart;
-  vedicD10?: VedicChart;
   timing?: TimingResult;
   /** The place the chart was cast for */
   location?: AstroResultLocation;

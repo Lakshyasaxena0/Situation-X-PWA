@@ -7,7 +7,7 @@
  */
 
 /**
- * Follow-up - did things turn out the way the reading suggested?
+ * Follow-up - did things turn out the way the reading suggested? (older clients; the server derives it from actionTaken and result when those are sent)
  */
 export type CreateFeedbackRequestOutcome =
   (typeof CreateFeedbackRequestOutcome)[keyof typeof CreateFeedbackRequestOutcome];

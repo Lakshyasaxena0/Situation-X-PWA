@@ -15,5 +15,8 @@ export interface FeedbackItem {
   comment?: string;
   helpful?: boolean;
   outcome?: string;
+  actionTaken?: string;
+  result?: string;
+  reasonTags?: string[];
   createdAt: string;
 }

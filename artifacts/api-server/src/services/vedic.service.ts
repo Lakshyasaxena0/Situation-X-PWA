@@ -17,6 +17,9 @@ import {
   BODY_NAMES,
   type BodyName,
   isRetrograde,
+  dailyMotion,
+  sunTimesFor,
+  type SunTimes,
   julianDayFromDate,
   lahiriAyanamsa,
   normalizeDegrees,
@@ -85,6 +88,46 @@ export function getDasamsa(longitude: number): string {
   return RASHI_NAMES[(startSign + dasamsaIndex) % 12];
 }
 
+// D4 (Chaturthamsa, property & home): four parts of 7.5 deg; the signs are the sign itself and its 4th, 7th, 10th.
+export function getChaturthamsa(longitude: number): string {
+  const signIndex = Math.floor(longitude / 30);
+  const part = Math.min(3, Math.floor((longitude % 30) / 7.5));
+  return RASHI_NAMES[(signIndex + part * 3) % 12];
+}
+
+// D7 (Saptamsa, children): seven parts of 4 deg 17 min. Odd signs start from themselves, even signs from their 7th.
+export function getSaptamsa(longitude: number): string {
+  const signIndex = Math.floor(longitude / 30);
+  const part = Math.min(6, Math.floor((longitude % 30) / (30 / 7)));
+  const start = signIndex % 2 === 0 ? signIndex : (signIndex + 6) % 12;
+  return RASHI_NAMES[(start + part) % 12];
+}
+
+// D12 (Dwadasamsa, parents & lineage): twelve parts of 2.5 deg, counted from the sign itself.
+export function getDwadasamsa(longitude: number): string {
+  const signIndex = Math.floor(longitude / 30);
+  const part = Math.min(11, Math.floor((longitude % 30) / 2.5));
+  return RASHI_NAMES[(signIndex + part) % 12];
+}
+
+// D2 (Hora, used for strength only): odd signs give Leo then Cancer, even signs Cancer then Leo.
+export function getHora(longitude: number): string {
+  const signIndex = Math.floor(longitude / 30);
+  const first = (longitude % 30) < 15;
+  const odd = signIndex % 2 === 0;
+  return odd === first ? "Leo" : "Cancer";
+}
+
+// D30 (Trimsamsa, used for strength only): unequal parts ruled by Mars, Saturn, Jupiter, Mercury, Venus.
+export function getTrimsamsa(longitude: number): string {
+  const signIndex = Math.floor(longitude / 30);
+  const d = longitude % 30;
+  if (signIndex % 2 === 0) {
+    return d < 5 ? "Aries" : d < 10 ? "Aquarius" : d < 18 ? "Sagittarius" : d < 25 ? "Gemini" : "Libra";
+  }
+  return d < 5 ? "Taurus" : d < 12 ? "Virgo" : d < 20 ? "Pisces" : d < 25 ? "Capricorn" : "Scorpio";
+}
+
 export type DashaLevel = { planet: string; startDate: string; endDate: string; years: number };
 export type VedicDashaTree = {
   mahadasha: DashaLevel;
@@ -118,7 +161,7 @@ export type VedicChart = {
   chartType: string;
 };
 
-export type VedicChartSet = { d1: VedicChart; d3: VedicChart; d9: VedicChart; d10: VedicChart };
+export type VedicChartSet = { d1: VedicChart; d3: VedicChart; d4: VedicChart; d7: VedicChart; d9: VedicChart; d10: VedicChart; d12: VedicChart };
 
 export type PrashnaSky = {
   charts: VedicChartSet;
@@ -129,6 +172,15 @@ export type PrashnaSky = {
   moonWaxing: boolean;
   /** Planets too close to the Sun to give their results freely. */
   combust: string[];
+  /** Julian day (UT) of the question. */
+  jd: number;
+  /** Sidereal (Lahiri) longitude of the ascendant and of every graha. */
+  ascendant: number;
+  longitudes: Record<BodyName, number>;
+  /** Daily motion, degrees per day (negative = retrograde). */
+  speeds: Record<BodyName, number>;
+  /** Sidereal positions of the question's planets in the strength divisions that are not shown (D2, D30). */
+  sunTimes: SunTimes;
 };
 
 export class ChartInputError extends Error {
@@ -219,20 +271,37 @@ export function castPrashnaCharts(
 
   const d1 = buildChart("D1", getSign, sidereal, ascendantSidereal, retro, ayanamsa);
   const d3 = buildChart("D3", getDrekkana, sidereal, ascendantSidereal, retro, ayanamsa);
+  const d4 = buildChart("D4", getChaturthamsa, sidereal, ascendantSidereal, retro, ayanamsa);
+  const d7 = buildChart("D7", getSaptamsa, sidereal, ascendantSidereal, retro, ayanamsa);
   const d9 = buildChart("D9", getNavamsa, sidereal, ascendantSidereal, retro, ayanamsa);
   const d10 = buildChart("D10", getDasamsa, sidereal, ascendantSidereal, retro, ayanamsa);
+  const d12 = buildChart("D12", getDwadasamsa, sidereal, ascendantSidereal, retro, ayanamsa);
+  const speeds = {} as Record<BodyName, number>;
+  for (const name of BODY_NAMES) speeds[name] = dailyMotion(name, jd);
 
   const elongation = normalizeDegrees(sidereal.Moon - sidereal.Sun);
+  // Orbs are a little tighter for Mercury and Venus when retrograde. Within 1 degree of the Sun a planet is
+  // "cazimi" (in the heart of the Sun), which strengthens it, so it is not listed as combust.
   const combust = Object.entries(COMBUST_ORB)
-    .filter(([name, orb]) => name !== "Moon" && angularSeparation(sidereal[name as BodyName], sidereal.Sun) <= orb)
+    .filter(([name, orb]) => {
+      if (name === "Moon") return false;
+      const sep = angularSeparation(sidereal[name as BodyName], sidereal.Sun);
+      const limit = retro[name] && name === "Mercury" ? 12 : retro[name] && name === "Venus" ? 8 : orb;
+      return sep <= limit && sep >= 1;
+    })
     .map(([name]) => name);
 
   return {
-    charts: { d1, d3, d9, d10 },
+    charts: { d1, d3, d4, d7, d9, d10, d12 },
     castAt: at,
     latitude,
     longitude,
     moonWaxing: elongation < 180,
     combust,
+    jd,
+    ascendant: ascendantSidereal,
+    longitudes: sidereal,
+    speeds,
+    sunTimes: sunTimesFor(jd, latitude, longitude),
   };
 }

@@ -10,4 +10,6 @@ export interface PrashnaFactor {
   label: string;
   effect: number;
   detail: string;
+  /** Which part of the reading this factor belongs to (used for learned weighting) */
+  family?: string;
 }

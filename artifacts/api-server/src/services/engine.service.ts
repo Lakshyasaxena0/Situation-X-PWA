@@ -2,6 +2,9 @@ import { detectIntent, type IntentAnalysis, type IntentResult } from "./ajit.ser
 import { detectEmotion, type EmotionAnalysis, type EmotionResult } from "./manu.service.js";
 import { simulatePaths, type SimulationResult } from "./sivi.service.js";
 import { analyzeAstro, type AstroResult } from "./astro.service.js";
+import type { Tuning } from "./prashna.service.js";
+import { assessSafety, type SafetyDecision } from "./safety.service.js";
+import type { Language } from "./analysis-options.js";
 
 export type EngineResponse = {
   intent: IntentResult;
@@ -13,6 +16,8 @@ export type EngineResponse = {
     riskLevel: "low" | "medium" | "high";
   };
   astro: AstroResult;
+  /** What the ethical filter decided about the message (read in context; nothing is deleted from the text). */
+  safety: SafetyDecision;
   /** What each module did for this question: whether it was active, its verdict and the evidence. */
   modules: ModuleReport[];
 };
@@ -35,18 +40,11 @@ export type EngineOptions = {
   longitude?: number;
   /** When false the astrology is still cast but is reported as switched off and takes no part in the answer. */
   useAstrology?: boolean;
+  /** The answer language, so a safety message can be written in it. */
+  language?: Language;
+  /** The learned weighting of the astrology (from feedback); the built-in weights when absent. */
+  tuning?: Tuning;
 };
-
-const UNSAFE_PATTERN = new RegExp(
-  "\\b(?:revenge|harm(?:s|ed|ing|ful)?|manipulat(?:e|es|ed|d|ing|ion)|control someone|blackmail(?:s|ed|ing)?)\\b",
-  "g",
-);
-
-function applyEthicalFilter(input: string): { text: string; removed: string[] } {
-  const lower = input.toLowerCase();
-  const removed = [...new Set(lower.match(UNSAFE_PATTERN) ?? [])];
-  return { text: lower.replace(UNSAFE_PATTERN, " ").replace(/\s+/g, " ").trim(), removed };
-}
 
 /** The SIVI card: what situation it understood, the paths it compared and why one ranks first. */
 export function siviReport(simulation: SimulationResult, intent: IntentResult, emotion: EmotionResult): ModuleReport {
@@ -76,9 +74,27 @@ export function siviReport(simulation: SimulationResult, intent: IntentResult, e
   };
 }
 
+const FILTER_VERDICT: Record<SafetyDecision["action"], string> = {
+  allow: "Read in context: nothing unsafe found. Your text was passed on unchanged.",
+  support: "Words that may point to a person in distress were found. The analysis is written with care and help lines are shown.",
+  redirect: "An intention to harm, control or deceive someone was found. The analysis will not help with that aim and steers to safe options.",
+  block: "Blocked: this asks for something that could seriously harm someone. Nothing was analysed and nothing was charged.",
+};
+
+function filterReport(safety: SafetyDecision): ModuleReport {
+  return {
+    key: "FILTER",
+    role: "Reads your message in context before anything else (who is being hurt, whether it is an intention, a plan or a request for instructions, negation like \"I don't want to hurt anyone\", exaggeration like \"I could kill him\", and protection like \"how do I stop him\") and decides: pass it on, answer with care, steer to safe options, or refuse. It never deletes words from your text. The AI's answer is checked again before you see it.",
+    name: "Ethical filter",
+    area: "intent",
+    active: safety.action !== "allow",
+    verdict: FILTER_VERDICT[safety.action],
+    evidence: safety.action === "allow" ? [] : [...safety.reasons, ...safety.matched.map((m) => `Matched: "${m}"`)],
+  };
+}
+
 function buildModuleReports(
-  clean: string,
-  removed: string[],
+  safety: SafetyDecision,
   intentAnalysis: IntentAnalysis,
   emotionAnalysis: EmotionAnalysis,
   simulation: SimulationResult,
@@ -94,15 +110,7 @@ function buildModuleReports(
     .map((f) => `${f.effect > 0 ? "+" : ""}${f.effect}: ${f.detail}`);
 
   return [
-    {
-      key: "FILTER",
-      role: "Scans your text for harmful words (revenge, blackmail, manipulate, harm) and removes them before any other module reads it, so the analysis never builds on a harmful intent.",
-      name: "Ethical filter",
-      area: "intent",
-      active: removed.length > 0,
-      verdict: removed.length ? `Removed ${removed.length} harmful term(s) before analysis.` : "Nothing needed filtering.",
-      evidence: removed.map((w) => `Removed: "${w}"`),
-    },
+    filterReport(safety),
     {
       key: "AJIT",
       role: "Reads your words in context (English, Hinglish, Hindi): topic words, negation (\"I don't want to fight\" is not wanting to fight), intensity and which sentence is the question, then decides what it is about. It still works from words, so the AI re-reads your full text for meaning.",
@@ -181,7 +189,10 @@ export function runEngine(input: string, options: EngineOptions = {}): EngineRes
   if (!input || input.length < 10) throw new Error("Input must be at least 10 characters long.");
   const { latitude, longitude, useAstrology = true } = options;
 
-  const { text: cleanInput, removed } = applyEthicalFilter(input);
+  // The text is read as written (case and punctuation carry meaning, e.g. CAPITALS and "!"); the ethical
+  // filter judges it in context and never edits it.
+  const cleanInput = input.trim();
+  const safety = assessSafety(cleanInput, options.language);
   const intentAnalysis = detectIntent(cleanInput);
   const intentResult = intentAnalysis.result;
   const emotionAnalysis = detectEmotion(cleanInput);
@@ -190,7 +201,7 @@ export function runEngine(input: string, options: EngineOptions = {}): EngineRes
   const finalVerdict = deriveFinalVerdict(simulationResult, emotionResult);
   // ASTRO casts the Prashna charts (D1, D3, D9, D10) for the moment of the question and reads
   // the ones that matter for the intent AJIT detected. No birth details are involved.
-  const astroResult = analyzeAstro(intentResult.intent, emotionResult.emotion, { latitude, longitude, text: input });
+  const astroResult = analyzeAstro(intentResult.intent, emotionResult.emotion, { latitude, longitude, text: cleanInput, tuning: options.tuning });
 
   return {
     intent: intentResult,
@@ -198,6 +209,7 @@ export function runEngine(input: string, options: EngineOptions = {}): EngineRes
     simulation: simulationResult,
     finalVerdict,
     astro: astroResult,
-    modules: buildModuleReports(cleanInput, removed, intentAnalysis, emotionAnalysis, simulationResult, astroResult, useAstrology),
+    safety,
+    modules: buildModuleReports(safety, intentAnalysis, emotionAnalysis, simulationResult, astroResult, useAstrology),
   };
 }

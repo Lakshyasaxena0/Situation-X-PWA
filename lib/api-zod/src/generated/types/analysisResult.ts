@@ -12,6 +12,7 @@ import type { EmotionResult } from "./emotionResult";
 import type { FinalVerdict } from "./finalVerdict";
 import type { IntentResult } from "./intentResult";
 import type { ModuleReport } from "./moduleReport";
+import type { SafetyNotice } from "./safetyNotice";
 import type { SimulationResult } from "./simulationResult";
 import type { Synthesis } from "./synthesis";
 
@@ -21,6 +22,7 @@ export interface AnalysisResult {
   intent: IntentResult;
   emotion: EmotionResult;
   simulation: SimulationResult;
+  safety?: SafetyNotice;
   finalVerdict: FinalVerdict;
   astro: AstroResult;
   overallScore: number;

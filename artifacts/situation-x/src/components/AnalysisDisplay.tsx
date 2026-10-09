@@ -357,12 +357,19 @@ function TimingSection({ timing }: { timing: TimingResult }) {
   );
 }
 
-/** The astrology card: a short summary that expands (down arrow) into the charts and dashas. */
+/** The astrology card: a short summary that expands (down arrow) into the ascendant, the main reasons and, for timing questions, the dashas. */
 function AstroCard({ result, reports }: { result: AnalysisResult; reports: ModuleReport[] }) {
   const [settings] = useSettings();
   const [open, setOpen] = useState(settings.expandAstrology);
   const astroOn = result.options?.useAstrology !== false;
   const astro = result.astro;
+  // Older saved analyses stored the whole chart; only its rising sign is shown, never the chart itself.
+  const legacy = astro as unknown as { vedicD1?: { ascendant: string; ascendantDegree: number } };
+  const asc = astro.ascendant ?? (legacy.vedicD1 ? { sign: legacy.vedicD1.ascendant, degree: legacy.vedicD1.ascendantDegree, lord: "" } : null);
+  const reasons = (astro.prashna?.factors ?? [])
+    .filter((f) => f.label !== "Scale centering")
+    .sort((x, y) => Math.abs(y.effect) - Math.abs(x.effect))
+    .slice(0, 4);
 
   if (!astroOn) {
     return (
@@ -397,47 +404,32 @@ function AstroCard({ result, reports }: { result: AnalysisResult; reports: Modul
           <p className="text-sm text-muted-foreground">{astro.interpretation}</p>
           {astro.timing ? <TimingSection timing={astro.timing} /> : <p className="text-xs text-muted-foreground border-t border-border pt-3">Dashas (Vimshottari and Chara) are used only when a question asks about timing, such as &ldquo;when&rdquo; or &ldquo;how long&rdquo;.</p>}
 
-          {astro.vedicD1 && (
-            <div className="space-y-4">
-              <div className="text-xs font-mono text-muted-foreground border-t border-border pt-3">
-                PRASHNA CHARTS &middot; cast for the moment you asked
+          {(asc || astro.prashna) && (
+            <div className="space-y-2 border-t border-border pt-3">
+              <div className="text-xs font-mono text-muted-foreground">
+                QUESTION MOMENT &middot; cast for when you asked
                 {astro.prashna && ` · ${astro.prashna.topic}`}
                 {astro.location && ` · lat ${astro.location.latitude.toFixed(2)}, lon ${astro.location.longitude.toFixed(2)}`}
               </div>
+              {asc && (
+                <p className="text-sm">
+                  <span className="text-muted-foreground">Ascendant (Lagna): </span>
+                  <strong className="text-foreground">{asc.sign}</strong> {asc.degree.toFixed(2)}&deg;
+                  {asc.lord ? <span className="text-muted-foreground"> &middot; lord {asc.lord}</span> : null}
+                </p>
+              )}
               {astro.prashna && (
-                <ul className="text-xs text-muted-foreground space-y-1">
-                  {astro.prashna.chartsUsed.map((u) => (
-                    <li key={u.chart}>
-                      <span className="font-mono font-bold text-primary">{u.chart}</span> <span className="text-foreground">{u.purpose}</span> &mdash; {u.note}
-                    </li>
+                <p className="text-sm text-muted-foreground">
+                  Moon in {astro.prashna.moonSign} ({astro.prashna.moonNakshatra}, {astro.prashna.moonWaxing ? "waxing" : "waning"}).
+                </p>
+              )}
+              {reasons.length > 0 && (
+                <ul className="text-xs text-muted-foreground space-y-1 list-disc pl-4">
+                  {reasons.map((f, i) => (
+                    <li key={i}>{f.detail}</li>
                   ))}
                 </ul>
               )}
-              {[astro.vedicD1, astro.vedicD3, astro.vedicD9, astro.vedicD10].map((chart) => {
-                if (!chart) return null;
-                const used = astro.prashna?.chartsUsed.some((u) => u.chart === chart.chartType);
-                return (
-                  <div key={chart.chartType} className={`rounded p-3 ${used ? "bg-muted/60 border border-primary/40" : "bg-muted/30 opacity-80"}`}>
-                    <div className="flex items-center gap-2 mb-2 flex-wrap">
-                      <span className="text-xs font-mono font-bold text-primary">{chart.chartType}</span>
-                      <span className="text-xs text-muted-foreground">
-                        Lagna: <strong className="text-foreground">{chart.ascendant}</strong> {chart.ascendantDegree.toFixed(1)}&deg;
-                      </span>
-                      {used && <span className="text-[10px] uppercase tracking-wide text-primary">used for this question</span>}
-                    </div>
-                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-1 text-xs">
-                      {chart.planets.slice(0, 9).map((p) => (
-                        <div key={p.name} className="flex items-center gap-1">
-                          <span className="text-muted-foreground w-14 truncate">{p.name}</span>
-                          <span className="text-foreground">{p.sign}</span>
-                          {p.house !== undefined && <span className="text-muted-foreground">H{p.house}</span>}
-                          {p.isRetrograde && <span className="text-amber-700">R</span>}
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                );
-              })}
             </div>
           )}
         </div>
@@ -537,6 +529,11 @@ function AnalysisBody({ result, header }: { result: AnalysisResult; header: Reac
   return (
     <div className="space-y-4 mt-6">
       {header}
+      {result.safety && (result.safety.action === "support" || result.safety.action === "redirect") && result.safety.message && (
+        <div role="note" className="rounded-lg border border-primary/40 bg-primary/10 p-4 text-sm leading-relaxed text-foreground">
+          {result.safety.message}
+        </div>
+      )}
       <EngineCard code="AJIT" title="Intent Analysis">
         <div className="flex items-center gap-3 flex-wrap">
           <span className="text-lg font-bold text-foreground capitalize">{result.intent.intent}</span>
