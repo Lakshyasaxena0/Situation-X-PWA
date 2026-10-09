@@ -7,7 +7,7 @@ import {
   GetAnalysisByIdParams,
   DeleteAnalysisParams,
 } from "@workspace/api-zod";
-import { runEngine } from "../services/engine.service.js";
+import { runEngine, siviReport } from "../services/engine.service.js";
 import { currentUserId } from "../middlewares/requireUser.js";
 import { getCalibration } from "../services/calibration.service.js";
 import { extractTexts, translateTexts, translationAvailable } from "../services/translate.service.js";
@@ -119,7 +119,12 @@ router.post("/analysis/analyze", async (req, res) => {
     // Step 2: AI and astrology work together on the final answer. The AI sees every module's
     // output plus the dasha/transits, and past follow-up accuracy tempers the result.
     const calibration = await getCalibration(engineResult.intent.intent);
-    const synthesis = await synthesize(situation, engineResult, calibration, undefined, cost.depth, options);
+    const { simulation: aiSimulation, ...synthesis } = await synthesize(situation, engineResult, calibration, undefined, cost.depth, options);
+    // When the AI read the whole situation, its paths replace the rule-based ones (SIVI says which it used).
+    const simulation = aiSimulation ?? engineResult.simulation;
+    const finalVerdict = aiSimulation
+      ? { ...engineResult.finalVerdict, recommendedAction: aiSimulation.bestPath.action, riskLevel: aiSimulation.bestPath.risk }
+      : engineResult.finalVerdict;
 
     // Charged only for what was delivered: without the AI the user still gets the engine +
     // astrology answer, so the AI credits go back.
@@ -142,7 +147,7 @@ router.post("/analysis/analyze", async (req, res) => {
     const overallScore = synthesis.score;
 
     const modules = [
-      ...engineResult.modules,
+      ...engineResult.modules.map((m) => (m.key === "SIVI" ? siviReport(simulation, engineResult.intent, engineResult.emotion) : m)),
       {
         key: "AI" as const,
         name: "AI - reasoning",
@@ -163,8 +168,8 @@ router.post("/analysis/analyze", async (req, res) => {
       options,
       intent: engineResult.intent,
       emotion: engineResult.emotion,
-      simulation: engineResult.simulation,
-      finalVerdict: engineResult.finalVerdict,
+      simulation,
+      finalVerdict,
       astro: engineResult.astro,
       overallScore,
       summary,

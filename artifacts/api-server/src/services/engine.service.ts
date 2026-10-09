@@ -48,6 +48,34 @@ function applyEthicalFilter(input: string): { text: string; removed: string[] } 
   return { text: lower.replace(UNSAFE_PATTERN, " ").replace(/\s+/g, " ").trim(), removed };
 }
 
+/** The SIVI card: what situation it understood, the paths it compared and why one ranks first. */
+export function siviReport(simulation: SimulationResult, intent: IntentResult, emotion: EmotionResult): ModuleReport {
+  const best = simulation.bestPath;
+  const ctx = simulation.context;
+  const describe = (p: SimulationResult["bestPath"], label: string) =>
+    `${label}: ${p.action} - risk ${p.risk}, stability ${p.stability}, ${p.reversible ? "can be undone" : "hard to undo"}` +
+    (p.benefits.length ? `. Benefits: ${p.benefits.join("; ")}` : "") +
+    (p.downsides.length ? `. Downsides: ${p.downsides.join("; ")}` : "") +
+    (p.uncertainties.length ? `. Uncertain: ${p.uncertainties.join("; ")}` : "");
+  return {
+    key: "SIVI",
+    role: "Compares the choices open to you. It lists what you want, the facts and limits you stated, and for every path its benefits, downsides and what is still uncertain, then explains why one path may be better. It does not predict the future. When the AI is on, the AI reads your whole situation and builds the paths; otherwise SIVI gives general paths from the intent and emotion.",
+    name: "SIVI - Simulated Intelligent & Variable Intentions",
+    area: "paths",
+    active: true,
+    verdict: `Best path: "${best.action}" (risk ${best.risk}, stability ${best.stability}). ${simulation.source === "ai" ? "Paths built by the AI from your full situation." : "General paths from the intent and emotion (rule-based)."}`,
+    evidence: [
+      `Wants: ${ctx.desiredOutcome}${ctx.inferred ? " (guessed from the kind of question)" : ""}`,
+      ...ctx.knownFacts.map((f) => `Fact: ${f}`),
+      ...ctx.constraints.map((c) => `Limit: ${c}`),
+      ...(simulation.source === "rules" ? [`Built from intent "${intent.intent}" and emotion "${emotion.emotion}".`] : []),
+      describe(best, "Best"),
+      ...simulation.alternatives.map((p) => describe(p, "Alternative")),
+      `Why: ${simulation.comparison}`,
+    ],
+  };
+}
+
 function buildModuleReports(
   clean: string,
   removed: string[],
@@ -59,7 +87,6 @@ function buildModuleReports(
 ): ModuleReport[] {
   const emotion = emotionAnalysis.result;
   const intent = intentAnalysis.result;
-  const best = simulation.bestPath;
   const topFactors = astro.prashna.factors
     .filter((f) => f.label !== "Scale centering")
     .sort((a, b) => Math.abs(b.effect) - Math.abs(a.effect))
@@ -122,20 +149,7 @@ function buildModuleReports(
         ...emotionAnalysis.notes,
       ],
     },
-    {
-      key: "SIVI",
-      role: "Takes the intent and the emotion and compares three possible courses of action by risk and stability, then picks the safest-yet-useful one.",
-      name: "SIVI - path simulation",
-      area: "paths",
-      active: true,
-      verdict: `Best path: "${best.action}" (risk ${best.risk}, stability ${best.stability}, outcome ${best.outcome}).`,
-      evidence: [
-        `Built from intent "${intent.intent}" and emotion "${emotion.emotion}".`,
-        ...[best, ...simulation.alternatives].map(
-          (p) => `${p === best ? "Best" : "Alternative"}: ${p.action} - risk ${p.risk}, stability ${p.stability}, ${p.outcome}`,
-        ),
-      ],
-    },
+    siviReport(simulation, intent, emotion),
     {
       key: "ASTRO",
       role: "Casts the Prashna chart for the moment you ask, reads the house and planets that rule your kind of question, and scores it. Dashas (Vimshottari and Chara) are added only when you ask about timing.",
@@ -172,7 +186,7 @@ export function runEngine(input: string, options: EngineOptions = {}): EngineRes
   const intentResult = intentAnalysis.result;
   const emotionAnalysis = detectEmotion(cleanInput);
   const emotionResult = emotionAnalysis.result;
-  const simulationResult = simulatePaths(intentResult.intent, emotionResult.emotion);
+  const simulationResult = simulatePaths(intentResult, emotionResult, cleanInput);
   const finalVerdict = deriveFinalVerdict(simulationResult, emotionResult);
   // ASTRO casts the Prashna charts (D1, D3, D9, D10) for the moment of the question and reads
   // the ones that matter for the intent AJIT detected. No birth details are involved.

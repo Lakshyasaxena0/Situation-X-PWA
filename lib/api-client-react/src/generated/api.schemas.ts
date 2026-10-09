@@ -269,11 +269,42 @@ export interface PathOption {
   risk: PathOptionRisk;
   stability: PathOptionStability;
   outcome: PathOptionOutcome;
+  benefits: string[];
+  downsides: string[];
+  uncertainties: string[];
+  /** Whether the person could undo this path if it turns out wrong */
+  reversible: boolean;
 }
 
+/**
+ * What SIVI understood about the situation before comparing paths
+ */
+export interface SituationContext {
+  desiredOutcome: string;
+  /** True when the desired outcome was guessed, not stated by the person */
+  inferred: boolean;
+  knownFacts: string[];
+  constraints: string[];
+}
+
+export type SimulationResultSource =
+  (typeof SimulationResultSource)[keyof typeof SimulationResultSource];
+
+export const SimulationResultSource = {
+  rules: "rules",
+  ai: "ai",
+} as const;
+
+/**
+ * SIVI comparison of the paths open to the person. It compares options; it does not predict the future.
+ */
 export interface SimulationResult {
+  context: SituationContext;
   bestPath: PathOption;
   alternatives: PathOption[];
+  /** Why the best path may be better than the others */
+  comparison: string;
+  source: SimulationResultSource;
 }
 
 export type FinalVerdictRiskLevel =

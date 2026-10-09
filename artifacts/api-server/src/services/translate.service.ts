@@ -8,11 +8,18 @@ import { LANGUAGE_NAMES, type Language } from "./analysis-options.js";
  * translated at most once per analysis.
  */
 
+export type PathTexts = { action?: string; benefits?: string[]; downsides?: string[]; uncertainties?: string[] };
+
 export type AnalysisTexts = {
   summary?: string;
   finalVerdict?: { recommendedAction?: string; reasoning?: string };
   synthesis?: { summary?: string; astroInsight?: string; advice?: string; reasoning?: string; risks?: string[]; keyUnknowns?: string[]; nextSteps?: string[] };
-  simulation?: { best?: string; alternatives?: string[] };
+  simulation?: {
+    context?: { desiredOutcome?: string; knownFacts?: string[]; constraints?: string[] };
+    comparison?: string;
+    best?: PathTexts;
+    alternatives?: PathTexts[];
+  };
   modules?: { key: string; role?: string; verdict?: string; evidence?: string[] }[];
   astro?: { interpretation?: string; timingSummary?: string; activations?: string[] };
 };
@@ -21,11 +28,17 @@ const str = (v: unknown): string | undefined => (typeof v === "string" && v.trim
 const strs = (v: unknown): string[] | undefined => (Array.isArray(v) ? v.filter((x): x is string => typeof x === "string") : undefined);
 const obj = (v: unknown): Record<string, unknown> => (v && typeof v === "object" ? (v as Record<string, unknown>) : {});
 
+const pathTexts = (v: unknown): PathTexts => {
+  const p = obj(v);
+  return { action: str(p.action), benefits: strs(p.benefits), downsides: strs(p.downsides), uncertainties: strs(p.uncertainties) };
+};
+
 /** Picks the user-readable sentences out of a stored analysis. */
 export function extractTexts(fa: Record<string, unknown>): AnalysisTexts {
   const fv = obj(fa.finalVerdict);
   const syn = obj(fa.synthesis);
   const sim = obj(fa.simulation);
+  const ctx = obj(sim.context);
   const astro = obj(fa.astro);
   const timing = obj(astro.timing);
   const modules = Array.isArray(fa.modules) ? (fa.modules as unknown[]).map(obj) : [];
@@ -42,8 +55,10 @@ export function extractTexts(fa: Record<string, unknown>): AnalysisTexts {
       nextSteps: strs(syn.nextSteps),
     },
     simulation: {
-      best: str(obj(sim.bestPath).action),
-      alternatives: Array.isArray(sim.alternatives) ? (sim.alternatives as unknown[]).map((a) => str(obj(a).action) ?? "") : undefined,
+      context: { desiredOutcome: str(ctx.desiredOutcome), knownFacts: strs(ctx.knownFacts), constraints: strs(ctx.constraints) },
+      comparison: str(sim.comparison),
+      best: pathTexts(sim.bestPath),
+      alternatives: Array.isArray(sim.alternatives) ? (sim.alternatives as unknown[]).map(pathTexts) : undefined,
     },
     modules: modules.map((m) => ({ key: String(m.key ?? ""), role: str(m.role), verdict: str(m.verdict), evidence: strs(m.evidence) })),
     astro: { interpretation: str(astro.interpretation), timingSummary: str(timing.summary), activations: strs(timing.activations) },

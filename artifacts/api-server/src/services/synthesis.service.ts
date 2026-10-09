@@ -3,6 +3,7 @@ import { groqConfigured, groqJsonCompletion } from "../lib/groq.js";
 import type { ReasoningDepth } from "./credit-cost.service.js";
 import { applyCalibration, type Calibration } from "./calibration.service.js";
 import { logger } from "../lib/logger.js";
+import { mergeContext, parseAiSimulation, type SimulationResult } from "./sivi.service.js";
 import type { TimingResult } from "./timing.service.js";
 import { DEFAULT_OPTIONS, LANGUAGE_NAMES, type AnalysisOptions } from "./analysis-options.js";
 
@@ -55,6 +56,8 @@ export type Synthesis = {
   nextSteps?: string[];
   /** Weights used to blend the two lenses. */
   weights?: { logic: number; astro: number };
+  /** The AI's own SIVI paths for this situation. The route moves it into `simulation`; it is not sent as part of the synthesis. */
+  simulation?: SimulationResult;
 };
 
 export const LOGIC_SHARE = 0.6;
@@ -69,7 +72,7 @@ export const ASTRO_MAX_PULL = 25;
 const DEFAULT_TIMEFRAME_DAYS = 14;
 const MIN_TIMEFRAME_DAYS = 3;
 const MAX_TIMEFRAME_DAYS = 90;
-const AI_MAX_TOKENS = 1500;
+const AI_MAX_TOKENS = 2100;
 
 /**
  * How hard the AI is asked to think. Higher levels are charged more credits (credit-cost.service)
@@ -83,13 +86,13 @@ const DEPTH_PROFILE: Record<ReasoningDepth, { maxTokens: number; temperature: nu
     instruction: "REASONING LEVEL: standard. Find the core question, the key facts, the main risk and the best action.",
   },
   deep: {
-    maxTokens: 1900,
+    maxTokens: 2600,
     temperature: 0.4,
     instruction:
       "REASONING LEVEL: deep. Think in several steps: list at least three options (including doing nothing), weigh benefit, cost, reversibility and timing for each, note second-order effects, and say what you would need to know to be surer.",
   },
   expert: {
-    maxTokens: 2400,
+    maxTokens: 3100,
     temperature: 0.35,
     instruction:
       "REASONING LEVEL: expert. Work like a senior advisor: map the people, constraints and hidden assumptions, compare four or more options, run a pre-mortem on the option you favour (how could it fail?), check your own reasoning for bias or wishful thinking, state your uncertainty honestly, and only then score.",
@@ -277,7 +280,7 @@ ${situation.replace(/[<>]/g, "")}
 Hints from the app's specialised modules (they are keyword-based and can be wrong; use your own understanding of the text over them):
 - AJIT (intent): ${engine.intent.intent}, confidence ${engine.intent.confidence}${engine.intent.secondary ? `, also touches ${engine.intent.secondary}` : ""}${engine.intent.stance === "avoid" ? ", and the person seems to want to AVOID what they name" : ""}
 - MANU (emotion, a text-based estimate only, never a diagnosis): ${engine.emotion.emotion}, intensity ${engine.emotion.intensity}${engine.emotion.secondary ? `, with ${engine.emotion.secondary} too` : ""}${engine.emotion.masked ? "; the person says they are fine but the message sounds distressed" : ""}${engine.emotion.crisis ? "; THE TEXT MAY POINT TO A PERSON IN DANGER: be gentle, say you are concerned, and kindly encourage reaching a trusted person or a local helpline now, before any advice" : ""}
-- SIVI (path simulation): best path "${engine.simulation.bestPath.action}" (risk ${engine.simulation.bestPath.risk}, stability ${engine.simulation.bestPath.stability}, outcome ${engine.simulation.bestPath.outcome}); alternatives: ${alternatives || "none"}
+- SIVI (rule-based draft of the paths, only from the intent and emotion, so general): best path "${engine.simulation.bestPath.action}" (risk ${engine.simulation.bestPath.risk}, stability ${engine.simulation.bestPath.stability}); alternatives: ${alternatives || "none"}. Build better, situation-specific paths yourself in STEP 1.
 
 STEP 1 - YOUR OWN JUDGMENT. Do this first, from the situation itself, with logic, evidence, common sense, psychology and practical wisdom:
 - What is really being asked? Which facts are stated and which assumptions are you making?
@@ -285,6 +288,7 @@ STEP 1 - YOUR OWN JUDGMENT. Do this first, from the situation itself, with logic
 - For each: likely upside, downside, reversibility, cost of being wrong, and what is within the person's control.
 - Is the person's emotional state likely to be distorting the question?
 - What missing information would change your answer?
+- SIVI TASK (paths): write the situation context and compare 3-4 concrete paths for THIS person (use their own facts, not generic advice): desiredOutcome in their terms (if they never said, state your best reading), knownFacts they actually stated (never invent), and constraints (money, time, people, rules) they mentioned. For each path give its real benefits, downsides and uncertainties, whether they could undo it (reversible), and its risk and stability (low/medium/high). Always include a low-effort option such as waiting or gathering information. Name the best path by its index, then explain in pathComparison why it beats the others and when another path would be better. This compares options; it does not predict the future.
 Then give logicScore (0-100): how likely it is that going ahead as the person is asking turns out well, judged on the merits alone. 70+ means YES, 45-69 CONDITIONAL, below 45 NO.
 
 ${step2}
@@ -294,7 +298,7 @@ ${step3}
 Rules: speak in tendencies, never promise outcomes; do not invent facts about the person; for health, legal, money-critical or safety matters recommend a qualified professional where it matters; be candid but kind; no cosmic fluff. Write every text value in ${language}; keep the JSON keys in English.
 
 Reply with ONLY a JSON object, no prose, with exactly these keys in this order:
-{"situationAnalysis": "<4-6 sentences: what is really being asked, key facts and assumptions, the options and their trade-offs>", "risks": ["<up to 3 short risks>"], "keyUnknowns": ["<up to 3 things that would change the answer>"], "logicScore": <integer 0-100>, ${useAstro ? `"astrologyAssessment": "<2-3 sentences naming the specific planets, houses, charts or dasha periods that drive the astrology verdict and what they imply for timing or caution>", "astroAlignment": "supports" | "mixed" | "contradicts",` : ""} "finalScore": <integer 0-100>, "summary": "<3-4 sentences: the final answer, direct and practical, reconciling both lenses>", "advice": "<the single most important next step>", "nextSteps": ["<2-4 ordered concrete steps>"], "timeframeDays": <integer, days until the outcome should become visible, ${MIN_TIMEFRAME_DAYS}-${MAX_TIMEFRAME_DAYS}>}`;
+{"situationAnalysis": "<4-6 sentences: what is really being asked, key facts and assumptions, the options and their trade-offs>", "risks": ["<up to 3 short risks>"], "situationContext": {"desiredOutcome": "<what the person wants>", "knownFacts": ["<up to 4 facts they stated>"], "constraints": ["<up to 4 limits they mentioned>"]}, "paths": [{"action": "<a concrete path>", "benefits": ["<up to 3>"], "downsides": ["<up to 3>"], "uncertainties": ["<up to 2>"], "reversible": true | false, "risk": "low" | "medium" | "high", "stability": "low" | "medium" | "high"}], "bestPath": <0-based index into paths>, "pathComparison": "<2-3 sentences: why the best path beats the others, and when another would be better>", "keyUnknowns": ["<up to 3 things that would change the answer>"], "logicScore": <integer 0-100>, ${useAstro ? `"astrologyAssessment": "<2-3 sentences naming the specific planets, houses, charts or dasha periods that drive the astrology verdict and what they imply for timing or caution>", "astroAlignment": "supports" | "mixed" | "contradicts",` : ""} "finalScore": <integer 0-100>, "summary": "<3-4 sentences: the final answer, direct and practical, reconciling both lenses>", "advice": "<the single most important next step>", "nextSteps": ["<2-4 ordered concrete steps>"], "timeframeDays": <integer, days until the outcome should become visible, ${MIN_TIMEFRAME_DAYS}-${MAX_TIMEFRAME_DAYS}>}`;
 }
 
 function text(value: unknown, max: number): string | null {
@@ -322,6 +326,8 @@ export type AiAnswer = {
   keyUnknowns: string[];
   nextSteps: string[];
   timeframeDays: number;
+  /** SIVI paths built by the AI from the whole situation (null when missing or unusable). */
+  simulation: SimulationResult | null;
 };
 
 /** Validates the model's JSON. Returns null when it is unusable. */
@@ -350,6 +356,7 @@ export function parseAiAnswer(raw: string | null | undefined): AiAnswer | null {
     keyUnknowns: list(o.keyUnknowns, 3, 300),
     nextSteps: list(o.nextSteps, 4, 300),
     timeframeDays: clampDays(o.timeframeDays),
+    simulation: parseAiSimulation(o),
   };
 }
 
@@ -393,6 +400,8 @@ export async function synthesize(
   }
   if (!ai) return fallback;
 
+  const aiSimulation = ai.simulation ? mergeContext(ai.simulation, engine.simulation) : undefined;
+
   // Two lenses, fixed weights. The AI may only fine-tune the blend, within a small, justified margin.
   if (!options.useAstrology) {
     // The AI alone: its own judgment, nudged by at most the same margin, then calibrated.
@@ -416,6 +425,7 @@ export async function synthesize(
       keyUnknowns: ai.keyUnknowns,
       nextSteps: ai.nextSteps,
       weights: { logic: 1, astro: 0 },
+      simulation: aiSimulation,
     };
   }
   const astro = astroScoreOf(engine);
@@ -444,5 +454,6 @@ export async function synthesize(
     keyUnknowns: ai.keyUnknowns,
     nextSteps: ai.nextSteps,
     weights: { logic: LOGIC_SHARE, astro: ASTRO_SHARE },
+    simulation: aiSimulation,
   };
 }

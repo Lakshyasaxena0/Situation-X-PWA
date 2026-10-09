@@ -739,24 +739,78 @@ components:
         outcome:
           type: string
           enum: [positive, negative, mixed]
+        benefits:
+          type: array
+          items:
+            type: string
+        downsides:
+          type: array
+          items:
+            type: string
+        uncertainties:
+          type: array
+          items:
+            type: string
+        reversible:
+          type: boolean
+          description: Whether the person could undo this path if it turns out wrong
       required:
         - action
         - risk
         - stability
         - outcome
+        - benefits
+        - downsides
+        - uncertainties
+        - reversible
+
+    SituationContext:
+      type: object
+      description: What SIVI understood about the situation before comparing paths
+      properties:
+        desiredOutcome:
+          type: string
+        inferred:
+          type: boolean
+          description: True when the desired outcome was guessed, not stated by the person
+        knownFacts:
+          type: array
+          items:
+            type: string
+        constraints:
+          type: array
+          items:
+            type: string
+      required:
+        - desiredOutcome
+        - inferred
+        - knownFacts
+        - constraints
 
     SimulationResult:
       type: object
+      description: SIVI comparison of the paths open to the person. It compares options; it does not predict the future.
       properties:
+        context:
+          $ref: "#/components/schemas/SituationContext"
         bestPath:
           $ref: "#/components/schemas/PathOption"
         alternatives:
           type: array
           items:
             $ref: "#/components/schemas/PathOption"
+        comparison:
+          type: string
+          description: Why the best path may be better than the others
+        source:
+          type: string
+          enum: [rules, ai]
       required:
+        - context
         - bestPath
         - alternatives
+        - comparison
+        - source
 
     FinalVerdict:
       type: object

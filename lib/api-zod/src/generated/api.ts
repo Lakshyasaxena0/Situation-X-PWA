@@ -151,22 +151,60 @@ export const AnalyzeSituationResponse = zod.object({
     intensity: zod.enum(["low", "medium", "high"]),
     score: zod.number(),
   }),
-  simulation: zod.object({
-    bestPath: zod.object({
-      action: zod.string(),
-      risk: zod.enum(["low", "medium", "high"]),
-      stability: zod.enum(["low", "medium", "high"]),
-      outcome: zod.enum(["positive", "negative", "mixed"]),
-    }),
-    alternatives: zod.array(
-      zod.object({
+  simulation: zod
+    .object({
+      context: zod
+        .object({
+          desiredOutcome: zod.string(),
+          inferred: zod
+            .boolean()
+            .describe(
+              "True when the desired outcome was guessed, not stated by the person",
+            ),
+          knownFacts: zod.array(zod.string()),
+          constraints: zod.array(zod.string()),
+        })
+        .describe(
+          "What SIVI understood about the situation before comparing paths",
+        ),
+      bestPath: zod.object({
         action: zod.string(),
         risk: zod.enum(["low", "medium", "high"]),
         stability: zod.enum(["low", "medium", "high"]),
         outcome: zod.enum(["positive", "negative", "mixed"]),
+        benefits: zod.array(zod.string()),
+        downsides: zod.array(zod.string()),
+        uncertainties: zod.array(zod.string()),
+        reversible: zod
+          .boolean()
+          .describe(
+            "Whether the person could undo this path if it turns out wrong",
+          ),
       }),
+      alternatives: zod.array(
+        zod.object({
+          action: zod.string(),
+          risk: zod.enum(["low", "medium", "high"]),
+          stability: zod.enum(["low", "medium", "high"]),
+          outcome: zod.enum(["positive", "negative", "mixed"]),
+          benefits: zod.array(zod.string()),
+          downsides: zod.array(zod.string()),
+          uncertainties: zod.array(zod.string()),
+          reversible: zod
+            .boolean()
+            .describe(
+              "Whether the person could undo this path if it turns out wrong",
+            ),
+        }),
+      ),
+      comparison: zod
+        .string()
+        .describe("Why the best path may be better than the others"),
+      source: zod.enum(["rules", "ai"]),
+    })
+    .describe(
+      "SIVI comparison of the paths open to the person. It compares options; it does not predict the future.",
     ),
-  }),
   finalVerdict: zod.object({
     recommendedAction: zod.string(),
     reasoning: zod.string(),
@@ -724,22 +762,60 @@ export const GetAnalysisHistoryResponse = zod.object({
             intensity: zod.enum(["low", "medium", "high"]),
             score: zod.number(),
           }),
-          simulation: zod.object({
-            bestPath: zod.object({
-              action: zod.string(),
-              risk: zod.enum(["low", "medium", "high"]),
-              stability: zod.enum(["low", "medium", "high"]),
-              outcome: zod.enum(["positive", "negative", "mixed"]),
-            }),
-            alternatives: zod.array(
-              zod.object({
+          simulation: zod
+            .object({
+              context: zod
+                .object({
+                  desiredOutcome: zod.string(),
+                  inferred: zod
+                    .boolean()
+                    .describe(
+                      "True when the desired outcome was guessed, not stated by the person",
+                    ),
+                  knownFacts: zod.array(zod.string()),
+                  constraints: zod.array(zod.string()),
+                })
+                .describe(
+                  "What SIVI understood about the situation before comparing paths",
+                ),
+              bestPath: zod.object({
                 action: zod.string(),
                 risk: zod.enum(["low", "medium", "high"]),
                 stability: zod.enum(["low", "medium", "high"]),
                 outcome: zod.enum(["positive", "negative", "mixed"]),
+                benefits: zod.array(zod.string()),
+                downsides: zod.array(zod.string()),
+                uncertainties: zod.array(zod.string()),
+                reversible: zod
+                  .boolean()
+                  .describe(
+                    "Whether the person could undo this path if it turns out wrong",
+                  ),
               }),
+              alternatives: zod.array(
+                zod.object({
+                  action: zod.string(),
+                  risk: zod.enum(["low", "medium", "high"]),
+                  stability: zod.enum(["low", "medium", "high"]),
+                  outcome: zod.enum(["positive", "negative", "mixed"]),
+                  benefits: zod.array(zod.string()),
+                  downsides: zod.array(zod.string()),
+                  uncertainties: zod.array(zod.string()),
+                  reversible: zod
+                    .boolean()
+                    .describe(
+                      "Whether the person could undo this path if it turns out wrong",
+                    ),
+                }),
+              ),
+              comparison: zod
+                .string()
+                .describe("Why the best path may be better than the others"),
+              source: zod.enum(["rules", "ai"]),
+            })
+            .describe(
+              "SIVI comparison of the paths open to the person. It compares options; it does not predict the future.",
             ),
-          }),
           finalVerdict: zod.object({
             recommendedAction: zod.string(),
             reasoning: zod.string(),
@@ -1330,22 +1406,60 @@ export const GetAnalysisByIdResponse = zod.object({
         intensity: zod.enum(["low", "medium", "high"]),
         score: zod.number(),
       }),
-      simulation: zod.object({
-        bestPath: zod.object({
-          action: zod.string(),
-          risk: zod.enum(["low", "medium", "high"]),
-          stability: zod.enum(["low", "medium", "high"]),
-          outcome: zod.enum(["positive", "negative", "mixed"]),
-        }),
-        alternatives: zod.array(
-          zod.object({
+      simulation: zod
+        .object({
+          context: zod
+            .object({
+              desiredOutcome: zod.string(),
+              inferred: zod
+                .boolean()
+                .describe(
+                  "True when the desired outcome was guessed, not stated by the person",
+                ),
+              knownFacts: zod.array(zod.string()),
+              constraints: zod.array(zod.string()),
+            })
+            .describe(
+              "What SIVI understood about the situation before comparing paths",
+            ),
+          bestPath: zod.object({
             action: zod.string(),
             risk: zod.enum(["low", "medium", "high"]),
             stability: zod.enum(["low", "medium", "high"]),
             outcome: zod.enum(["positive", "negative", "mixed"]),
+            benefits: zod.array(zod.string()),
+            downsides: zod.array(zod.string()),
+            uncertainties: zod.array(zod.string()),
+            reversible: zod
+              .boolean()
+              .describe(
+                "Whether the person could undo this path if it turns out wrong",
+              ),
           }),
+          alternatives: zod.array(
+            zod.object({
+              action: zod.string(),
+              risk: zod.enum(["low", "medium", "high"]),
+              stability: zod.enum(["low", "medium", "high"]),
+              outcome: zod.enum(["positive", "negative", "mixed"]),
+              benefits: zod.array(zod.string()),
+              downsides: zod.array(zod.string()),
+              uncertainties: zod.array(zod.string()),
+              reversible: zod
+                .boolean()
+                .describe(
+                  "Whether the person could undo this path if it turns out wrong",
+                ),
+            }),
+          ),
+          comparison: zod
+            .string()
+            .describe("Why the best path may be better than the others"),
+          source: zod.enum(["rules", "ai"]),
+        })
+        .describe(
+          "SIVI comparison of the paths open to the person. It compares options; it does not predict the future.",
         ),
-      }),
       finalVerdict: zod.object({
         recommendedAction: zod.string(),
         reasoning: zod.string(),

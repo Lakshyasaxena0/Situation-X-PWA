@@ -6,8 +6,17 @@
  * OpenAPI spec version: 0.1.0
  */
 import type { PathOption } from "./pathOption";
+import type { SimulationResultSource } from "./simulationResultSource";
+import type { SituationContext } from "./situationContext";
 
+/**
+ * SIVI comparison of the paths open to the person. It compares options; it does not predict the future.
+ */
 export interface SimulationResult {
+  context: SituationContext;
   bestPath: PathOption;
   alternatives: PathOption[];
+  /** Why the best path may be better than the others */
+  comparison: string;
+  source: SimulationResultSource;
 }

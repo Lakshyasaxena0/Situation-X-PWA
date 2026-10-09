@@ -1,11 +1,18 @@
 import type { AnalysisResult } from "@workspace/api-client-react";
 
+type PathTexts = { action?: string; benefits?: string[]; downsides?: string[]; uncertainties?: string[] };
+
 /** The translated sentences of an analysis (same structure the server sends back). */
 export type Texts = {
   summary?: string;
   finalVerdict?: { recommendedAction?: string; reasoning?: string };
   synthesis?: { summary?: string; astroInsight?: string; advice?: string; reasoning?: string; risks?: string[]; keyUnknowns?: string[]; nextSteps?: string[] };
-  simulation?: { best?: string; alternatives?: string[] };
+  simulation?: {
+    context?: { desiredOutcome?: string; knownFacts?: string[]; constraints?: string[] };
+    comparison?: string;
+    best?: PathTexts;
+    alternatives?: PathTexts[];
+  };
   modules?: { key: string; role?: string; verdict?: string; evidence?: string[] }[];
   astro?: { interpretation?: string; timingSummary?: string; activations?: string[] };
 };
@@ -13,6 +20,18 @@ export type Texts = {
 const pick = <T>(translated: T | undefined, original: T): T => (translated === undefined || translated === null || translated === "" ? original : translated);
 const pickList = (translated: string[] | undefined, original: string[] | undefined) =>
   original && translated && translated.length === original.length ? translated : original;
+
+function applyPath<P extends { action: string; benefits?: string[]; downsides?: string[]; uncertainties?: string[] }>(p: P, t: PathTexts | undefined): P {
+  // Older cached translations stored a plain string here; they are ignored rather than trusted.
+  if (!t || typeof t !== "object") return p;
+  return {
+    ...p,
+    action: pick(t.action, p.action),
+    benefits: pickList(t.benefits, p.benefits),
+    downsides: pickList(t.downsides, p.downsides),
+    uncertainties: pickList(t.uncertainties, p.uncertainties),
+  };
+}
 
 /** Returns a copy of the analysis with its sentences replaced by the translated ones. Numbers are untouched. */
 export function applyTexts(result: AnalysisResult, t: Texts | undefined): AnalysisResult {
@@ -39,8 +58,18 @@ export function applyTexts(result: AnalysisResult, t: Texts | undefined): Analys
         }
       : syn,
     simulation: {
-      bestPath: { ...result.simulation.bestPath, action: pick(t.simulation?.best, result.simulation.bestPath.action) },
-      alternatives: result.simulation.alternatives.map((alt, i) => ({ ...alt, action: pick(t.simulation?.alternatives?.[i], alt.action) })),
+      ...result.simulation,
+      context: result.simulation.context
+        ? {
+            ...result.simulation.context,
+            desiredOutcome: pick(t.simulation?.context?.desiredOutcome, result.simulation.context.desiredOutcome),
+            knownFacts: pickList(t.simulation?.context?.knownFacts, result.simulation.context.knownFacts) ?? [],
+            constraints: pickList(t.simulation?.context?.constraints, result.simulation.context.constraints) ?? [],
+          }
+        : result.simulation.context,
+      comparison: result.simulation.comparison ? pick(t.simulation?.comparison, result.simulation.comparison) : result.simulation.comparison,
+      bestPath: applyPath(result.simulation.bestPath, t.simulation?.best),
+      alternatives: result.simulation.alternatives.map((alt, i) => applyPath(alt, t.simulation?.alternatives?.[i])),
     },
     modules: result.modules?.map((m, i) => {
       const tm = t.modules?.[i];

@@ -14,4 +14,9 @@ export interface PathOption {
   risk: PathOptionRisk;
   stability: PathOptionStability;
   outcome: PathOptionOutcome;
+  benefits: string[];
+  downsides: string[];
+  uncertainties: string[];
+  /** Whether the person could undo this path if it turns out wrong */
+  reversible: boolean;
 }

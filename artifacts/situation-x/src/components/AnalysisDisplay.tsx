@@ -43,6 +43,74 @@ function Badge({ label, className = "" }: { label: string; className?: string })
   );
 }
 
+type SimulationView = AnalysisResult["simulation"];
+
+function BulletList({ title, items, tone }: { title: string; items?: string[]; tone: string }) {
+  if (!items || items.length === 0) return null;
+  return (
+    <div>
+      <div className={`text-[11px] font-mono mb-0.5 ${tone}`}>{title}</div>
+      <ul className="list-disc pl-4 space-y-0.5 text-xs text-foreground">
+        {items.map((it, i) => (
+          <li key={i}>{it}</li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
+/** One path: its levels always visible, benefits / downsides / uncertainties one tap away. */
+function PathView({ path, best = false }: { path: SimulationView["bestPath"]; best?: boolean }) {
+  const [open, setOpen] = useState(best);
+  const hasDetail = (path.benefits?.length ?? 0) + (path.downsides?.length ?? 0) + (path.uncertainties?.length ?? 0) > 0;
+  return (
+    <div className={`${best ? "bg-muted/60" : "bg-muted/40"} rounded p-3`}>
+      <p className={`text-sm mb-2 ${best ? "text-foreground font-medium" : "text-foreground"}`}>{path.action}</p>
+      <div className="flex gap-2 flex-wrap">
+        <Badge label={`risk: ${path.risk}`} className={riskColor(path.risk as RiskLevel)} />
+        <Badge label={`stability: ${path.stability}`} className="text-secondary bg-secondary/10 border-secondary/30" />
+        <Badge label={path.outcome} className={`border ${outcomeColor(path.outcome as Outcome)} bg-transparent border-current/30`} />
+        {path.reversible !== undefined && (
+          <Badge label={path.reversible ? "can be undone" : "hard to undo"} className="text-muted-foreground bg-muted border-border" />
+        )}
+      </div>
+      {hasDetail && (
+        <>
+          <button type="button" onClick={() => setOpen(!open)} className="mt-2 inline-flex items-center gap-1 text-xs text-primary underline underline-offset-2" aria-expanded={open}>
+            {open ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
+            {open ? "Hide details" : "Benefits, downsides, unknowns"}
+          </button>
+          {open && (
+            <div className="mt-2 space-y-2">
+              <BulletList title="BENEFITS" items={path.benefits} tone="text-green-700" />
+              <BulletList title="DOWNSIDES" items={path.downsides} tone="text-red-700" />
+              <BulletList title="UNCERTAIN" items={path.uncertainties} tone="text-muted-foreground" />
+            </div>
+          )}
+        </>
+      )}
+    </div>
+  );
+}
+
+function SituationContextView({ ctx }: { ctx: NonNullable<SimulationView["context"]> }) {
+  if (!ctx.desiredOutcome && ctx.knownFacts.length === 0 && ctx.constraints.length === 0) return null;
+  return (
+    <div className="rounded border border-border bg-card px-3 py-2 space-y-2">
+      <div className="text-xs text-muted-foreground font-mono">SITUATION AS SIVI READ IT</div>
+      {ctx.desiredOutcome && (
+        <p className="text-sm text-foreground">
+          <span className="font-semibold">You want: </span>
+          {ctx.desiredOutcome}
+          {ctx.inferred && <span className="text-xs text-muted-foreground"> (not stated, guessed from the question)</span>}
+        </p>
+      )}
+      <BulletList title="FACTS YOU GAVE" items={ctx.knownFacts} tone="text-muted-foreground" />
+      <BulletList title="LIMITS" items={ctx.constraints} tone="text-muted-foreground" />
+    </div>
+  );
+}
+
 function EngineCard({ code, title, children, right }: { code: string; title: string; children: React.ReactNode; right?: React.ReactNode }) {
   return (
     <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} className="bg-card border border-card-border rounded-lg p-5 shadow-sm">
@@ -402,32 +470,33 @@ function AnalysisBody({ result, header }: { result: AnalysisResult; header: Reac
 
       <EngineCard code="SIVI" title="Alternative Path Simulation">
         <div className="space-y-3">
+          {result.simulation.context && <SituationContextView ctx={result.simulation.context} />}
           <div>
             <div className="text-xs text-muted-foreground mb-1 font-mono">RECOMMENDED PATH</div>
-            <div className="bg-muted/60 rounded p-3">
-              <p className="text-sm text-foreground font-medium mb-2">{result.simulation.bestPath.action}</p>
-              <div className="flex gap-2 flex-wrap">
-                <Badge label={`risk: ${result.simulation.bestPath.risk}`} className={riskColor(result.simulation.bestPath.risk as RiskLevel)} />
-                <Badge label={`stability: ${result.simulation.bestPath.stability}`} className="text-secondary bg-secondary/10 border-secondary/30" />
-                <Badge label={result.simulation.bestPath.outcome} className={`border ${outcomeColor(result.simulation.bestPath.outcome as Outcome)} bg-transparent border-current/30`} />
-              </div>
-            </div>
+            <PathView path={result.simulation.bestPath} best />
           </div>
           {result.simulation.alternatives.length > 0 && (
             <div>
               <div className="text-xs text-muted-foreground mb-1 font-mono">ALTERNATIVES</div>
               <div className="space-y-2">
                 {result.simulation.alternatives.map((alt, i) => (
-                  <div key={i} className="bg-muted/40 rounded p-3">
-                    <p className="text-sm text-muted-foreground mb-1">{alt.action}</p>
-                    <div className="flex gap-2 flex-wrap">
-                      <Badge label={`risk: ${alt.risk}`} className={riskColor(alt.risk as RiskLevel)} />
-                      <Badge label={alt.outcome} className="text-muted-foreground bg-muted border-border" />
-                    </div>
-                  </div>
+                  <PathView key={i} path={alt} />
                 ))}
               </div>
             </div>
+          )}
+          {result.simulation.comparison && (
+            <div className="rounded border border-border bg-card px-3 py-2">
+              <div className="text-xs text-muted-foreground mb-1 font-mono">WHY THIS ORDER</div>
+              <p className="text-sm text-foreground leading-relaxed">{result.simulation.comparison}</p>
+            </div>
+          )}
+          {result.simulation.source && (
+            <p className="text-xs text-muted-foreground">
+              {result.simulation.source === "ai"
+                ? "Paths built by the AI from your whole situation. They compare options; they do not predict the future."
+                : "General paths from the intent and emotion (the AI was off or unavailable). They compare options; they do not predict the future."}
+            </p>
           )}
         </div>
         <ModuleReports reports={reportsFor(result, "paths")} />
