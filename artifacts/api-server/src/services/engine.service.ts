@@ -1,8 +1,7 @@
-import { analyzeIntent, type IntentResult } from "./ajit.service.js";
+import { detectIntent, type IntentAnalysis, type IntentResult } from "./ajit.service.js";
 import { analyzeEmotion, type EmotionResult } from "./manu.service.js";
 import { simulatePaths, type SimulationResult } from "./sivi.service.js";
 import { analyzeAstro, type AstroResult } from "./astro.service.js";
-import { KEYWORDS as INTENT_KEYWORDS } from "./ajit.service.js";
 import { EMOTION_KEYWORDS } from "./manu.service.js";
 import { matchedKeywords, normalizeText } from "./text.js";
 
@@ -60,14 +59,14 @@ const ranked = (text: string, table: Record<string, string[]>) =>
 function buildModuleReports(
   clean: string,
   removed: string[],
-  intent: IntentResult,
+  intentAnalysis: IntentAnalysis,
   emotion: EmotionResult,
   simulation: SimulationResult,
   astro: AstroResult,
   useAstrology: boolean,
 ): ModuleReport[] {
   const normalized = normalizeText(clean);
-  const intentRank = ranked(normalized, INTENT_KEYWORDS);
+  const intent = intentAnalysis.result;
   const emotionRank = ranked(normalized, EMOTION_KEYWORDS);
   const best = simulation.bestPath;
   const topFactors = astro.prashna.factors
@@ -88,15 +87,23 @@ function buildModuleReports(
     },
     {
       key: "AJIT",
-      role: "Reads your words for topic keywords (career, love, conflict, decision, health) and decides what the question is about. It counts keywords, it does not understand meaning, so the AI re-reads your full text itself.",
+      role: "Reads your words in context (English, Hinglish, Hindi): topic words, negation (\"I don't want to fight\" is not wanting to fight), intensity and which sentence is the question, then decides what it is about. It still works from words, so the AI re-reads your full text for meaning.",
       name: "AJIT - intent detection",
       area: "intent",
       active: intent.intent !== "unclear",
       verdict:
         intent.intent === "unclear"
-          ? "No clear intent words found, so the question is read as a general outlook."
-          : `Intent: ${intent.intent} (${intent.confidence} confidence, ${intent.score} keyword match${intent.score === 1 ? "" : "es"}).`,
-      evidence: intentRank.map((r) => `${r.label}: ${r.hits.map((h) => `"${h}"`).join(", ")}`),
+          ? "No clear topic found, so the question is read as a general outlook."
+          : `Intent: ${intent.intent} (${intent.confidence} confidence, evidence ${intent.score})` +
+            (intent.secondary ? `, also touches ${intent.secondary}` : "") +
+            (intent.stance === "avoid" ? ". You seem to want to AVOID what you name, not pursue it." : "."),
+      evidence: intentAnalysis.ranking.map(
+        (r) =>
+          `${r.key} ${r.score}: ` +
+          r.hits
+            .map((h) => `"${h.matched}"${h.negated ? (h.effective === 0 ? " (negated, ignored)" : h.avoids ? " (negated, wanting to avoid it)" : " (negated)") : ""}`)
+            .join(", "),
+      ),
     },
     {
       key: "MANU",
@@ -156,7 +163,8 @@ export function runEngine(input: string, options: EngineOptions = {}): EngineRes
   const { latitude, longitude, useAstrology = true } = options;
 
   const { text: cleanInput, removed } = applyEthicalFilter(input);
-  const intentResult = analyzeIntent(cleanInput);
+  const intentAnalysis = detectIntent(cleanInput);
+  const intentResult = intentAnalysis.result;
   const emotionResult = analyzeEmotion(cleanInput);
   const simulationResult = simulatePaths(intentResult.intent, emotionResult.emotion);
   const finalVerdict = deriveFinalVerdict(simulationResult, emotionResult);
@@ -170,6 +178,6 @@ export function runEngine(input: string, options: EngineOptions = {}): EngineRes
     simulation: simulationResult,
     finalVerdict,
     astro: astroResult,
-    modules: buildModuleReports(cleanInput, removed, intentResult, emotionResult, simulationResult, astroResult, useAstrology),
+    modules: buildModuleReports(cleanInput, removed, intentAnalysis, emotionResult, simulationResult, astroResult, useAstrology),
   };
 }

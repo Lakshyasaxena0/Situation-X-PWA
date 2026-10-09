@@ -275,7 +275,7 @@ ${situation.replace(/[<>]/g, "")}
 </situation>
 
 Hints from the app's specialised modules (they are keyword-based and can be wrong; use your own understanding of the text over them):
-- AJIT (intent): ${engine.intent.intent}, confidence ${engine.intent.confidence}
+- AJIT (intent): ${engine.intent.intent}, confidence ${engine.intent.confidence}${engine.intent.secondary ? `, also touches ${engine.intent.secondary}` : ""}${engine.intent.stance === "avoid" ? ", and the person seems to want to AVOID what they name" : ""}
 - MANU (emotion): ${engine.emotion.emotion}, intensity ${engine.emotion.intensity}
 - SIVI (path simulation): best path "${engine.simulation.bestPath.action}" (risk ${engine.simulation.bestPath.risk}, stability ${engine.simulation.bestPath.stability}, outcome ${engine.simulation.bestPath.outcome}); alternatives: ${alternatives || "none"}
 
