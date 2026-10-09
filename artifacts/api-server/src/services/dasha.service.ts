@@ -8,13 +8,22 @@
 //   - A dasha year is 365.25 days (JHora's default; the 360-day "savana" year is not used).
 //   - Vimshottari: balance of the first Mahadasha from the Moon's exact position in its nakshatra;
 //     sub-periods in proportion to the planets' years, starting with the period lord.
-//   - Chara dasha (Jaimini): signs run from the Lagna, direct when the Lagna is an odd sign and
-//     reverse when it is an even sign. A sign's years = signs counted from it to its lord, minus
-//     one (counted forward from Aries/Taurus/Gemini/Libra/Scorpio/Sagittarius, backward from the
-//     other six); a lord in its own sign gives 12. Scorpio and Aquarius take the stronger of their
-//     two lords. Antardashas are the 12 signs, each 1/12 of the Mahadasha, in the same direction
-//     starting from the sign after the dasha sign (the dasha sign comes last). Only the first
-//     cycle of 12 Mahadashas is computed.
+//   - Chara dasha (Jaimini), the Jaimini Upadesa / K.N. Rao convention:
+//       * Order of the Mahadashas: from the Lagna, direct for Aries, Leo, Virgo, Libra, Aquarius and
+//         Pisces lagnas, reverse for Taurus, Gemini, Cancer, Scorpio, Sagittarius and Capricorn.
+//       * A sign's years = signs counted from it to its lord, minus one; counted forward from
+//         Aries/Taurus/Gemini/Libra/Scorpio/Sagittarius, backward from the other six; a lord in its
+//         own sign gives 12.
+//       * Scorpio (Mars & Ketu) and Aquarius (Saturn & Rahu): if one of the two sits in the sign, the
+//         OTHER one is used; if both sit in it, 12 years; if neither, the stronger one.
+//       * Exaltation / debilitation of the lord (+1 / -1 year) is taught by some schools and is OFF by
+//         default; `exaltationAdjustment: true` switches it on.
+//       * Antardashas: the 12 signs, each 1/12 of the Mahadasha, counted in the direction of the
+//         Mahadasha sign itself (forward for Aries/Taurus/Gemini/Libra/Scorpio/Sagittarius, backward
+//         for the rest), starting from the next sign in that direction; the dasha sign is last.
+//       * Only the first cycle of 12 Mahadashas is computed.
+//     These rules were checked against a published worked example (Gemini lagna) in the tests, not
+//     against JHora itself.
 
 export const NAKSHATRA_SPAN = 360 / 27;
 export const NAKSHATRA_LORDS = ["Ketu", "Venus", "Sun", "Moon", "Mars", "Rahu", "Jupiter", "Saturn", "Mercury"] as const;
@@ -119,10 +128,11 @@ const signOf = (lon: number) => Math.floor((((lon % 360) + 360) % 360) / 30);
 /** Aries, Taurus, Gemini, Libra, Scorpio, Sagittarius count forward; the other six count backward. */
 const COUNTS_FORWARD = [true, true, true, false, false, false, true, true, true, false, false, false];
 
-/** Which lord of a dual-lord sign is stronger: sits in the sign, has more planets with it, higher degree. */
-function strongerLord(signIndex: number, classical: string, coLord: string, lon: Record<string, number>): string {
-  const inSign = (p: string) => (signOf(lon[p]) === signIndex ? 1 : 0);
-  if (inSign(classical) !== inSign(coLord)) return inSign(classical) ? classical : coLord;
+/** Aries, Leo, Virgo, Libra, Aquarius and Pisces lagnas run their Mahadashas forward; the other six backward. */
+const LAGNA_RUNS_FORWARD = [true, false, false, false, true, true, true, false, false, false, true, true];
+
+/** Which of two lords is stronger when neither sits in the sign: more planets with it, then higher degree. */
+function strongerLord(classical: string, coLord: string, lon: Record<string, number>): string {
   const companions = (p: string) =>
     Object.keys(lon).filter((q) => q !== p && signOf(lon[q]) === signOf(lon[p])).length;
   if (companions(classical) !== companions(coLord)) return companions(classical) > companions(coLord) ? classical : coLord;
@@ -131,18 +141,36 @@ function strongerLord(signIndex: number, classical: string, coLord: string, lon:
   return classical;
 }
 
-export function charaSignYears(signIndex: number, lon: Record<string, number>): number {
-  let lord = CLASSICAL_LORDS[signIndex];
-  if (signIndex === 7 && lon.Ketu !== undefined) lord = strongerLord(signIndex, "Mars", "Ketu", lon);
-  if (signIndex === 10 && lon.Rahu !== undefined) lord = strongerLord(signIndex, "Saturn", "Rahu", lon);
-  const lordSign = signOf(lon[lord]);
-  const steps = COUNTS_FORWARD[signIndex] ? (lordSign - signIndex + 12) % 12 : (signIndex - lordSign + 12) % 12;
-  return steps === 0 ? 12 : steps;
+const EXALTATION_SIGN: Record<string, number> = { Sun: 0, Moon: 1, Mars: 9, Mercury: 5, Jupiter: 3, Venus: 11, Saturn: 6 };
+
+/** The lord whose position sets the years, or "both" when both lords of Scorpio / Aquarius sit in the sign (12 years). */
+function charaLordOf(signIndex: number, lon: Record<string, number>): string {
+  const classical = CLASSICAL_LORDS[signIndex];
+  const coLord = signIndex === 7 ? "Ketu" : signIndex === 10 ? "Rahu" : null;
+  if (!coLord || lon[coLord] === undefined) return classical;
+  const here = (p: string) => signOf(lon[p]) === signIndex;
+  if (here(classical) && here(coLord)) return "both";
+  if (here(classical)) return coLord;
+  if (here(coLord)) return classical;
+  return strongerLord(classical, coLord, lon);
 }
 
-export function charaDashaAt(input: CharaInput, birth: Date, at: Date): CharaDasha | null {
+export function charaSignYears(signIndex: number, lon: Record<string, number>, exaltationAdjustment = false): number {
+  const lord = charaLordOf(signIndex, lon);
+  if (lord === "both") return 12;
+  const lordSign = signOf(lon[lord]);
+  const steps = COUNTS_FORWARD[signIndex] ? (lordSign - signIndex + 12) % 12 : (signIndex - lordSign + 12) % 12;
+  let years = steps === 0 ? 12 : steps;
+  if (exaltationAdjustment && lord in EXALTATION_SIGN) {
+    if (lordSign === EXALTATION_SIGN[lord]) years += 1;
+    else if (lordSign === (EXALTATION_SIGN[lord] + 6) % 12) years -= 1;
+  }
+  return Math.max(1, years);
+}
+
+export function charaDashaAt(input: CharaInput, birth: Date, at: Date, options: { exaltationAdjustment?: boolean } = {}): CharaDasha | null {
   const lagna = signOf(input.lagnaLongitude);
-  const direct = lagna % 2 === 0; // Aries (index 0) is an odd sign
+  const direct = LAGNA_RUNS_FORWARD[lagna];
   const step = direct ? 1 : -1;
   const signAt = (i: number) => (lagna + step * i + 120) % 12;
 
@@ -150,7 +178,7 @@ export function charaDashaAt(input: CharaInput, birth: Date, at: Date): CharaDas
   let cursor = birth.getTime();
   for (let i = 0; i < 12; i++) {
     const idx = signAt(i);
-    const years = charaSignYears(idx, input.longitudes);
+    const years = charaSignYears(idx, input.longitudes, options.exaltationAdjustment);
     const endMs = cursor + years * DASHA_YEAR_MS;
     sequence.push({ sign: SIGNS[idx], signIndex: idx, years, startDate: dateOnly(cursor), endDate: dateOnly(endMs), startMs: cursor, endMs });
     cursor = endMs;
@@ -161,13 +189,14 @@ export function charaDashaAt(input: CharaInput, birth: Date, at: Date): CharaDas
 
   const sub = (maha.endMs - maha.startMs) / 12;
   const antarIdx = Math.min(11, Math.floor((t - maha.startMs) / sub));
-  // Sub-periods start from the sign after the dasha sign, in the same direction; the dasha sign is last.
-  const antarSign = (maha.signIndex + step * (antarIdx + 1) + 120) % 12;
+  // Sub-periods run in the direction of the dasha sign itself, from the next sign; the dasha sign is last.
+  const antarStep = COUNTS_FORWARD[maha.signIndex] ? 1 : -1;
+  const antarSign = (maha.signIndex + antarStep * (antarIdx + 1) + 120) % 12;
   const antarStart = maha.startMs + antarIdx * sub;
   const strip = ({ startMs: _s, endMs: _e, ...rest }: (typeof sequence)[number]): CharaPeriod => rest;
 
   return {
-    school: "Jaimini Chara dasha (odd/even Lagna direction, stronger lord for Scorpio and Aquarius)",
+    school: "Jaimini Chara dasha (Jaimini Upadesa / K.N. Rao convention; no exaltation adjustment)",
     direction: direct ? "direct" : "reverse",
     mahadasha: strip(maha),
     antardasha: {
@@ -179,7 +208,7 @@ export function charaDashaAt(input: CharaInput, birth: Date, at: Date): CharaDas
     },
     sequence: sequence.map(strip),
     notes: [
-      "Schools differ on the direction rule, the starting sign of antardashas and the second cycle; this is one common convention.",
+      "Schools differ on the direction rule, exaltation adjustments, the starting sign of antardashas and the second cycle; this is one common convention, checked against a published worked example and not against JHora itself.",
       "A dasha year is 365.25 days.",
     ],
   };

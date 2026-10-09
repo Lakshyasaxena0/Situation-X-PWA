@@ -78,20 +78,56 @@ test("Chara: years = signs counted to the lord minus one (forward from odd signs
   assert.equal(charaSignYears(3, planets), 9); // Cancer (backward) -> Moon in Libra: 10th backward, 9 years
 });
 
-test("Chara: Scorpio and Aquarius use the stronger lord", () => {
-  // Mars in Scorpio itself beats Ketu elsewhere: 12 years
-  const a = lon({ Sun: 0, Moon: 0, Mars: 7, Mercury: 0, Jupiter: 0, Venus: 0, Saturn: 0, Rahu: 0, Ketu: 11 });
-  assert.equal(charaSignYears(7, a), 12);
-  // Ketu in Scorpio, Mars in Aries: Ketu sits in the sign so it is the lord used: 12 years
+test("Chara: Scorpio / Aquarius - the lord that sits in the sign is skipped, both in the sign gives 12, neither: the stronger", () => {
+  // Mars in Scorpio itself: the other lord (Ketu in Pisces) is used. Scorpio counts forward: 4 signs on = 4 years
+  const a = lon({ Sun: 0, Moon: 0, Mars: 7, Mercury: 0, Jupiter: 0, Venus: 0, Saturn: 0, Rahu: 5, Ketu: 11 });
+  assert.equal(charaSignYears(7, a), 4);
+  // Ketu in Scorpio, Mars in Aries: Mars is used. Scorpio -> Aries forward: 6th sign, 5 years
   const b = lon({ Sun: 3, Moon: 3, Mars: 0, Mercury: 5, Jupiter: 5, Venus: 5, Saturn: 5, Rahu: 1, Ketu: 7 });
-  assert.equal(charaSignYears(7, b), 12);
+  assert.equal(charaSignYears(7, b), 5);
+  // Both lords in the sign: 12 years
+  const both = lon({ Sun: 3, Moon: 3, Mars: 7, Mercury: 5, Jupiter: 5, Venus: 5, Saturn: 5, Rahu: 1, Ketu: 7 });
+  assert.equal(charaSignYears(7, both), 12);
   // Neither in the sign: the one with more company wins (Mars in Leo with Sun and Moon beats Ketu alone in Pisces)
   const c = lon({ Sun: 4, Moon: 4, Mars: 4, Mercury: 5, Jupiter: 5, Venus: 5, Saturn: 5, Rahu: 1, Ketu: 11 });
-  // Scorpio counts forward: Scorpio -> Leo is 10 signs, so 9 years
-  assert.equal(charaSignYears(7, c), 9);
+  assert.equal(charaSignYears(7, c), 9); // Scorpio -> Leo is the 10th sign
+  // Aquarius follows the same rule with Saturn and Rahu: Rahu in Aquarius, so Saturn (Libra) is used; backward 5th -> 4 years
+  const d = lon({ Sun: 0, Moon: 0, Mars: 0, Mercury: 5, Jupiter: 5, Venus: 5, Saturn: 6, Rahu: 10, Ketu: 4 });
+  assert.equal(charaSignYears(10, d), 4);
 });
 
-test("Chara: odd Lagna runs direct, even Lagna runs reverse, periods start at birth and tile", () => {
+test("Chara: exaltation / debilitation adjustment is off by default and +1 / -1 when switched on", () => {
+  // Aries -> Mars in Capricorn (exalted): 10th sign, 9 years; 10 with the adjustment
+  const exalted = lon({ Sun: 0, Moon: 0, Mars: 9, Mercury: 0, Jupiter: 0, Venus: 0, Saturn: 0, Rahu: 0, Ketu: 6 });
+  assert.equal(charaSignYears(0, exalted), 9);
+  assert.equal(charaSignYears(0, exalted, true), 10);
+  // Aries -> Mars in Cancer (debilitated): 4th sign, 3 years; 2 with the adjustment
+  const debil = lon({ Sun: 0, Moon: 0, Mars: 3, Mercury: 0, Jupiter: 0, Venus: 0, Saturn: 0, Rahu: 0, Ketu: 6 });
+  assert.equal(charaSignYears(0, debil), 3);
+  assert.equal(charaSignYears(0, debil, true), 2);
+});
+
+test("Chara: matches a published worked example (Gemini lagna, Upadesa/K.N. Rao convention)", () => {
+  // Mercury Aquarius, Venus/Mars/Sun Pisces, Jupiter Taurus, Saturn Libra, Moon Cancer
+  const planets = lon({ Sun: 11, Moon: 3, Mars: 11, Mercury: 10, Jupiter: 1, Venus: 11, Saturn: 6 });
+  const d = charaDashaAt({ longitudes: planets, lagnaLongitude: 75 }, birth, after(0.1))!;
+  assert.equal(d.direction, "reverse");
+  assert.deepEqual(d.sequence.map((p) => p.sign), ["Gemini", "Taurus", "Aries", "Pisces", "Aquarius", "Capricorn", "Sagittarius", "Scorpio", "Libra", "Virgo", "Leo", "Cancer"]);
+  assert.deepEqual(d.sequence.map((p) => p.years), [8, 10, 11, 10, 4, 3, 5, 4, 5, 7, 5, 12]);
+});
+
+test("Chara: antardashas follow the direction of the dasha sign itself", () => {
+  const planets = lon({ Sun: 11, Moon: 3, Mars: 11, Mercury: 10, Jupiter: 1, Venus: 11, Saturn: 6 });
+  // Gemini lagna: Gemini counts forward -> antardashas start with Cancer; Taurus counts forward too -> Gemini
+  const g = charaDashaAt({ longitudes: planets, lagnaLongitude: 75 }, birth, after(0.01))!;
+  assert.equal(g.antardasha.sign, "Cancer");
+  // Pisces mahadasha (4th, 10 years) counts backward -> its first antardasha is Aquarius
+  const p = charaDashaAt({ longitudes: planets, lagnaLongitude: 75 }, birth, after(8 + 10 + 11 + 0.01))!;
+  assert.equal(p.mahadasha.sign, "Pisces");
+  assert.equal(p.antardasha.sign, "Aquarius");
+});
+
+test("Chara: Aries/Leo/Virgo/Libra/Aquarius/Pisces lagnas run direct, the others reverse, periods start at birth and tile", () => {
   const planets = lon({ Sun: 0, Moon: 6, Mars: 4, Mercury: 2, Jupiter: 0, Venus: 2, Saturn: 0, Rahu: 0, Ketu: 6 });
   const direct = charaDashaAt({ longitudes: planets, lagnaLongitude: 5 }, birth, after(0.1))!;
   assert.equal(direct.direction, "direct");
