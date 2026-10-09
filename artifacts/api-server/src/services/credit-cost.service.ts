@@ -24,6 +24,7 @@ export const MODULE_COSTS = {
   ajit: 1,            // intent detection
   manu: 1,            // emotion detection
   sivi: 2,            // path simulation
+  rsmi: 1,            // silence reading (only when the question mentions a silence)
 } as const;
 
 export const AI_COSTS: Record<ReasoningDepth, number> = { standard: 4, deep: 8, expert: 14 };
@@ -35,7 +36,7 @@ export const DEPTH_LABELS: Record<ReasoningDepth, string> = {
 };
 
 export type CostLine = {
-  key: "astro" | "ajit" | "manu" | "sivi" | "ai";
+  key: "astro" | "ajit" | "manu" | "sivi" | "rsmi" | "ai";
   label: string;
   credits: number;
   note: string;
@@ -99,6 +100,9 @@ export function computeCost(
   }
   if (engine.emotion.score > 0) {
     lines.push({ key: "manu", label: "MANU - emotion", credits: MODULE_COSTS.manu, note: `Emotional tone detected: ${engine.emotion.emotion}.` });
+  }
+  if (engine.silence) {
+    lines.push({ key: "rsmi", label: "RSMI - silence", credits: MODULE_COSTS.rsmi, note: "Meanings of the silence you described." });
   }
   lines.push({ key: "sivi", label: "SIVI - path simulation", credits: MODULE_COSTS.sivi, note: "Compares the possible paths." });
   if (options.useAi) {

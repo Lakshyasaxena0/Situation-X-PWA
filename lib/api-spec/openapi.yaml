@@ -50,6 +50,43 @@ paths:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
 
+  /analysis/clarify:
+    post:
+      operationId: clarifySituation
+      tags: [analysis]
+      summary: The next short question to ask before analysing (free). One at a time, at most four.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ClarifyRequest"
+      responses:
+        "200":
+          description: The next question, or done
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ClarifyResponse"
+        "400":
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "422":
+          description: The request was refused by the safety filter
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "429":
+          description: Too many questions asked in a short time
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
   /analysis/analyze:
     post:
       operationId: analyzeSituation
@@ -528,6 +565,12 @@ components:
         useAstrology:
           type: boolean
           description: Use the astrology lens (default true). When false the astrology is not used in the answer and is not charged.
+        clarifications:
+          type: array
+          maxItems: 4
+          description: Questions the app asked before the analysis and the person's answers; they are added to the situation.
+          items:
+            $ref: "#/components/schemas/Clarification"
         fromPath:
           type: object
           description: Run one of the paths SIVI listed in an earlier analysis of yours as a new question. The server builds the question from that analysis (the situation text is ignored) and charges half price. Looking at a path costs nothing.
@@ -543,6 +586,140 @@ components:
             - pathIndex
       required:
         - situation
+
+    Clarification:
+      type: object
+      properties:
+        question:
+          type: string
+          maxLength: 300
+        answer:
+          type: string
+          maxLength: 500
+      required:
+        - question
+        - answer
+
+    ClarifyRequest:
+      type: object
+      properties:
+        situation:
+          type: string
+          description: The situation written so far (min 10 characters)
+        answers:
+          type: array
+          maxItems: 4
+          items:
+            $ref: "#/components/schemas/Clarification"
+        language:
+          type: string
+          enum: [auto, en, hi, hinglish]
+        useAi:
+          type: boolean
+      required:
+        - situation
+
+    ClarifyResponse:
+      type: object
+      properties:
+        done:
+          type: boolean
+          description: True when enough is known (or the limit of questions is reached)
+        question:
+          type: object
+          properties:
+            question:
+              type: string
+            why:
+              type: string
+            choices:
+              type: array
+              items:
+                type: string
+          required:
+            - question
+            - choices
+        round:
+          type: integer
+          description: How many questions have been answered so far
+        max:
+          type: integer
+        source:
+          type: string
+          enum: [ai, rules]
+      required:
+        - done
+        - round
+        - max
+
+    SilenceMeaning:
+      type: object
+      properties:
+        meaning:
+          type: string
+        likelihood:
+          type: string
+          enum: [more likely, possible, less likely]
+        why:
+          type: string
+      required:
+        - meaning
+        - likelihood
+        - why
+
+    SilenceReading:
+      type: object
+      description: RSMI - the meanings a silence described in the question can have (possibilities, not mind reading)
+      properties:
+        subject:
+          type: string
+          enum: [other, self]
+        channel:
+          type: string
+          enum: [in_person, message, call, organisation]
+        who:
+          type: string
+          nullable: true
+        trigger:
+          type: string
+        duration:
+          type: object
+          properties:
+            bucket:
+              type: string
+              enum: [moments, minutes, hours, days, weeks, unknown]
+            text:
+              type: string
+              nullable: true
+          required:
+            - bucket
+        meanings:
+          type: array
+          items:
+            $ref: "#/components/schemas/SilenceMeaning"
+        unknowns:
+          type: array
+          items:
+            type: string
+        checks:
+          type: array
+          items:
+            type: string
+        caution:
+          type: string
+        source:
+          type: string
+          enum: [rules, ai]
+      required:
+        - subject
+        - channel
+        - trigger
+        - duration
+        - meanings
+        - unknowns
+        - checks
+        - caution
+        - source
 
     TranslateRequest:
       type: object
@@ -573,12 +750,12 @@ components:
       properties:
         key:
           type: string
-          enum: [AJIT, MANU, FILTER, SIVI, ASTRO, AI]
+          enum: [AJIT, MANU, FILTER, SIVI, ASTRO, RSMI, AI]
         name:
           type: string
         area:
           type: string
-          enum: [intent, emotion, paths, astrology, synthesis]
+          enum: [intent, emotion, paths, astrology, silence, synthesis]
         role:
           type: string
           description: What the module looks at and how it understands the question
@@ -1148,6 +1325,12 @@ components:
           $ref: "#/components/schemas/SimulationResult"
         safety:
           $ref: "#/components/schemas/SafetyNotice"
+        silence:
+          $ref: "#/components/schemas/SilenceReading"
+        clarifications:
+          type: array
+          items:
+            $ref: "#/components/schemas/Clarification"
         finalVerdict:
           $ref: "#/components/schemas/FinalVerdict"
         astro:
@@ -1515,7 +1698,7 @@ components:
       properties:
         key:
           type: string
-          enum: [astro, ajit, manu, sivi, ai]
+          enum: [astro, ajit, manu, sivi, rsmi, ai]
         label:
           type: string
         credits:

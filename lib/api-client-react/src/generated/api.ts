@@ -22,6 +22,8 @@ import type {
   AnalysisResult,
   AnalyzeRequest,
   BillingPlansResponse,
+  ClarifyRequest,
+  ClarifyResponse,
   CostEstimate,
   CreateFeedbackRequest,
   CreateOrderRequest,
@@ -213,6 +215,92 @@ export const useEstimateAnalysisCost = <
   TContext
 > => {
   return useMutation(getEstimateAnalysisCostMutationOptions(options));
+};
+
+/**
+ * @summary The next short question to ask before analysing (free). One at a time, at most four.
+ */
+export const getClarifySituationUrl = () => {
+  return `/api/analysis/clarify`;
+};
+
+export const clarifySituation = async (
+  clarifyRequest: ClarifyRequest,
+  options?: RequestInit,
+): Promise<ClarifyResponse> => {
+  return customFetch<ClarifyResponse>(getClarifySituationUrl(), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(clarifyRequest),
+  });
+};
+
+export const getClarifySituationMutationOptions = <
+  TError = ErrorType<ErrorResponse>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof clarifySituation>>,
+    TError,
+    { data: BodyType<ClarifyRequest> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof clarifySituation>>,
+  TError,
+  { data: BodyType<ClarifyRequest> },
+  TContext
+> => {
+  const mutationKey = ["clarifySituation"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof clarifySituation>>,
+    { data: BodyType<ClarifyRequest> }
+  > = (props) => {
+    const { data } = props ?? {};
+
+    return clarifySituation(data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type ClarifySituationMutationResult = NonNullable<
+  Awaited<ReturnType<typeof clarifySituation>>
+>;
+export type ClarifySituationMutationBody = BodyType<ClarifyRequest>;
+export type ClarifySituationMutationError = ErrorType<ErrorResponse>;
+
+/**
+ * @summary The next short question to ask before analysing (free). One at a time, at most four.
+ */
+export const useClarifySituation = <
+  TError = ErrorType<ErrorResponse>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof clarifySituation>>,
+    TError,
+    { data: BodyType<ClarifyRequest> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof clarifySituation>>,
+  TError,
+  { data: BodyType<ClarifyRequest> },
+  TContext
+> => {
+  return useMutation(getClarifySituationMutationOptions(options));
 };
 
 /**

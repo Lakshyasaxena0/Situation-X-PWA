@@ -3,6 +3,7 @@ import { detectEmotion, type EmotionAnalysis, type EmotionResult } from "./manu.
 import { simulatePaths, type SimulationResult } from "./sivi.service.js";
 import { analyzeAstro, type AstroResult } from "./astro.service.js";
 import type { Tuning } from "./prashna.service.js";
+import { detectSilence, type SilenceReading } from "./rsmi.service.js";
 import { assessSafety, type SafetyDecision } from "./safety.service.js";
 import type { Language } from "./analysis-options.js";
 
@@ -16,6 +17,8 @@ export type EngineResponse = {
     riskLevel: "low" | "medium" | "high";
   };
   astro: AstroResult;
+  /** RSMI: the meanings a silence in the question can have; null when the question mentions no silence. */
+  silence: SilenceReading | null;
   /** What the ethical filter decided about the message (read in context; nothing is deleted from the text). */
   safety: SafetyDecision;
   /** What each module did for this question: whether it was active, its verdict and the evidence. */
@@ -23,10 +26,10 @@ export type EngineResponse = {
 };
 
 export type ModuleReport = {
-  key: "AJIT" | "MANU" | "FILTER" | "SIVI" | "ASTRO" | "AI";
+  key: "AJIT" | "MANU" | "FILTER" | "SIVI" | "ASTRO" | "RSMI" | "AI";
   name: string;
   /** Which part of the analysis this module feeds. */
-  area: "intent" | "emotion" | "paths" | "astrology" | "synthesis";
+  area: "intent" | "emotion" | "paths" | "astrology" | "silence" | "synthesis";
   /** What this module looks at and how it understands the question (plain language). */
   role: string;
   active: boolean;
@@ -93,6 +96,24 @@ function filterReport(safety: SafetyDecision): ModuleReport {
   };
 }
 
+/** The RSMI card: the silence it found and the meanings it ranks. Only present when the question mentions a silence. */
+export function rsmiReport(silence: SilenceReading): ModuleReport {
+  const whose = silence.subject === "self" ? "Your silence" : `${silence.who ? silence.who[0].toUpperCase() + silence.who.slice(1) : "The other person"}'s silence`;
+  const top = silence.meanings[0];
+  return {
+    key: "RSMI",
+    name: "RSMI - Reasonable Silence Module",
+    area: "silence",
+    role: "Notices when your question mentions a silence (someone went quiet, did not reply, stopped talking). It does not read minds: it lists the reasonable meanings that silence can have, ranks them from the facts you gave (who, after what, how long, any signs of how it felt) and says what to check before believing any of them.",
+    active: true,
+    verdict: `${whose} ${silence.channel === "in_person" ? "in conversation" : silence.channel === "organisation" ? "from an organisation" : silence.channel === "call" ? "on calls" : "in messages"}, after ${silence.trigger}. Most likely: ${top.meaning}.`,
+    evidence: [
+      ...silence.meanings.map((m) => `${m.likelihood}: ${m.meaning}`),
+      ...(silence.unknowns.length ? [`Not known yet: ${silence.unknowns.join("; ")}`] : []),
+    ],
+  };
+}
+
 function buildModuleReports(
   safety: SafetyDecision,
   intentAnalysis: IntentAnalysis,
@@ -100,6 +121,7 @@ function buildModuleReports(
   simulation: SimulationResult,
   astro: AstroResult,
   useAstrology: boolean,
+  silence: SilenceReading | null,
 ): ModuleReport[] {
   const emotion = emotionAnalysis.result;
   const intent = intentAnalysis.result;
@@ -111,6 +133,7 @@ function buildModuleReports(
 
   return [
     filterReport(safety),
+    ...(silence ? [rsmiReport(silence)] : []),
     {
       key: "AJIT",
       role: "Reads your words in context (English, Hinglish, Hindi): topic words, negation (\"I don't want to fight\" is not wanting to fight), intensity and which sentence is the question, then decides what it is about. It still works from words, so the AI re-reads your full text for meaning.",
@@ -198,6 +221,7 @@ export function runEngine(input: string, options: EngineOptions = {}): EngineRes
   const emotionAnalysis = detectEmotion(cleanInput);
   const emotionResult = emotionAnalysis.result;
   const simulationResult = simulatePaths(intentResult, emotionResult, cleanInput);
+  const silence = detectSilence(cleanInput);
   const finalVerdict = deriveFinalVerdict(simulationResult, emotionResult);
   // ASTRO casts the Prashna charts (D1, D3, D9, D10) for the moment of the question and reads
   // the ones that matter for the intent AJIT detected. No birth details are involved.
@@ -209,7 +233,8 @@ export function runEngine(input: string, options: EngineOptions = {}): EngineRes
     simulation: simulationResult,
     finalVerdict,
     astro: astroResult,
+    silence,
     safety,
-    modules: buildModuleReports(safety, intentAnalysis, emotionAnalysis, simulationResult, astroResult, useAstrology),
+    modules: buildModuleReports(safety, intentAnalysis, emotionAnalysis, simulationResult, astroResult, useAstrology, silence),
   };
 }

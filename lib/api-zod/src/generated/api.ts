@@ -17,6 +17,12 @@ export const HealthCheckResponse = zod.object({
 /**
  * @summary Exact credit cost of analysing this situation (modules involved + reasoning level), before anything is charged
  */
+export const estimateAnalysisCostBodyClarificationsItemQuestionMax = 300;
+
+export const estimateAnalysisCostBodyClarificationsItemAnswerMax = 500;
+
+export const estimateAnalysisCostBodyClarificationsMax = 4;
+
 export const estimateAnalysisCostBodyFromPathPathIndexMin = 0;
 
 export const EstimateAnalysisCostBody = zod.object({
@@ -59,6 +65,22 @@ export const EstimateAnalysisCostBody = zod.object({
     .describe(
       "Use the astrology lens (default true). When false the astrology is not used in the answer and is not charged.",
     ),
+  clarifications: zod
+    .array(
+      zod.object({
+        question: zod
+          .string()
+          .max(estimateAnalysisCostBodyClarificationsItemQuestionMax),
+        answer: zod
+          .string()
+          .max(estimateAnalysisCostBodyClarificationsItemAnswerMax),
+      }),
+    )
+    .max(estimateAnalysisCostBodyClarificationsMax)
+    .optional()
+    .describe(
+      "Questions the app asked before the analysis and the person's answers; they are added to the situation.",
+    ),
   fromPath: zod
     .object({
       analysisId: zod.number(),
@@ -80,7 +102,7 @@ export const EstimateAnalysisCostResponse = zod.object({
   depthChosen: zod.enum(["auto", "user"]),
   lines: zod.array(
     zod.object({
-      key: zod.enum(["astro", "ajit", "manu", "sivi", "ai"]),
+      key: zod.enum(["astro", "ajit", "manu", "sivi", "rsmi", "ai"]),
       label: zod.string(),
       credits: zod.number(),
       note: zod.string(),
@@ -94,8 +116,58 @@ export const EstimateAnalysisCostResponse = zod.object({
 });
 
 /**
+ * @summary The next short question to ask before analysing (free). One at a time, at most four.
+ */
+export const clarifySituationBodyAnswersItemQuestionMax = 300;
+
+export const clarifySituationBodyAnswersItemAnswerMax = 500;
+
+export const clarifySituationBodyAnswersMax = 4;
+
+export const ClarifySituationBody = zod.object({
+  situation: zod
+    .string()
+    .describe("The situation written so far (min 10 characters)"),
+  answers: zod
+    .array(
+      zod.object({
+        question: zod.string().max(clarifySituationBodyAnswersItemQuestionMax),
+        answer: zod.string().max(clarifySituationBodyAnswersItemAnswerMax),
+      }),
+    )
+    .max(clarifySituationBodyAnswersMax)
+    .optional(),
+  language: zod.enum(["auto", "en", "hi", "hinglish"]).optional(),
+  useAi: zod.boolean().optional(),
+});
+
+export const ClarifySituationResponse = zod.object({
+  done: zod
+    .boolean()
+    .describe(
+      "True when enough is known (or the limit of questions is reached)",
+    ),
+  question: zod
+    .object({
+      question: zod.string(),
+      why: zod.string().optional(),
+      choices: zod.array(zod.string()),
+    })
+    .optional(),
+  round: zod.number().describe("How many questions have been answered so far"),
+  max: zod.number(),
+  source: zod.enum(["ai", "rules"]).optional(),
+});
+
+/**
  * @summary Analyze a situation
  */
+export const analyzeSituationBodyClarificationsItemQuestionMax = 300;
+
+export const analyzeSituationBodyClarificationsItemAnswerMax = 500;
+
+export const analyzeSituationBodyClarificationsMax = 4;
+
 export const analyzeSituationBodyFromPathPathIndexMin = 0;
 
 export const AnalyzeSituationBody = zod.object({
@@ -138,6 +210,22 @@ export const AnalyzeSituationBody = zod.object({
     .describe(
       "Use the astrology lens (default true). When false the astrology is not used in the answer and is not charged.",
     ),
+  clarifications: zod
+    .array(
+      zod.object({
+        question: zod
+          .string()
+          .max(analyzeSituationBodyClarificationsItemQuestionMax),
+        answer: zod
+          .string()
+          .max(analyzeSituationBodyClarificationsItemAnswerMax),
+      }),
+    )
+    .max(analyzeSituationBodyClarificationsMax)
+    .optional()
+    .describe(
+      "Questions the app asked before the analysis and the person's answers; they are added to the situation.",
+    ),
   fromPath: zod
     .object({
       analysisId: zod.number(),
@@ -151,6 +239,10 @@ export const AnalyzeSituationBody = zod.object({
       "Run one of the paths SIVI listed in an earlier analysis of yours as a new question. The server builds the question from that analysis (the situation text is ignored) and charges half price. Looking at a path costs nothing.",
     ),
 });
+
+export const analyzeSituationResponseClarificationsItemQuestionMax = 300;
+
+export const analyzeSituationResponseClarificationsItemAnswerMax = 500;
 
 export const AnalyzeSituationResponse = zod.object({
   id: zod.number(),
@@ -251,6 +343,51 @@ export const AnalyzeSituationResponse = zod.object({
     .describe(
       'What the ethical filter decided about the message. \"support\" and \"redirect\" analyses carry a message that is shown to the person; blocked requests are refused with HTTP 422 and are never analysed or charged.',
     ),
+  silence: zod
+    .object({
+      subject: zod.enum(["other", "self"]),
+      channel: zod.enum(["in_person", "message", "call", "organisation"]),
+      who: zod.string().nullish(),
+      trigger: zod.string(),
+      duration: zod.object({
+        bucket: zod.enum([
+          "moments",
+          "minutes",
+          "hours",
+          "days",
+          "weeks",
+          "unknown",
+        ]),
+        text: zod.string().nullish(),
+      }),
+      meanings: zod.array(
+        zod.object({
+          meaning: zod.string(),
+          likelihood: zod.enum(["more likely", "possible", "less likely"]),
+          why: zod.string(),
+        }),
+      ),
+      unknowns: zod.array(zod.string()),
+      checks: zod.array(zod.string()),
+      caution: zod.string(),
+      source: zod.enum(["rules", "ai"]),
+    })
+    .optional()
+    .describe(
+      "RSMI - the meanings a silence described in the question can have (possibilities, not mind reading)",
+    ),
+  clarifications: zod
+    .array(
+      zod.object({
+        question: zod
+          .string()
+          .max(analyzeSituationResponseClarificationsItemQuestionMax),
+        answer: zod
+          .string()
+          .max(analyzeSituationResponseClarificationsItemAnswerMax),
+      }),
+    )
+    .optional(),
   finalVerdict: zod.object({
     recommendedAction: zod.string(),
     reasoning: zod.string(),
@@ -478,13 +615,22 @@ export const AnalyzeSituationResponse = zod.object({
     .array(
       zod
         .object({
-          key: zod.enum(["AJIT", "MANU", "FILTER", "SIVI", "ASTRO", "AI"]),
+          key: zod.enum([
+            "AJIT",
+            "MANU",
+            "FILTER",
+            "SIVI",
+            "ASTRO",
+            "RSMI",
+            "AI",
+          ]),
           name: zod.string(),
           area: zod.enum([
             "intent",
             "emotion",
             "paths",
             "astrology",
+            "silence",
             "synthesis",
           ]),
           role: zod
@@ -520,7 +666,7 @@ export const AnalyzeSituationResponse = zod.object({
       depthChosen: zod.enum(["auto", "user"]),
       lines: zod.array(
         zod.object({
-          key: zod.enum(["astro", "ajit", "manu", "sivi", "ai"]),
+          key: zod.enum(["astro", "ajit", "manu", "sivi", "rsmi", "ai"]),
           label: zod.string(),
           credits: zod.number(),
           note: zod.string(),
@@ -546,6 +692,10 @@ export const GetAnalysisHistoryQueryParams = zod.object({
   limit: zod.coerce.number().default(getAnalysisHistoryQueryLimitDefault),
   offset: zod.coerce.number().default(getAnalysisHistoryQueryOffsetDefault),
 });
+
+export const getAnalysisHistoryResponseItemsItemFullAnalysisClarificationsItemQuestionMax = 300;
+
+export const getAnalysisHistoryResponseItemsItemFullAnalysisClarificationsItemAnswerMax = 500;
 
 export const GetAnalysisHistoryResponse = zod.object({
   items: zod.array(
@@ -657,6 +807,64 @@ export const GetAnalysisHistoryResponse = zod.object({
             .describe(
               'What the ethical filter decided about the message. \"support\" and \"redirect\" analyses carry a message that is shown to the person; blocked requests are refused with HTTP 422 and are never analysed or charged.',
             ),
+          silence: zod
+            .object({
+              subject: zod.enum(["other", "self"]),
+              channel: zod.enum([
+                "in_person",
+                "message",
+                "call",
+                "organisation",
+              ]),
+              who: zod.string().nullish(),
+              trigger: zod.string(),
+              duration: zod.object({
+                bucket: zod.enum([
+                  "moments",
+                  "minutes",
+                  "hours",
+                  "days",
+                  "weeks",
+                  "unknown",
+                ]),
+                text: zod.string().nullish(),
+              }),
+              meanings: zod.array(
+                zod.object({
+                  meaning: zod.string(),
+                  likelihood: zod.enum([
+                    "more likely",
+                    "possible",
+                    "less likely",
+                  ]),
+                  why: zod.string(),
+                }),
+              ),
+              unknowns: zod.array(zod.string()),
+              checks: zod.array(zod.string()),
+              caution: zod.string(),
+              source: zod.enum(["rules", "ai"]),
+            })
+            .optional()
+            .describe(
+              "RSMI - the meanings a silence described in the question can have (possibilities, not mind reading)",
+            ),
+          clarifications: zod
+            .array(
+              zod.object({
+                question: zod
+                  .string()
+                  .max(
+                    getAnalysisHistoryResponseItemsItemFullAnalysisClarificationsItemQuestionMax,
+                  ),
+                answer: zod
+                  .string()
+                  .max(
+                    getAnalysisHistoryResponseItemsItemFullAnalysisClarificationsItemAnswerMax,
+                  ),
+              }),
+            )
+            .optional(),
           finalVerdict: zod.object({
             recommendedAction: zod.string(),
             reasoning: zod.string(),
@@ -892,6 +1100,7 @@ export const GetAnalysisHistoryResponse = zod.object({
                     "FILTER",
                     "SIVI",
                     "ASTRO",
+                    "RSMI",
                     "AI",
                   ]),
                   name: zod.string(),
@@ -900,6 +1109,7 @@ export const GetAnalysisHistoryResponse = zod.object({
                     "emotion",
                     "paths",
                     "astrology",
+                    "silence",
                     "synthesis",
                   ]),
                   role: zod
@@ -935,7 +1145,14 @@ export const GetAnalysisHistoryResponse = zod.object({
               depthChosen: zod.enum(["auto", "user"]),
               lines: zod.array(
                 zod.object({
-                  key: zod.enum(["astro", "ajit", "manu", "sivi", "ai"]),
+                  key: zod.enum([
+                    "astro",
+                    "ajit",
+                    "manu",
+                    "sivi",
+                    "rsmi",
+                    "ai",
+                  ]),
                   label: zod.string(),
                   credits: zod.number(),
                   note: zod.string(),
@@ -987,6 +1204,10 @@ export const TranslateAnalysisResponse = zod.object({
 export const GetAnalysisByIdParams = zod.object({
   id: zod.coerce.number(),
 });
+
+export const getAnalysisByIdResponseFullAnalysisClarificationsItemQuestionMax = 300;
+
+export const getAnalysisByIdResponseFullAnalysisClarificationsItemAnswerMax = 500;
 
 export const GetAnalysisByIdResponse = zod.object({
   id: zod.number(),
@@ -1096,6 +1317,55 @@ export const GetAnalysisByIdResponse = zod.object({
         .describe(
           'What the ethical filter decided about the message. \"support\" and \"redirect\" analyses carry a message that is shown to the person; blocked requests are refused with HTTP 422 and are never analysed or charged.',
         ),
+      silence: zod
+        .object({
+          subject: zod.enum(["other", "self"]),
+          channel: zod.enum(["in_person", "message", "call", "organisation"]),
+          who: zod.string().nullish(),
+          trigger: zod.string(),
+          duration: zod.object({
+            bucket: zod.enum([
+              "moments",
+              "minutes",
+              "hours",
+              "days",
+              "weeks",
+              "unknown",
+            ]),
+            text: zod.string().nullish(),
+          }),
+          meanings: zod.array(
+            zod.object({
+              meaning: zod.string(),
+              likelihood: zod.enum(["more likely", "possible", "less likely"]),
+              why: zod.string(),
+            }),
+          ),
+          unknowns: zod.array(zod.string()),
+          checks: zod.array(zod.string()),
+          caution: zod.string(),
+          source: zod.enum(["rules", "ai"]),
+        })
+        .optional()
+        .describe(
+          "RSMI - the meanings a silence described in the question can have (possibilities, not mind reading)",
+        ),
+      clarifications: zod
+        .array(
+          zod.object({
+            question: zod
+              .string()
+              .max(
+                getAnalysisByIdResponseFullAnalysisClarificationsItemQuestionMax,
+              ),
+            answer: zod
+              .string()
+              .max(
+                getAnalysisByIdResponseFullAnalysisClarificationsItemAnswerMax,
+              ),
+          }),
+        )
+        .optional(),
       finalVerdict: zod.object({
         recommendedAction: zod.string(),
         reasoning: zod.string(),
@@ -1325,13 +1595,22 @@ export const GetAnalysisByIdResponse = zod.object({
         .array(
           zod
             .object({
-              key: zod.enum(["AJIT", "MANU", "FILTER", "SIVI", "ASTRO", "AI"]),
+              key: zod.enum([
+                "AJIT",
+                "MANU",
+                "FILTER",
+                "SIVI",
+                "ASTRO",
+                "RSMI",
+                "AI",
+              ]),
               name: zod.string(),
               area: zod.enum([
                 "intent",
                 "emotion",
                 "paths",
                 "astrology",
+                "silence",
                 "synthesis",
               ]),
               role: zod
@@ -1367,7 +1646,7 @@ export const GetAnalysisByIdResponse = zod.object({
           depthChosen: zod.enum(["auto", "user"]),
           lines: zod.array(
             zod.object({
-              key: zod.enum(["astro", "ajit", "manu", "sivi", "ai"]),
+              key: zod.enum(["astro", "ajit", "manu", "sivi", "rsmi", "ai"]),
               label: zod.string(),
               credits: zod.number(),
               note: zod.string(),

@@ -438,6 +438,58 @@ function AstroCard({ result, reports }: { result: AnalysisResult; reports: Modul
   );
 }
 
+const LIKELIHOOD_STYLE: Record<string, string> = {
+  "more likely": "bg-primary/20 text-foreground border-primary/40",
+  possible: "bg-muted text-foreground border-border",
+  "less likely": "bg-transparent text-muted-foreground border-border",
+};
+
+/** RSMI: the meanings a described silence can have. Only shown when the question mentioned a silence. */
+function SilenceCard({ result }: { result: AnalysisResult }) {
+  const s = result.silence;
+  if (!s) return null;
+  const who = s.subject === "self" ? "Your silence" : s.who ? `${s.who[0].toUpperCase()}${s.who.slice(1)}'s silence` : "The silence";
+  const where = { in_person: "in conversation", message: "in messages", call: "on calls", organisation: "from an organisation" }[s.channel];
+  return (
+    <EngineCard code="RSMI" title="Reasonable Silence">
+      <p className="text-sm text-muted-foreground">
+        {who} {where}, after {s.trigger}
+        {s.duration.text ? ` (${s.duration.text})` : ""}. What it may mean:
+      </p>
+      <ul className="mt-3 space-y-3">
+        {s.meanings.map((m, i) => (
+          <li key={i} className="text-sm">
+            <div className="flex items-start gap-2">
+              <span className={`shrink-0 mt-0.5 rounded border px-1.5 py-0.5 text-[10px] uppercase tracking-wide ${LIKELIHOOD_STYLE[m.likelihood] ?? ""}`}>{m.likelihood}</span>
+              <span className="text-foreground font-medium">{m.meaning}</span>
+            </div>
+            <p className="text-xs text-muted-foreground mt-1 ml-0.5">{m.why}</p>
+          </li>
+        ))}
+      </ul>
+      {s.checks.length > 0 && (
+        <div className="mt-4 border-t border-border pt-3">
+          <p className="text-xs font-mono font-bold text-foreground mb-1">HOW TO FIND OUT</p>
+          <ul className="text-xs text-muted-foreground space-y-1 list-disc pl-4">
+            {s.checks.map((c, i) => <li key={i}>{c}</li>)}
+          </ul>
+        </div>
+      )}
+      {s.unknowns.length > 0 && (
+        <p className="mt-3 text-xs text-muted-foreground">
+          <span className="font-semibold text-foreground">Not known yet: </span>
+          {s.unknowns.join("; ")}.
+        </p>
+      )}
+      <p className="mt-3 text-xs text-muted-foreground">{s.caution}</p>
+      {result.clarifications && result.clarifications.length > 0 && (
+        <p className="mt-2 text-xs text-muted-foreground">Used your answers: {result.clarifications.map((c) => c.answer).join("; ")}.</p>
+      )}
+      <ModuleReports reports={reportsFor(result, "silence")} />
+    </EngineCard>
+  );
+}
+
 function reportsFor(result: AnalysisResult, area: ModuleReport["area"]): ModuleReport[] {
   return (result.modules ?? []).filter((m) => m.area === area);
 }
@@ -551,6 +603,8 @@ function AnalysisBody({ result, header }: { result: AnalysisResult; header: Reac
         </div>
         <ModuleReports reports={reportsFor(result, "emotion")} />
       </EngineCard>
+
+      <SilenceCard result={result} />
 
       <EngineCard code="SIVI" title="Alternative Path Simulation">
         <div className="space-y-3">

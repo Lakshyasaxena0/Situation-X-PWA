@@ -3,6 +3,7 @@ import { db, analysesTable } from "@workspace/db";
 import { and, eq, desc, count } from "drizzle-orm";
 import {
   AnalyzeSituationBody,
+  ClarifySituationBody,
   GetAnalysisHistoryQueryParams,
   GetAnalysisByIdParams,
   DeleteAnalysisParams,
@@ -14,6 +15,7 @@ import { currentUserId } from "../middlewares/requireUser.js";
 import { getCalibration } from "../services/calibration.service.js";
 import { extractTexts, translateTexts, translationAvailable } from "../services/translate.service.js";
 import { assessSafety } from "../services/safety.service.js";
+import { MAX_ANSWER_LENGTH, MAX_QUESTION_LENGTH, MAX_ROUNDS, nextQuestion, withClarifications, type Clarification } from "../services/clarify.service.js";
 import { synthesize } from "../services/synthesis.service.js";
 import { computeCost, pathFollowUpPrice, withoutAi, type CreditCost } from "../services/credit-cost.service.js";
 import type { AnalysisOptions } from "../services/analysis-options.js";
@@ -32,8 +34,18 @@ type Parsed = {
   options: AnalysisOptions;
   /** Set when the question is one of the paths SIVI listed in an earlier analysis. */
   fromPath?: { analysisId: number; pathIndex: number };
+  /** The questions the app asked first and the person's answers (added to the situation). */
+  clarifications: Clarification[];
 };
 type ParseOutcome = { ok: true; data: Parsed } | { ok: false; status: number; body: { error: string; message: string } };
+
+/** At most MAX_ROUNDS answered questions, trimmed; anything else is dropped. */
+function cleanClarifications(raw: { question: string; answer: string }[] | undefined): Clarification[] {
+  return (raw ?? [])
+    .map((c) => ({ question: c.question.trim().slice(0, MAX_QUESTION_LENGTH), answer: c.answer.trim().slice(0, MAX_ANSWER_LENGTH) }))
+    .filter((c) => c.question && c.answer)
+    .slice(0, MAX_ROUNDS);
+}
 
 /** Shared by /analyze and /estimate so the quoted price always matches the charged price. */
 function parseSituationRequest(body: unknown): ParseOutcome {
@@ -67,7 +79,8 @@ function parseSituationRequest(body: unknown): ParseOutcome {
     language: parseResult.data.language ?? "auto",
   };
   const fromPath = parseResult.data.fromPath ? { analysisId: parseResult.data.fromPath.analysisId, pathIndex: parseResult.data.fromPath.pathIndex } : undefined;
-  return { ok: true, data: { situation, latitude, longitude, depth, options, fromPath } };
+  const clarifications = cleanClarifications(parseResult.data.clarifications);
+  return { ok: true, data: { situation, latitude, longitude, depth, options, fromPath, clarifications } };
 }
 
 function blockedBody(d: ReturnType<typeof assessSafety>) {
@@ -95,6 +108,58 @@ async function situationForPath(userId: string, ref: { analysisId: number; pathI
   return `${base}\n\nI am now considering this specific path: "${action.trim()}". What is likely to happen if I take it, what should I watch for, and how does it compare with my other options?`;
 }
 
+// Free, but each call can use the AI, so a person can ask for a limited number per hour.
+const CLARIFY_LIMIT = 40;
+const CLARIFY_WINDOW_MS = 60 * 60 * 1000;
+const clarifyCalls = new Map<string, number[]>();
+function clarifyAllowed(userId: string, now = Date.now()): boolean {
+  const recent = (clarifyCalls.get(userId) ?? []).filter((t) => now - t < CLARIFY_WINDOW_MS);
+  if (recent.length >= CLARIFY_LIMIT) {
+    clarifyCalls.set(userId, recent);
+    return false;
+  }
+  recent.push(now);
+  clarifyCalls.set(userId, recent);
+  if (clarifyCalls.size > 5000) for (const [k, v] of clarifyCalls) if (v.every((t) => now - t >= CLARIFY_WINDOW_MS)) clarifyCalls.delete(k);
+  return true;
+}
+
+router.post("/analysis/clarify", async (req, res) => {
+  const parsed = ClarifySituationBody.safeParse(req.body);
+  if (!parsed.success) {
+    res.status(400).json({ error: "validation_error", message: parsed.error.message });
+    return;
+  }
+  const situation = parsed.data.situation.trim();
+  if (situation.length < 10) {
+    res.status(400).json({ error: "too_short", message: "Situation must be at least 10 characters." });
+    return;
+  }
+  if (situation.length > MAX_SITUATION_LENGTH) {
+    res.status(400).json({ error: "too_long", message: `Situation must be at most ${MAX_SITUATION_LENGTH} characters.` });
+    return;
+  }
+  const answers = cleanClarifications(parsed.data.answers);
+  const language = parsed.data.language ?? "auto";
+  const gate = assessSafety(withClarifications(situation, answers), language);
+  if (gate.action === "block") {
+    res.status(422).json(blockedBody(gate));
+    return;
+  }
+  if (!clarifyAllowed(currentUserId(res))) {
+    res.status(429).json({ error: "too_many_requests", message: "Too many questions in a short time. You can analyse now, or try again later." });
+    return;
+  }
+  try {
+    // When the filter has concerns (support / redirect), the questions come from rules only, never from the AI.
+    const result = await nextQuestion(situation, answers, language, (parsed.data.useAi ?? true) && gate.action === "allow");
+    res.json(result);
+  } catch (err) {
+    req.log.error({ err }, "Clarify failed");
+    res.json({ done: true, round: answers.length, max: MAX_ROUNDS, source: "rules" });
+  }
+});
+
 router.post("/analysis/estimate", async (req, res) => {
   const parsed = parseSituationRequest(req.body);
   if (!parsed.ok) {
@@ -112,6 +177,8 @@ router.post("/analysis/estimate", async (req, res) => {
         return;
       }
       situation = built;
+    } else {
+      situation = withClarifications(situation, parsed.data.clarifications);
     }
     const gate = assessSafety(situation, options.language);
     if (gate.action === "block") {
@@ -147,6 +214,8 @@ router.post("/analysis/analyze", async (req, res) => {
       return;
     }
     situation = built;
+  } else {
+    situation = withClarifications(situation, parsed.data.clarifications);
   }
   // The ethical filter runs first: a request that asks for serious harm is refused before anything is
   // analysed or charged.
@@ -184,7 +253,7 @@ router.post("/analysis/analyze", async (req, res) => {
     // Step 2: AI and astrology work together on the final answer. The AI sees every module's
     // output plus the dasha/transits, and past follow-up accuracy tempers the result.
     const calibration = await getCalibration(engineResult.intent.intent);
-    const { simulation: aiSimulation, withheld, ...synthesis } = await synthesize(situation, engineResult, calibration, undefined, cost.depth, options);
+    const { simulation: aiSimulation, withheld, silence: aiSilence, ...synthesis } = await synthesize(situation, engineResult, calibration, undefined, cost.depth, options);
     // When the AI read the whole situation, its paths replace the rule-based ones (SIVI says which it used).
     const simulation = aiSimulation ?? engineResult.simulation;
     const finalVerdict = aiSimulation
@@ -238,6 +307,8 @@ router.post("/analysis/analyze", async (req, res) => {
       simulation,
       finalVerdict,
       astro: publicAstro(engineResult.astro),
+      silence: aiSilence ?? engineResult.silence ?? undefined,
+      clarifications: fromPath ? undefined : parsed.data.clarifications.length ? parsed.data.clarifications : undefined,
       // Only what the person needs to see: a notice when the filter steered or cared for them.
       safety: { action: engineResult.safety.action, category: engineResult.safety.category, message: engineResult.safety.message },
       overallScore,

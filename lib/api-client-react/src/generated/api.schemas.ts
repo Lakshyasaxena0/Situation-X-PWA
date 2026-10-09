@@ -47,6 +47,13 @@ export type AnalyzeRequestFromPath = {
   pathIndex: number;
 };
 
+export interface Clarification {
+  /** @maxLength 300 */
+  question: string;
+  /** @maxLength 500 */
+  answer: string;
+}
+
 export interface AnalyzeRequest {
   /** The situation to analyze (min 10 characters) */
   situation: string;
@@ -62,8 +69,130 @@ export interface AnalyzeRequest {
   useAi?: boolean;
   /** Use the astrology lens (default true). When false the astrology is not used in the answer and is not charged. */
   useAstrology?: boolean;
+  /**
+   * Questions the app asked before the analysis and the person's answers; they are added to the situation.
+   * @maxItems 4
+   */
+  clarifications?: Clarification[];
   /** Run one of the paths SIVI listed in an earlier analysis of yours as a new question. The server builds the question from that analysis (the situation text is ignored) and charges half price. Looking at a path costs nothing. */
   fromPath?: AnalyzeRequestFromPath;
+}
+
+export type ClarifyRequestLanguage =
+  (typeof ClarifyRequestLanguage)[keyof typeof ClarifyRequestLanguage];
+
+export const ClarifyRequestLanguage = {
+  auto: "auto",
+  en: "en",
+  hi: "hi",
+  hinglish: "hinglish",
+} as const;
+
+export interface ClarifyRequest {
+  /** The situation written so far (min 10 characters) */
+  situation: string;
+  /** @maxItems 4 */
+  answers?: Clarification[];
+  language?: ClarifyRequestLanguage;
+  useAi?: boolean;
+}
+
+export type ClarifyResponseQuestion = {
+  question: string;
+  why?: string;
+  choices: string[];
+};
+
+export type ClarifyResponseSource =
+  (typeof ClarifyResponseSource)[keyof typeof ClarifyResponseSource];
+
+export const ClarifyResponseSource = {
+  ai: "ai",
+  rules: "rules",
+} as const;
+
+export interface ClarifyResponse {
+  /** True when enough is known (or the limit of questions is reached) */
+  done: boolean;
+  question?: ClarifyResponseQuestion;
+  /** How many questions have been answered so far */
+  round: number;
+  max: number;
+  source?: ClarifyResponseSource;
+}
+
+export type SilenceMeaningLikelihood =
+  (typeof SilenceMeaningLikelihood)[keyof typeof SilenceMeaningLikelihood];
+
+export const SilenceMeaningLikelihood = {
+  more_likely: "more likely",
+  possible: "possible",
+  less_likely: "less likely",
+} as const;
+
+export interface SilenceMeaning {
+  meaning: string;
+  likelihood: SilenceMeaningLikelihood;
+  why: string;
+}
+
+export type SilenceReadingSubject =
+  (typeof SilenceReadingSubject)[keyof typeof SilenceReadingSubject];
+
+export const SilenceReadingSubject = {
+  other: "other",
+  self: "self",
+} as const;
+
+export type SilenceReadingChannel =
+  (typeof SilenceReadingChannel)[keyof typeof SilenceReadingChannel];
+
+export const SilenceReadingChannel = {
+  in_person: "in_person",
+  message: "message",
+  call: "call",
+  organisation: "organisation",
+} as const;
+
+export type SilenceReadingDurationBucket =
+  (typeof SilenceReadingDurationBucket)[keyof typeof SilenceReadingDurationBucket];
+
+export const SilenceReadingDurationBucket = {
+  moments: "moments",
+  minutes: "minutes",
+  hours: "hours",
+  days: "days",
+  weeks: "weeks",
+  unknown: "unknown",
+} as const;
+
+export type SilenceReadingDuration = {
+  bucket: SilenceReadingDurationBucket;
+  text?: string | null;
+};
+
+export type SilenceReadingSource =
+  (typeof SilenceReadingSource)[keyof typeof SilenceReadingSource];
+
+export const SilenceReadingSource = {
+  rules: "rules",
+  ai: "ai",
+} as const;
+
+/**
+ * RSMI - the meanings a silence described in the question can have (possibilities, not mind reading)
+ */
+export interface SilenceReading {
+  subject: SilenceReadingSubject;
+  channel: SilenceReadingChannel;
+  who?: string | null;
+  trigger: string;
+  duration: SilenceReadingDuration;
+  meanings: SilenceMeaning[];
+  unknowns: string[];
+  checks: string[];
+  caution: string;
+  source: SilenceReadingSource;
 }
 
 export type TranslateRequestLanguage =
@@ -108,6 +237,7 @@ export const ModuleReportKey = {
   FILTER: "FILTER",
   SIVI: "SIVI",
   ASTRO: "ASTRO",
+  RSMI: "RSMI",
   AI: "AI",
 } as const;
 
@@ -119,6 +249,7 @@ export const ModuleReportArea = {
   emotion: "emotion",
   paths: "paths",
   astrology: "astrology",
+  silence: "silence",
   synthesis: "synthesis",
 } as const;
 
@@ -678,6 +809,7 @@ export const CostLineKey = {
   ajit: "ajit",
   manu: "manu",
   sivi: "sivi",
+  rsmi: "rsmi",
   ai: "ai",
 } as const;
 
@@ -707,6 +839,8 @@ export interface AnalysisResult {
   emotion: EmotionResult;
   simulation: SimulationResult;
   safety?: SafetyNotice;
+  silence?: SilenceReading;
+  clarifications?: Clarification[];
   finalVerdict: FinalVerdict;
   astro: AstroResult;
   overallScore: number;

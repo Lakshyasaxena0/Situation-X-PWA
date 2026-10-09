@@ -14,5 +14,6 @@ export const ModuleReportArea = {
   emotion: "emotion",
   paths: "paths",
   astrology: "astrology",
+  silence: "silence",
   synthesis: "synthesis",
 } as const;

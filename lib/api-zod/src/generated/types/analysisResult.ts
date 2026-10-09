@@ -7,12 +7,14 @@
  */
 import type { AnalysisResultOptions } from "./analysisResultOptions";
 import type { AstroResult } from "./astroResult";
+import type { Clarification } from "./clarification";
 import type { CreditsUsed } from "./creditsUsed";
 import type { EmotionResult } from "./emotionResult";
 import type { FinalVerdict } from "./finalVerdict";
 import type { IntentResult } from "./intentResult";
 import type { ModuleReport } from "./moduleReport";
 import type { SafetyNotice } from "./safetyNotice";
+import type { SilenceReading } from "./silenceReading";
 import type { SimulationResult } from "./simulationResult";
 import type { Synthesis } from "./synthesis";
 
@@ -23,6 +25,8 @@ export interface AnalysisResult {
   emotion: EmotionResult;
   simulation: SimulationResult;
   safety?: SafetyNotice;
+  silence?: SilenceReading;
+  clarifications?: Clarification[];
   finalVerdict: FinalVerdict;
   astro: AstroResult;
   overallScore: number;

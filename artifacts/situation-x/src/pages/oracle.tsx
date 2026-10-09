@@ -1,13 +1,15 @@
 import { Link } from "wouter";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import {
   useAnalyzeSituation,
   useEstimateAnalysisCost,
+  useClarifySituation,
   getGetCreditsQueryKey,
   type AnalyzeRequestDepth,
 } from "@workspace/api-client-react";
 import { AnalysisDisplay, CostLines } from "@/components/AnalysisDisplay";
+import { ClarifyPanel, type Answered } from "@/components/ClarifyPanel";
 import { CreditsBar } from "@/components/CreditsBar";
 import { analysisSession, clearAnalysisSession } from "@/lib/analysisSession";
 import { DEFAULT_PLACE } from "@/lib/places";
@@ -46,10 +48,19 @@ export default function Oracle() {
   const queryClient = useQueryClient();
 
   const analyze = useAnalyzeSituation();
+  const clarify = useClarifySituation();
+
+  // Questions asked before the analysis: the answers belong to the exact text they were given for.
+  const [qa, setQa] = useState<{ forText: string; answers: Answered[]; current: { question: string; why: string; choices: string[] } | null; round: number; max: number; done: boolean }>({
+    forText: "", answers: [], current: null, round: 0, max: 4, done: false,
+  });
+  const answers = qa.forText === situation.trim() ? qa.answers : [];
+  const clarifying = qa.current !== null && qa.forText === situation.trim();
   const estimate = useEstimateAnalysisCost();
   const { mutate: runEstimate, reset: resetEstimate } = estimate;
   const text = situation.trim();
   const optionsKey = JSON.stringify(requestOptions(settings));
+  const answersKey = JSON.stringify(answers);
 
   // Quote the exact price (modules involved + reasoning level) while the user types, before anything is charged.
   useEffect(() => {
@@ -57,17 +68,14 @@ export default function Oracle() {
       resetEstimate();
       return;
     }
-    const t = setTimeout(() => runEstimate({ data: { situation: text, depth, ...(JSON.parse(optionsKey) as object) } }), 600);
+    const t = setTimeout(() => runEstimate({ data: { situation: text, depth, ...(JSON.parse(optionsKey) as object), ...(JSON.parse(answersKey).length ? { clarifications: JSON.parse(answersKey) as Answered[] } : {}) } }), 600);
     return () => clearTimeout(t);
-  }, [text, depth, optionsKey, runEstimate, resetEstimate]);
+  }, [text, depth, optionsKey, answersKey, runEstimate, resetEstimate]);
   const quote = estimate.data?.billingActive ? estimate.data : null;
 
-  function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    if (!situation.trim() || situation.length < 10) return;
-
+  function runAnalysis(given: Answered[]) {
     analyze.mutate(
-      { data: { situation: situation.trim(), depth, ...requestOptions(settings) } },
+      { data: { situation: situation.trim(), depth, ...requestOptions(settings), ...(given.length ? { clarifications: given } : {}) } },
       {
         onSuccess: (data) => {
           analysisSession.set((prev) => ({ ...prev, result: data }));
@@ -76,6 +84,39 @@ export default function Oracle() {
         onError: () => void queryClient.invalidateQueries({ queryKey: getGetCreditsQueryKey() }),
       }
     );
+  }
+
+  /** Asks the next short question, or finishes the questions when there is nothing more to ask. */
+  function askNext(given: Answered[]) {
+    const forText = situation.trim();
+    clarify.mutate(
+      { data: { situation: forText, answers: given, language: settings.language, useAi: settings.useAi } },
+      {
+        onSuccess: (r) => {
+          if (r.done || !r.question) return finishQuestions(forText, given);
+          setQa({ forText, answers: given, current: { question: r.question.question, why: r.question.why ?? "", choices: r.question.choices }, round: r.round, max: r.max, done: false });
+        },
+        // A failed question must never block the analysis.
+        onError: () => finishQuestions(forText, given),
+      }
+    );
+  }
+
+  function finishQuestions(forText: string, given: Answered[]) {
+    setQa({ forText, answers: given, current: null, round: given.length, max: 4, done: true });
+    // With credits in use the final price (it can change with the answers) is shown first; otherwise just run.
+    if (!estimate.data?.billingActive) runAnalysis(given);
+  }
+
+  function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    if (!situation.trim() || situation.length < 10 || clarifying || clarify.isPending) return;
+    // Questions are asked once per text; after that Run Analysis runs it.
+    if (settings.askQuestions && !(qa.done && qa.forText === situation.trim())) {
+      askNext([]);
+      return;
+    }
+    runAnalysis(answers);
   }
 
   const placeName = settings.location?.name ?? `${DEFAULT_PLACE.name} (default)`;
@@ -87,7 +128,7 @@ export default function Oracle() {
         <div className="mb-6 flex items-start justify-between gap-3">
           <div>
             <h1 className="text-2xl font-bold text-foreground">Analysis</h1>
-            <p className="text-sm text-muted-foreground mt-1">Describe your situation in your own words. Four modules read it (intent, emotion, possible paths and the Prashna chart) and the AI weighs everything into one answer. Each result shows what every module saw.</p>
+            <p className="text-sm text-muted-foreground mt-1">Describe your situation in your own words. Modules read it (intent, emotion, possible paths, the Prashna chart and, if you mention a silence, what it may mean) and the AI weighs everything into one answer. Each result shows what every module saw.</p>
           </div>
           {(result || situation) && (
             <Button type="button" variant="outline" size="sm" onClick={() => { clearAnalysisSession(); analyze.reset(); }}>
@@ -170,15 +211,39 @@ export default function Oracle() {
           )}
           {quote && !quote.enough && <InviteCta />}
 
+          {clarifying && qa.current && (
+            <ClarifyPanel
+              question={qa.current.question}
+              why={qa.current.why}
+              choices={qa.current.choices}
+              round={qa.round}
+              max={qa.max}
+              answered={answers}
+              busy={clarify.isPending}
+              onAnswer={(a) => askNext([...answers, { question: qa.current!.question, answer: a }])}
+              onSkip={() => finishQuestions(situation.trim(), answers)}
+            />
+          )}
+          {!clarifying && answers.length > 0 && (
+            <p className="text-xs text-muted-foreground">
+              Added from your answers: {answers.map((a) => a.answer).join("; ")}
+            </p>
+          )}
+
           <Button
             type="submit"
-            disabled={analyze.isPending || situation.length < 10 || (quote !== null && !quote.enough)}
+            disabled={analyze.isPending || clarify.isPending || clarifying || situation.length < 10 || (quote !== null && !quote.enough)}
             className="w-full bg-primary text-primary-foreground hover:opacity-90"
           >
             {analyze.isPending ? (
               <span className="flex items-center gap-2">
                 <Loader2 className="w-4 h-4 animate-spin" />
                 Running analysis...
+              </span>
+            ) : clarify.isPending && !clarifying ? (
+              <span className="flex items-center gap-2">
+                <Loader2 className="w-4 h-4 animate-spin" />
+                Thinking of a question...
               </span>
             ) : (
               "Run Analysis"

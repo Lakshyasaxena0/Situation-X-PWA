@@ -107,6 +107,10 @@ export default function Settings() {
           </>
         )}
 
+        <Section title="Questions first" hint="Before the analysis the app can ask a few short questions, one at a time, to clear up what matters (for example how long a silence lasted). Free; you can skip them any time.">
+          <ToggleRow label="Ask me questions first" hint="Up to 4 quick questions. Off: the analysis runs straight away." checked={s.askQuestions} onChange={(askQuestions) => update({ askQuestions })} />
+        </Section>
+
         <Section title="Password" hint="Change the password of the account you are signed in with.">
           <ChangePassword />
         </Section>

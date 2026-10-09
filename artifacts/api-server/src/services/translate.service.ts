@@ -22,6 +22,7 @@ export type AnalysisTexts = {
   };
   modules?: { key: string; role?: string; verdict?: string; evidence?: string[] }[];
   astro?: { interpretation?: string; timingSummary?: string; activations?: string[] };
+  silence?: { trigger?: string; meanings?: { meaning?: string; why?: string }[]; unknowns?: string[]; checks?: string[]; caution?: string };
 };
 
 const str = (v: unknown): string | undefined => (typeof v === "string" && v.trim() ? v : undefined);
@@ -41,6 +42,7 @@ export function extractTexts(fa: Record<string, unknown>): AnalysisTexts {
   const ctx = obj(sim.context);
   const astro = obj(fa.astro);
   const timing = obj(astro.timing);
+  const silence = obj(fa.silence);
   const modules = Array.isArray(fa.modules) ? (fa.modules as unknown[]).map(obj) : [];
   return {
     summary: str(fa.summary),
@@ -62,6 +64,15 @@ export function extractTexts(fa: Record<string, unknown>): AnalysisTexts {
     },
     modules: modules.map((m) => ({ key: String(m.key ?? ""), role: str(m.role), verdict: str(m.verdict), evidence: strs(m.evidence) })),
     astro: { interpretation: str(astro.interpretation), timingSummary: str(timing.summary), activations: strs(timing.activations) },
+    silence: Array.isArray(silence.meanings)
+      ? {
+          trigger: str(silence.trigger),
+          meanings: (silence.meanings as unknown[]).map((m) => ({ meaning: str(obj(m).meaning), why: str(obj(m).why) })),
+          unknowns: strs(silence.unknowns),
+          checks: strs(silence.checks),
+          caution: str(silence.caution),
+        }
+      : undefined,
   };
 }
 

@@ -15,5 +15,6 @@ export const ModuleReportKey = {
   FILTER: "FILTER",
   SIVI: "SIVI",
   ASTRO: "ASTRO",
+  RSMI: "RSMI",
   AI: "AI",
 } as const;

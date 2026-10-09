@@ -6,13 +6,10 @@
  * OpenAPI spec version: 0.1.0
  */
 
-export type CostLineKey = (typeof CostLineKey)[keyof typeof CostLineKey];
+export type ClarifyResponseSource =
+  (typeof ClarifyResponseSource)[keyof typeof ClarifyResponseSource];
 
-export const CostLineKey = {
-  astro: "astro",
-  ajit: "ajit",
-  manu: "manu",
-  sivi: "sivi",
-  rsmi: "rsmi",
+export const ClarifyResponseSource = {
   ai: "ai",
+  rules: "rules",
 } as const;

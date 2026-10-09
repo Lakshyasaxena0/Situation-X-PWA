@@ -15,6 +15,8 @@ export type Settings = {
   location: SavedPlace | null;
   /** Show the astrology details expanded by default. */
   expandAstrology: boolean;
+  /** Let the app ask a few short questions before the analysis (free). */
+  askQuestions: boolean;
 };
 
 export const DEFAULT_SETTINGS: Settings = {
@@ -24,6 +26,7 @@ export const DEFAULT_SETTINGS: Settings = {
   depth: "auto",
   location: null,
   expandAstrology: false,
+  askQuestions: true,
 };
 
 const LANGS: Language[] = ["auto", "en", "hi", "hinglish"];
@@ -45,6 +48,7 @@ export function sanitizeSettings(raw: unknown): Settings {
     depth: DEPTHS.includes(r.depth as Depth) ? (r.depth as Depth) : DEFAULT_SETTINGS.depth,
     location: place(r.location),
     expandAstrology: typeof r.expandAstrology === "boolean" ? r.expandAstrology : DEFAULT_SETTINGS.expandAstrology,
+    askQuestions: typeof r.askQuestions === "boolean" ? r.askQuestions : DEFAULT_SETTINGS.askQuestions,
   };
 }
 

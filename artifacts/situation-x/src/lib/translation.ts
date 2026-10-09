@@ -15,6 +15,7 @@ export type Texts = {
   };
   modules?: { key: string; role?: string; verdict?: string; evidence?: string[] }[];
   astro?: { interpretation?: string; timingSummary?: string; activations?: string[] };
+  silence?: { trigger?: string; meanings?: { meaning?: string; why?: string }[]; unknowns?: string[]; checks?: string[]; caution?: string };
 };
 
 const pick = <T>(translated: T | undefined, original: T): T => (translated === undefined || translated === null || translated === "" ? original : translated);
@@ -71,6 +72,19 @@ export function applyTexts(result: AnalysisResult, t: Texts | undefined): Analys
       bestPath: applyPath(result.simulation.bestPath, t.simulation?.best),
       alternatives: result.simulation.alternatives.map((alt, i) => applyPath(alt, t.simulation?.alternatives?.[i])),
     },
+    silence: result.silence
+      ? {
+          ...result.silence,
+          trigger: pick(t.silence?.trigger, result.silence.trigger),
+          meanings:
+            t.silence?.meanings && t.silence.meanings.length === result.silence.meanings.length
+              ? result.silence.meanings.map((m, i) => ({ ...m, meaning: pick(t.silence?.meanings?.[i]?.meaning, m.meaning), why: pick(t.silence?.meanings?.[i]?.why, m.why) }))
+              : result.silence.meanings,
+          unknowns: pickList(t.silence?.unknowns, result.silence.unknowns) ?? result.silence.unknowns,
+          checks: pickList(t.silence?.checks, result.silence.checks) ?? result.silence.checks,
+          caution: pick(t.silence?.caution, result.silence.caution),
+        }
+      : result.silence,
     modules: result.modules?.map((m, i) => {
       const tm = t.modules?.[i];
       if (!tm || tm.key !== m.key) return m;
