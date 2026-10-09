@@ -118,3 +118,20 @@ export function computeCost(
 export function withoutAi(cost: CreditCost): { total: number; lines: CostLine[] } {
   return { total: cost.total - cost.aiCredits, lines: cost.lines.filter((l) => l.key !== "ai") };
 }
+
+/**
+ * Looking at a SIVI path costs nothing. Running one as a question of its own is a new analysis, but
+ * it continues an earlier one (the situation is already known), so it is charged at half price,
+ * line by line and rounded up.
+ */
+export const PATH_FOLLOWUP_FACTOR = 0.5;
+
+export function pathFollowUpPrice(cost: CreditCost): CreditCost {
+  const lines = cost.lines.map((l) => ({
+    ...l,
+    credits: Math.max(1, Math.ceil(l.credits * PATH_FOLLOWUP_FACTOR)),
+    note: `${l.note} Half price: it continues an earlier analysis.`,
+  }));
+  const aiLine = lines.find((l) => l.key === "ai");
+  return { ...cost, lines, total: lines.reduce((sum, l) => sum + l.credits, 0), aiCredits: aiLine?.credits ?? 0 };
+}

@@ -12,6 +12,7 @@ export * from "./analysisResult";
 export * from "./analysisResultOptions";
 export * from "./analyzeRequest";
 export * from "./analyzeRequestDepth";
+export * from "./analyzeRequestFromPath";
 export * from "./analyzeRequestLanguage";
 export * from "./astroInfluence";
 export * from "./astroInfluenceRisk";

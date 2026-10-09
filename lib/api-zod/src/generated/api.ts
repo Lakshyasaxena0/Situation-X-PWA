@@ -17,6 +17,8 @@ export const HealthCheckResponse = zod.object({
 /**
  * @summary Exact credit cost of analysing this situation (modules involved + reasoning level), before anything is charged
  */
+export const estimateAnalysisCostBodyFromPathPathIndexMin = 0;
+
 export const EstimateAnalysisCostBody = zod.object({
   situation: zod
     .string()
@@ -57,6 +59,18 @@ export const EstimateAnalysisCostBody = zod.object({
     .describe(
       "Use the astrology lens (default true). When false the astrology is not used in the answer and is not charged.",
     ),
+  fromPath: zod
+    .object({
+      analysisId: zod.number(),
+      pathIndex: zod
+        .number()
+        .min(estimateAnalysisCostBodyFromPathPathIndexMin)
+        .describe("0 is the recommended path, then the alternatives in order"),
+    })
+    .optional()
+    .describe(
+      "Run one of the paths SIVI listed in an earlier analysis of yours as a new question. The server builds the question from that analysis (the situation text is ignored) and charges half price. Looking at a path costs nothing.",
+    ),
 });
 
 export const EstimateAnalysisCostResponse = zod.object({
@@ -82,6 +96,8 @@ export const EstimateAnalysisCostResponse = zod.object({
 /**
  * @summary Analyze a situation
  */
+export const analyzeSituationBodyFromPathPathIndexMin = 0;
+
 export const AnalyzeSituationBody = zod.object({
   situation: zod
     .string()
@@ -121,6 +137,18 @@ export const AnalyzeSituationBody = zod.object({
     .optional()
     .describe(
       "Use the astrology lens (default true). When false the astrology is not used in the answer and is not charged.",
+    ),
+  fromPath: zod
+    .object({
+      analysisId: zod.number(),
+      pathIndex: zod
+        .number()
+        .min(analyzeSituationBodyFromPathPathIndexMin)
+        .describe("0 is the recommended path, then the alternatives in order"),
+    })
+    .optional()
+    .describe(
+      "Run one of the paths SIVI listed in an earlier analysis of yours as a new question. The server builds the question from that analysis (the situation text is ignored) and charges half price. Looking at a path costs nothing.",
     ),
 });
 

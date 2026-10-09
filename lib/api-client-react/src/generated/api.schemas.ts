@@ -35,6 +35,18 @@ export const AnalyzeRequestLanguage = {
   hinglish: "hinglish",
 } as const;
 
+/**
+ * Run one of the paths SIVI listed in an earlier analysis of yours as a new question. The server builds the question from that analysis (the situation text is ignored) and charges half price. Looking at a path costs nothing.
+ */
+export type AnalyzeRequestFromPath = {
+  analysisId: number;
+  /**
+   * 0 is the recommended path, then the alternatives in order
+   * @minimum 0
+   */
+  pathIndex: number;
+};
+
 export interface AnalyzeRequest {
   /** The situation to analyze (min 10 characters) */
   situation: string;
@@ -50,6 +62,8 @@ export interface AnalyzeRequest {
   useAi?: boolean;
   /** Use the astrology lens (default true). When false the astrology is not used in the answer and is not charged. */
   useAstrology?: boolean;
+  /** Run one of the paths SIVI listed in an earlier analysis of yours as a new question. The server builds the question from that analysis (the situation text is ignored) and charges half price. Looking at a path costs nothing. */
+  fromPath?: AnalyzeRequestFromPath;
 }
 
 export type TranslateRequestLanguage =

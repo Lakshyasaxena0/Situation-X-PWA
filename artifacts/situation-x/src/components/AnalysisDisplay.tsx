@@ -1,11 +1,13 @@
-import { Link } from "wouter";
+import { Link, useLocation } from "wouter";
 import { useEffect, useRef, useState } from "react";
-import { useTranslateAnalysis, type AnalysisResult, type CostLine, type ModuleReport, type TimingResult } from "@workspace/api-client-react";
+import { useQueryClient } from "@tanstack/react-query";
+import { useAnalyzeSituation, useEstimateAnalysisCost, getGetCreditsQueryKey, useTranslateAnalysis, type AnalysisResult, type CostLine, type ModuleReport, type TimingResult } from "@workspace/api-client-react";
 import { InviteCta } from "@/components/InviteCta";
 import { motion } from "framer-motion";
 import { ChevronDown, ChevronUp, CheckCircle2, MinusCircle, Loader2 } from "lucide-react";
 import { applyTexts, type Texts } from "@/lib/translation";
-import { useSettings } from "@/lib/settings";
+import { requestOptions, useSettings } from "@/lib/settings";
+import { analysisSession } from "@/lib/analysisSession";
 
 type RiskLevel = "low" | "medium" | "high";
 type Signal = "favorable" | "challenging" | "neutral";
@@ -59,8 +61,92 @@ function BulletList({ title, items, tone }: { title: string; items?: string[]; t
   );
 }
 
+/**
+ * Looking at a path is free. Running it as a question of its own is a new analysis, charged at half
+ * price: the price is shown first and nothing happens until the person confirms.
+ */
+function PathAnalyse({ analysisId, pathIndex }: { analysisId: number; pathIndex: number }) {
+  const [settings] = useSettings();
+  const [, navigate] = useLocation();
+  const queryClient = useQueryClient();
+  const [asking, setAsking] = useState(false);
+  const estimate = useEstimateAnalysisCost();
+  const analyze = useAnalyzeSituation();
+  const body = { situation: "Analyse this path from my earlier analysis", depth: settings.depth, fromPath: { analysisId, pathIndex }, ...requestOptions(settings) };
+
+  function ask() {
+    setAsking(true);
+    estimate.mutate({ data: body });
+  }
+  function confirm() {
+    analyze.mutate(
+      { data: body },
+      {
+        onSuccess: (data) => {
+          analysisSession.set({ situation: data.situation ?? "", result: data });
+          void queryClient.invalidateQueries({ queryKey: getGetCreditsQueryKey() });
+          navigate("/oracle");
+          window.scrollTo({ top: 0 });
+        },
+        onError: () => void queryClient.invalidateQueries({ queryKey: getGetCreditsQueryKey() }),
+      },
+    );
+  }
+
+  const quote = estimate.data;
+  const status = (analyze.error as { status?: number } | null)?.status;
+  if (!asking) {
+    return (
+      <button type="button" onClick={ask} className="mt-2 text-xs rounded border border-primary px-2.5 py-1 text-foreground hover:bg-primary/15">
+        Analyse this path as a new question
+      </button>
+    );
+  }
+  return (
+    <div className="mt-2 rounded border border-border bg-card p-3 text-xs space-y-2">
+      {estimate.isPending && <p className="text-muted-foreground">Checking the price...</p>}
+      {estimate.isError && <p className="text-red-700">Could not check the price. Try again.</p>}
+      {quote && (
+        <>
+          <p className="text-foreground">
+            This runs as a new analysis of this path.{" "}
+            {quote.billingActive ? (
+              <>
+                It uses <strong>{quote.total} credits</strong> (half price, because it continues this analysis). You have {quote.balance}.
+              </>
+            ) : (
+              "No credits are charged right now."
+            )}
+          </p>
+          {quote.billingActive && <CostLines lines={quote.lines} />}
+          {quote.billingActive && !quote.enough && (
+            <p className="text-red-700">
+              You need {quote.total - quote.balance} more credits.{" "}
+              <Link href="/pricing" className="underline underline-offset-2">Get credits</Link>
+            </p>
+          )}
+        </>
+      )}
+      {analyze.isError && <p className="text-red-700">{status === 402 ? "Not enough credits." : "Analysis failed. Please try again."}</p>}
+      <div className="flex gap-2">
+        <button
+          type="button"
+          onClick={confirm}
+          disabled={!quote || analyze.isPending || (quote.billingActive && !quote.enough)}
+          className="rounded bg-primary px-3 py-1 font-semibold text-primary-foreground disabled:opacity-50"
+        >
+          {analyze.isPending ? "Running..." : "Run it"}
+        </button>
+        <button type="button" onClick={() => setAsking(false)} disabled={analyze.isPending} className="rounded border border-border px-3 py-1 text-muted-foreground">
+          Cancel
+        </button>
+      </div>
+    </div>
+  );
+}
+
 /** One path: its levels always visible, benefits / downsides / uncertainties one tap away. */
-function PathView({ path, best = false }: { path: SimulationView["bestPath"]; best?: boolean }) {
+function PathView({ path, best = false, analysisId, pathIndex }: { path: SimulationView["bestPath"]; best?: boolean; analysisId?: number; pathIndex: number }) {
   const [open, setOpen] = useState(best);
   const hasDetail = (path.benefits?.length ?? 0) + (path.downsides?.length ?? 0) + (path.uncertainties?.length ?? 0) > 0;
   return (
@@ -89,6 +175,7 @@ function PathView({ path, best = false }: { path: SimulationView["bestPath"]; be
           )}
         </>
       )}
+      {analysisId !== undefined && <PathAnalyse analysisId={analysisId} pathIndex={pathIndex} />}
     </div>
   );
 }
@@ -473,14 +560,14 @@ function AnalysisBody({ result, header }: { result: AnalysisResult; header: Reac
           {result.simulation.context && <SituationContextView ctx={result.simulation.context} />}
           <div>
             <div className="text-xs text-muted-foreground mb-1 font-mono">RECOMMENDED PATH</div>
-            <PathView path={result.simulation.bestPath} best />
+            <PathView path={result.simulation.bestPath} best analysisId={result.id} pathIndex={0} />
           </div>
           {result.simulation.alternatives.length > 0 && (
             <div>
               <div className="text-xs text-muted-foreground mb-1 font-mono">ALTERNATIVES</div>
               <div className="space-y-2">
                 {result.simulation.alternatives.map((alt, i) => (
-                  <PathView key={i} path={alt} />
+                  <PathView key={i} path={alt} analysisId={result.id} pathIndex={i + 1} />
                 ))}
               </div>
             </div>

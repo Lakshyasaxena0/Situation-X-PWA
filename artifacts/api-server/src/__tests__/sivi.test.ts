@@ -100,3 +100,15 @@ test("SIVI: the prompt asks the AI for context and paths, and parseAiAnswer carr
   );
   assert.equal(a?.simulation?.bestPath.action, "A");
 });
+
+test("SIVI paths: running one as a new question costs half, rounded up, and the AI part is refunded in proportion", async () => {
+  const { computeCost, pathFollowUpPrice, withoutAi } = await import("../services/credit-cost.service.js");
+  const t = "Should I leave my stable job to start my own company? I am worried about money.";
+  const full = computeCost(t, runEngine(t, {}), "standard");
+  const half = pathFollowUpPrice(full);
+  assert.ok(half.total < full.total && half.total >= Math.floor(full.total / 2));
+  assert.equal(half.total, half.lines.reduce((n, l) => n + l.credits, 0));
+  assert.equal(half.aiCredits, Math.ceil(full.aiCredits / 2));
+  assert.equal(withoutAi(half).total, half.total - half.aiCredits);
+  assert.match(half.lines[0].note, /Half price/);
+});

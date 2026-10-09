@@ -12,7 +12,7 @@ import { currentUserId } from "../middlewares/requireUser.js";
 import { getCalibration } from "../services/calibration.service.js";
 import { extractTexts, translateTexts, translationAvailable } from "../services/translate.service.js";
 import { synthesize } from "../services/synthesis.service.js";
-import { computeCost, withoutAi, type CreditCost } from "../services/credit-cost.service.js";
+import { computeCost, pathFollowUpPrice, withoutAi, type CreditCost } from "../services/credit-cost.service.js";
 import type { AnalysisOptions } from "../services/analysis-options.js";
 import { attachAnalysis, billingActiveFor, debitCredits, getBalance, refundCharge, type DebitResult } from "../services/credits.service.js";
 
@@ -27,6 +27,8 @@ type Parsed = {
   longitude?: number;
   depth: "auto" | "standard" | "deep" | "expert";
   options: AnalysisOptions;
+  /** Set when the question is one of the paths SIVI listed in an earlier analysis. */
+  fromPath?: { analysisId: number; pathIndex: number };
 };
 type ParseOutcome = { ok: true; data: Parsed } | { ok: false; status: number; body: { error: string; message: string } };
 
@@ -61,7 +63,29 @@ function parseSituationRequest(body: unknown): ParseOutcome {
     useAstrology: parseResult.data.useAstrology ?? true,
     language: parseResult.data.language ?? "auto",
   };
-  return { ok: true, data: { situation, latitude, longitude, depth, options } };
+  const fromPath = parseResult.data.fromPath ? { analysisId: parseResult.data.fromPath.analysisId, pathIndex: parseResult.data.fromPath.pathIndex } : undefined;
+  return { ok: true, data: { situation, latitude, longitude, depth, options, fromPath } };
+}
+
+const MAX_BASE_LENGTH = 1500; // leaves room for the path text inside the 2000 limit
+
+/**
+ * A path from SIVI run as a question of its own. The text is built HERE from the person's own
+ * earlier analysis, never taken from the request, so the half price cannot be used on any other text.
+ * Returns the new situation, or null when the analysis or path does not exist for this user.
+ */
+async function situationForPath(userId: string, ref: { analysisId: number; pathIndex: number }): Promise<string | null> {
+  const [row] = await db
+    .select({ situation: analysesTable.situation, fullAnalysis: analysesTable.fullAnalysis })
+    .from(analysesTable)
+    .where(and(eq(analysesTable.id, ref.analysisId), eq(analysesTable.userId, userId)));
+  if (!row) return null;
+  const sim = (row.fullAnalysis as { simulation?: { bestPath?: { action?: unknown }; alternatives?: { action?: unknown }[] } } | null)?.simulation;
+  const actions = [sim?.bestPath?.action, ...(sim?.alternatives ?? []).map((a) => a?.action)];
+  const action = actions[ref.pathIndex];
+  if (typeof action !== "string" || !action.trim()) return null;
+  const base = row.situation.length > MAX_BASE_LENGTH ? `${row.situation.slice(0, MAX_BASE_LENGTH)}...` : row.situation;
+  return `${base}\n\nI am now considering this specific path: "${action.trim()}". What is likely to happen if I take it, what should I watch for, and how does it compare with my other options?`;
 }
 
 router.post("/analysis/estimate", async (req, res) => {
@@ -71,9 +95,19 @@ router.post("/analysis/estimate", async (req, res) => {
     return;
   }
   try {
-    const { situation, latitude, longitude, depth, options } = parsed.data;
+    const { latitude, longitude, depth, options, fromPath } = parsed.data;
     const userId = currentUserId(res);
-    const cost = computeCost(situation, runEngine(situation, { latitude, longitude, useAstrology: options.useAstrology }), depth, options);
+    let situation = parsed.data.situation;
+    if (fromPath) {
+      const built = await situationForPath(userId, fromPath);
+      if (!built) {
+        res.status(404).json({ error: "path_not_found", message: "That path was not found in your analysis." });
+        return;
+      }
+      situation = built;
+    }
+    const base = computeCost(situation, runEngine(situation, { latitude, longitude, useAstrology: options.useAstrology }), depth, options);
+    const cost = fromPath ? pathFollowUpPrice(base) : base;
     const billingActive = billingActiveFor(userId);
     const balance = await getBalance(userId);
     res.json({ ...cost, billingActive, balance, enough: !billingActive || balance >= cost.total });
@@ -89,9 +123,18 @@ router.post("/analysis/analyze", async (req, res) => {
     res.status(parsed.status).json(parsed.body);
     return;
   }
-  const { situation, latitude, longitude, depth, options } = parsed.data;
+  const { latitude, longitude, depth, options, fromPath } = parsed.data;
   const userId = currentUserId(res);
   const billingActive = billingActiveFor(userId);
+  let situation = parsed.data.situation;
+  if (fromPath) {
+    const built = await situationForPath(userId, fromPath);
+    if (!built) {
+      res.status(404).json({ error: "path_not_found", message: "That path was not found in your analysis." });
+      return;
+    }
+    situation = built;
+  }
   let charge: { ledgerId: number; balance: number } | null = null;
 
   try {
@@ -100,7 +143,8 @@ router.post("/analysis/analyze", async (req, res) => {
 
     // The price is fixed by the modules involved and the reasoning level, so it is charged up front
     // (atomically, never below zero) and the AI part is given back if the AI cannot answer.
-    const cost: CreditCost = computeCost(situation, engineResult, depth, options);
+    const fullCost = computeCost(situation, engineResult, depth, options);
+    const cost: CreditCost = fromPath ? pathFollowUpPrice(fullCost) : fullCost;
     if (billingActive) {
       const debit: DebitResult = await debitCredits(userId, cost.total, { lines: cost.lines, depth: cost.depth });
       if (!debit.ok) {
