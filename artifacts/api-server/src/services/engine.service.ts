@@ -99,7 +99,7 @@ function buildModuleReports(
     {
       key: "MANU",
       role: "Reads the feelings in your words (stress, worry, anger, sadness, confusion, calm), including phrases like \"gusse mein\" or \"samajh nahi aa raha\", negation, past versus now, and \"I am fine\" that hides distress. It estimates how strong the feeling sounds. It does not diagnose anything.",
-      name: "MANU - emotion mapping",
+      name: "MANU - Mood & Mind Analysis and Navigation Unit",
       area: "emotion",
       active: emotion.score > 0,
       verdict:
