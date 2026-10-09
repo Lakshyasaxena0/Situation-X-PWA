@@ -20,8 +20,12 @@ import {
   DIMINISHER_FACTOR,
   INTENSIFIERS,
   INTENSIFIER_FACTOR,
+  EMPHASIS_FACTOR,
   NEGATORS_AFTER,
   NEGATORS_BEFORE,
+  PAST_FACTOR,
+  PAST_MARKERS,
+  PRESENT_MARKERS,
   QUESTION_FACTOR,
   SOFTEN_FACTOR,
   type VocabEntry,
@@ -38,6 +42,15 @@ export type Hit = {
   negated: boolean;
   /** True when the negation was a wish to avoid it ("I don't want to fight"). */
   avoids: boolean;
+  /** Said about the past ("I was angry"), so it counts less than how the person feels now. */
+  past: boolean;
+  /** Stressed by "!" or CAPITALS. */
+  emphasized: boolean;
+};
+
+export type MatchOptions = {
+  /** Read tense (past counts less) and emphasis ("!", CAPITALS). Used for emotions. */
+  context?: boolean;
 };
 
 export type KeyScore = { key: string; score: number; hits: Hit[] };
@@ -68,18 +81,25 @@ function normalize(text: string): string {
     .replace(/(\p{L})'(\p{L})/gu, "$1$2");
 }
 
-type Clause = { tokens: string[]; question: boolean };
+type Clause = { tokens: string[]; question: boolean; emphasized: boolean; past: boolean };
+
+const SENTENCES = /[^.!?\u0964\n]+[.!?\u0964]*/gu;
 
 function splitClauses(text: string): Clause[] {
-  const sentences = normalize(text).match(/[^.!?।\n]+[.!?।]*/gu) ?? [];
+  const original = text.normalize("NFC").match(SENTENCES) ?? [];
+  const sentences = normalize(text).match(SENTENCES) ?? [];
   const clauses: Clause[] = [];
-  for (const sentence of sentences) {
+  sentences.forEach((sentence, index) => {
     const question = sentence.includes("?");
+    const raw = original[index] ?? "";
+    const emphasized = raw.includes("!") || /\b\p{Lu}{3,}\b/u.test(raw);
     for (const part of sentence.split(CLAUSE_BREAKS)) {
       const tokens = part.replace(/[^\p{L}\p{N}\p{M}\s*]/gu, " ").split(/\s+/).filter(Boolean);
-      if (tokens.length) clauses.push({ tokens, question });
+      if (!tokens.length) continue;
+      const past = tokens.some((t) => PAST_MARKERS.has(t)) && !tokens.some((t) => PRESENT_MARKERS.has(t));
+      clauses.push({ tokens, question, emphasized, past });
     }
-  }
+  });
   return clauses;
 }
 
@@ -92,7 +112,7 @@ function findTerm(tokens: string[], entry: VocabEntry, from = 0): { start: numbe
 }
 
 /** Scores every key of the vocabulary against the text. */
-export function matchVocabulary(text: string, vocabulary: Vocabulary): MatchResult {
+export function matchVocabulary(text: string, vocabulary: Vocabulary, options: MatchOptions = {}): MatchResult {
   const clauses = splitClauses(text);
   const best = new Map<string, Map<string, Hit>>();
   const avoided = new Set<string>();
@@ -119,6 +139,10 @@ export function matchVocabulary(text: string, vocabulary: Vocabulary): MatchResu
           if (intensified) effective *= INTENSIFIER_FACTOR;
           if (diminished) effective *= DIMINISHER_FACTOR;
           if (clause.question) effective *= QUESTION_FACTOR;
+          const past = Boolean(options.context && clause.past);
+          const emphasized = Boolean(options.context && clause.emphasized);
+          if (past) effective *= PAST_FACTOR;
+          if (emphasized) effective *= EMPHASIS_FACTOR;
 
           const hit: Hit = {
             term: entry.term,
@@ -127,6 +151,8 @@ export function matchVocabulary(text: string, vocabulary: Vocabulary): MatchResu
             effective: Math.round(effective * 100) / 100,
             negated,
             avoids: wantsToAvoid,
+            past,
+            emphasized,
           };
           const prev = perTerm.get(entry.term);
           // Each distinct word counts once, at its strongest occurrence.

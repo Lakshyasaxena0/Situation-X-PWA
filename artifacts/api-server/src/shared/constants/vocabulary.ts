@@ -80,3 +80,64 @@ export const INTENSIFIER_FACTOR = 1.3;
 export const DIMINISHER_FACTOR = 0.7;
 /** Words inside a question sentence matter a little more: that is where the real ask usually is. */
 export const QUESTION_FACTOR = 1.25;
+
+/** Words that say a feeling is about the past ("I was angry yesterday"). Counted only for emotions. */
+export const PAST_MARKERS = new Set(["was", "were", "had", "used", "yesterday", "ago", "earlier", "tha", "thi", "pehle", "kal", "\u092a\u0939\u0932\u0947", "\u0925\u093e", "\u0925\u0940"]);
+/** Words that say it is how the person feels now. A clause with one of these is never "past". */
+export const PRESENT_MARKERS = new Set(["am", "im", "feel", "feeling", "feels", "hai", "hoon", "hu", "raha", "rahi", "rahe", "now", "today", "abhi", "aaj", "currently", "still", "lag", "\u0939\u0942\u0902", "\u0939\u0942\u0901", "\u0930\u0939\u093e", "\u0930\u0939\u0940", "\u0905\u092d\u0940"]);
+export const PAST_FACTOR = 0.7;
+/** "!" or CAPITALS in the sentence. */
+export const EMPHASIS_FACTOR = 1.2;
+
+// ---- emotions (MANU) ------------------------------------------------------
+// Same weights and negation rules as above. For feelings a negation almost always cancels them
+// ("I am not worried"), so every entry is "cancel".
+
+const feel = (weight: number, ...terms: string[]) => entries(weight, "cancel")(...terms);
+
+export const EMOTION_VOCABULARY: Vocabulary = {
+  stressed: [
+    ...feel(2, "pressure mein", "tension mein", "cant handle", "cant cope", "cant take it", "too much to handle", "burnt out", "burn out", "kaam ka load", "dabav mein"),
+    ...feel(1.5, "overwhelm*", "burnout", "tension le", "exhausted"),
+    ...feel(1, "stress*", "pressure", "burden", "tension", "deadline", "dabav", "load", "\u0924\u0928\u093e\u0935", "\u0926\u092c\u093e\u0935"),
+    ...feel(0.5, "too much", "no time", "thak*", "tired", "\u0925\u0915"),
+  ],
+  anxious: [
+    ...feel(2, "chinta ho rahi", "chinta ho raha", "dar lag raha", "dar lag rahi", "cant stop worrying", "cant stop thinking", "cant sleep", "what if", "kya hoga"),
+    ...feel(1.5, "overthink*", "ghabra*", "ghabrahat", "panic*", "dread", "bechaini", "\u0918\u092c\u0930\u093e\u0939\u091f"),
+    ...feel(1, "anxious", "anxiety", "worried", "worry", "worries", "worrying", "fear", "scared", "afraid", "nervous", "uneasy", "chinta", "dar", "darr", "\u091a\u093f\u0902\u0924\u093e", "\u0921\u0930"),
+  ],
+  angry: [
+    ...feel(2, "gusse mein", "gussa aa raha", "gussa aa rahi", "fed up", "sick of", "sick and tired", "khoon khaul"),
+    ...feel(1.5, "furious", "rage", "pissed", "bhadak*", "krodh", "nafrat", "\u0928\u092b\u0930\u0924"),
+    ...feel(1, "angry", "anger", "frustrat*", "irritat*", "annoy*", "hate", "hated", "resent*", "mad", "gussa", "chidh*", "\u0917\u0941\u0938\u094d\u0938\u093e", "\u091a\u093f\u0922\u093c"),
+  ],
+  sad: [
+    ...feel(2, "bura lag raha", "bura lag rahi", "dil toot", "dil tut", "feeling low", "feel low", "heartbroken", "heart broken", "hopeless", "worthless"),
+    ...feel(1.5, "bura lag", "toot gaya", "ro raha", "ro rahi", "depressed", "depression", "lonely", "grief", "give up", "let down"),
+    ...feel(1, "sad", "hurt", "cry", "crying", "tears", "regret*", "disappointed", "empty", "dukh", "udaas", "udas", "rona", "afsos", "pachta*", "\u0909\u0926\u093e\u0938", "\u0926\u0941\u0916"),
+    ...feel(0.5, "alone", "miss", "akela", "akeli", "low"),
+  ],
+  confused: [
+    ...feel(2, "samajh nahi aa raha", "samajh nahi aa rahi", "cant decide", "mixed feelings", "dont know what to do", "kya karu samajh nahi", "\u0909\u0932\u091d\u0928"),
+    ...feel(1.5, "not sure", "dont know", "pata nahi", "samajh nahi", "uljh*", "ulajh*", "dwidha", "torn between", "\u092a\u0924\u093e \u0928\u0939\u0940\u0902", "\u0938\u092e\u091d \u0928\u0939\u0940\u0902"),
+    ...feel(1, "confus*", "uncertain*", "doubt*", "unsure", "no idea", "torn", "dilemma", "confuse"),
+    ...feel(0.5, "lost"),
+  ],
+  calm: [
+    ...feel(1, "theek hoon", "theek hu", "sab theek", "all good", "im fine", "i am fine", "im okay", "i am okay", "doing fine", "at peace", "thinking clearly", "clear headed", "shant", "\u0920\u0940\u0915 \u0939\u0942\u0902", "\u0936\u093e\u0902\u0924"),
+    ...feel(1, "calm", "peaceful", "relaxed", "composed", "stable", "normal"),
+    ...feel(0.5, "fine", "okay", "theek hai", "theek"),
+  ],
+};
+
+/** Words that make a feeling bigger or an overall state worse. Added to the intensity, not to the emotion. */
+export const INTENSITY_CUES: Vocabulary = {
+  absolute: [...entries(0.5, "cancel")("always", "never", "everything", "nothing", "no one", "nobody", "everyone", "hamesha", "kabhi nahi", "sab kuch", "kuch nahi", "koi nahi", "\u0939\u092e\u0947\u0936\u093e")],
+  limit: [...entries(1, "cancel")("cant take", "cant anymore", "cant do this", "breaking point", "too much", "unbearable", "bardasht", "bas ab", "thak gaya", "thak gayi")],
+};
+
+/** Phrases that mean the person may be in danger. MANU only raises a flag so the answer is written with care. */
+export const CRISIS_VOCABULARY: Vocabulary = {
+  crisis: [...entries(4, "cancel")("kill myself", "end my life", "end it all", "want to die", "wanna die", "suicide", "suicidal", "no reason to live", "better off without me", "marna chahta", "marna chahti", "mar jaun", "jeena nahi chahta", "jeena nahi chahti", "khud ko khatam", "aatmhatya", "\u0906\u0924\u094d\u092e\u0939\u0924\u094d\u092f\u093e")],
+};

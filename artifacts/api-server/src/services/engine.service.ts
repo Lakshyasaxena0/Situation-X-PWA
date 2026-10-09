@@ -1,9 +1,7 @@
 import { detectIntent, type IntentAnalysis, type IntentResult } from "./ajit.service.js";
-import { analyzeEmotion, type EmotionResult } from "./manu.service.js";
+import { detectEmotion, type EmotionAnalysis, type EmotionResult } from "./manu.service.js";
 import { simulatePaths, type SimulationResult } from "./sivi.service.js";
 import { analyzeAstro, type AstroResult } from "./astro.service.js";
-import { EMOTION_KEYWORDS } from "./manu.service.js";
-import { matchedKeywords, normalizeText } from "./text.js";
 
 export type EngineResponse = {
   intent: IntentResult;
@@ -50,24 +48,17 @@ function applyEthicalFilter(input: string): { text: string; removed: string[] } 
   return { text: lower.replace(UNSAFE_PATTERN, " ").replace(/\s+/g, " ").trim(), removed };
 }
 
-const ranked = (text: string, table: Record<string, string[]>) =>
-  Object.entries(table)
-    .map(([label, words]) => ({ label, hits: matchedKeywords(text, words) }))
-    .filter((r) => r.hits.length > 0)
-    .sort((a, b) => b.hits.length - a.hits.length);
-
 function buildModuleReports(
   clean: string,
   removed: string[],
   intentAnalysis: IntentAnalysis,
-  emotion: EmotionResult,
+  emotionAnalysis: EmotionAnalysis,
   simulation: SimulationResult,
   astro: AstroResult,
   useAstrology: boolean,
 ): ModuleReport[] {
-  const normalized = normalizeText(clean);
+  const emotion = emotionAnalysis.result;
   const intent = intentAnalysis.result;
-  const emotionRank = ranked(normalized, EMOTION_KEYWORDS);
   const best = simulation.bestPath;
   const topFactors = astro.prashna.factors
     .filter((f) => f.label !== "Scale centering")
@@ -107,15 +98,29 @@ function buildModuleReports(
     },
     {
       key: "MANU",
-      role: "Looks for emotion words (stress, worry, anger, sadness, confusion, calm) to estimate your emotional state and how strong it is. Strong emotion makes the engine favour slower, lower-risk paths.",
+      role: "Reads the feelings in your words (stress, worry, anger, sadness, confusion, calm), including phrases like \"gusse mein\" or \"samajh nahi aa raha\", negation, past versus now, and \"I am fine\" that hides distress. It estimates how strong the feeling sounds. It does not diagnose anything.",
       name: "MANU - emotion mapping",
       area: "emotion",
       active: emotion.score > 0,
       verdict:
         emotion.score > 0
-          ? `Emotion: ${emotion.emotion} (${emotion.intensity} intensity, ${emotion.score} keyword match${emotion.score === 1 ? "" : "es"}).`
-          : "No emotion words found, so the tone is treated as unclear (confused, low intensity).",
-      evidence: emotionRank.map((r) => `${r.label}: ${r.hits.map((h) => `"${h}"`).join(", ")}`),
+          ? `Emotion: ${emotion.emotion} (${emotion.intensity} intensity, evidence ${emotion.score})` +
+            (emotion.secondary ? `, with ${emotion.secondary} close behind` : "") +
+            (emotion.masked ? ". You say you are fine, but the rest of the message sounds distressed." : ".") +
+            " This describes how the words sound, not a diagnosis."
+          : emotion.crisis
+            ? "Words that may point to a person in danger were found. This is not a diagnosis."
+            : "No emotion words found, so the tone is treated as unclear (confused, low intensity).",
+      evidence: [
+        ...emotionAnalysis.ranking.map(
+          (r) =>
+            `${r.key} ${r.score}: ` +
+            r.hits
+              .map((h) => `"${h.matched}"${h.negated ? " (negated, ignored)" : ""}${h.past ? " (about the past, softer)" : ""}${h.emphasized ? " (stressed)" : ""}`)
+              .join(", "),
+        ),
+        ...emotionAnalysis.notes,
+      ],
     },
     {
       key: "SIVI",
@@ -165,7 +170,8 @@ export function runEngine(input: string, options: EngineOptions = {}): EngineRes
   const { text: cleanInput, removed } = applyEthicalFilter(input);
   const intentAnalysis = detectIntent(cleanInput);
   const intentResult = intentAnalysis.result;
-  const emotionResult = analyzeEmotion(cleanInput);
+  const emotionAnalysis = detectEmotion(cleanInput);
+  const emotionResult = emotionAnalysis.result;
   const simulationResult = simulatePaths(intentResult.intent, emotionResult.emotion);
   const finalVerdict = deriveFinalVerdict(simulationResult, emotionResult);
   // ASTRO casts the Prashna charts (D1, D3, D9, D10) for the moment of the question and reads
@@ -178,6 +184,6 @@ export function runEngine(input: string, options: EngineOptions = {}): EngineRes
     simulation: simulationResult,
     finalVerdict,
     astro: astroResult,
-    modules: buildModuleReports(cleanInput, removed, intentAnalysis, emotionResult, simulationResult, astroResult, useAstrology),
+    modules: buildModuleReports(cleanInput, removed, intentAnalysis, emotionAnalysis, simulationResult, astroResult, useAstrology),
   };
 }

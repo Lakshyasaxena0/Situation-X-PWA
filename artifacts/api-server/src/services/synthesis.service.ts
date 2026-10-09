@@ -276,7 +276,7 @@ ${situation.replace(/[<>]/g, "")}
 
 Hints from the app's specialised modules (they are keyword-based and can be wrong; use your own understanding of the text over them):
 - AJIT (intent): ${engine.intent.intent}, confidence ${engine.intent.confidence}${engine.intent.secondary ? `, also touches ${engine.intent.secondary}` : ""}${engine.intent.stance === "avoid" ? ", and the person seems to want to AVOID what they name" : ""}
-- MANU (emotion): ${engine.emotion.emotion}, intensity ${engine.emotion.intensity}
+- MANU (emotion, a text-based estimate only, never a diagnosis): ${engine.emotion.emotion}, intensity ${engine.emotion.intensity}${engine.emotion.secondary ? `, with ${engine.emotion.secondary} too` : ""}${engine.emotion.masked ? "; the person says they are fine but the message sounds distressed" : ""}${engine.emotion.crisis ? "; THE TEXT MAY POINT TO A PERSON IN DANGER: be gentle, say you are concerned, and kindly encourage reaching a trusted person or a local helpline now, before any advice" : ""}
 - SIVI (path simulation): best path "${engine.simulation.bestPath.action}" (risk ${engine.simulation.bestPath.risk}, stability ${engine.simulation.bestPath.stability}, outcome ${engine.simulation.bestPath.outcome}); alternatives: ${alternatives || "none"}
 
 STEP 1 - YOUR OWN JUDGMENT. Do this first, from the situation itself, with logic, evidence, common sense, psychology and practical wisdom:
