@@ -216,28 +216,34 @@ function ModuleReports({ reports }: { reports: ModuleReport[] }) {
   if (reports.length === 0) return null;
   return (
     <div className="mt-4 space-y-2.5 border-t border-border pt-3">
-      <div className="text-[11px] font-mono text-muted-foreground tracking-wide">MODULES THAT RAN FOR THIS QUESTION</div>
-      {reports.map((m) => (
-        <div key={m.key} className="rounded-md bg-muted/50 p-3">
-          <div className="flex items-start gap-2">
-            {m.active ? <CheckCircle2 className="w-4 h-4 mt-0.5 shrink-0 text-green-700" /> : <MinusCircle className="w-4 h-4 mt-0.5 shrink-0 text-muted-foreground" />}
-            <div className="min-w-0">
-              <div className="text-sm font-semibold text-foreground">
-                {m.name} <span className={`ml-1 text-[10px] font-mono uppercase ${m.active ? "text-green-700" : "text-muted-foreground"}`}>{m.active ? "active" : "not triggered"}</span>
+      {reports.some((m) => m.active) && <div className="text-[11px] font-mono text-muted-foreground tracking-wide">WHAT THIS MODULE SAW</div>}
+      {reports.map((m) =>
+        m.active ? (
+          <div key={m.key} className="rounded-md bg-muted/50 p-3">
+            <div className="flex items-start gap-2">
+              <CheckCircle2 className="w-4 h-4 mt-0.5 shrink-0 text-green-700" />
+              <div className="min-w-0">
+                <div className="text-sm font-semibold text-foreground">{m.name}</div>
+                {m.role && <p className="text-xs text-muted-foreground italic mb-1">{m.role}</p>}
+                <p className="text-sm text-foreground">{m.verdict}</p>
+                {m.evidence.length > 0 && (
+                  <ul className="mt-1 list-disc pl-4 text-xs text-muted-foreground space-y-0.5">
+                    {m.evidence.map((e, i) => (
+                      <li key={i}>{e}</li>
+                    ))}
+                  </ul>
+                )}
               </div>
-              {m.role && <p className="text-xs text-muted-foreground italic mb-1">{m.role}</p>}
-              <p className="text-sm text-foreground">{m.verdict}</p>
-              {m.evidence.length > 0 && (
-                <ul className="mt-1 list-disc pl-4 text-xs text-muted-foreground space-y-0.5">
-                  {m.evidence.map((e, i) => (
-                    <li key={i}>{e}</li>
-                  ))}
-                </ul>
-              )}
             </div>
           </div>
-        </div>
-      ))}
+        ) : (
+          <div key={m.key} className="flex items-center gap-2 rounded-md bg-muted/30 px-3 py-2 text-sm text-muted-foreground">
+            <MinusCircle className="w-4 h-4 shrink-0" />
+            <span className="font-semibold">{m.name}</span>
+            <span className="ml-auto text-[10px] font-mono uppercase">not activated</span>
+          </div>
+        ),
+      )}
     </div>
   );
 }
@@ -374,7 +380,7 @@ function AstroCard({ result, reports }: { result: AnalysisResult; reports: Modul
   if (!astroOn) {
     return (
       <EngineCard code="ASTRO" title="Astrological Context">
-        <p className="text-sm text-muted-foreground">Astrology was switched off for this analysis (Settings).</p>
+        <p className="text-sm text-muted-foreground">Not activated (switched off in Settings).</p>
       </EngineCard>
     );
   }
@@ -587,20 +593,24 @@ function AnalysisBody({ result, header }: { result: AnalysisResult; header: Reac
         </div>
       )}
       <EngineCard code="AJIT" title="Intent Analysis">
-        <div className="flex items-center gap-3 flex-wrap">
-          <span className="text-lg font-bold text-foreground capitalize">{result.intent.intent}</span>
-          <Badge label={result.intent.confidence} className={intensityColor(result.intent.confidence)} />
-          <span className="text-xs text-muted-foreground">score: {result.intent.score}</span>
-        </div>
+        {result.intent.intent !== "unclear" && (
+          <div className="flex items-center gap-3 flex-wrap">
+            <span className="text-lg font-bold text-foreground capitalize">{result.intent.intent}</span>
+            <Badge label={result.intent.confidence} className={intensityColor(result.intent.confidence)} />
+            <span className="text-xs text-muted-foreground">score: {result.intent.score}</span>
+          </div>
+        )}
         <ModuleReports reports={reportsFor(result, "intent")} />
       </EngineCard>
 
       <EngineCard code="MANU" title="Emotion Mapping">
-        <div className="flex items-center gap-3 flex-wrap">
-          <span className="text-lg font-bold text-foreground capitalize">{result.emotion.emotion}</span>
-          <Badge label={result.emotion.intensity} className={intensityColor(result.emotion.intensity)} />
-          <span className="text-xs text-muted-foreground">score: {result.emotion.score}</span>
-        </div>
+        {result.emotion.score > 0 && (
+          <div className="flex items-center gap-3 flex-wrap">
+            <span className="text-lg font-bold text-foreground capitalize">{result.emotion.emotion}</span>
+            <Badge label={result.emotion.intensity} className={intensityColor(result.emotion.intensity)} />
+            <span className="text-xs text-muted-foreground">score: {result.emotion.score}</span>
+          </div>
+        )}
         <ModuleReports reports={reportsFor(result, "emotion")} />
       </EngineCard>
 

@@ -346,14 +346,21 @@ function evaluate(sky: PrashnaSky, cfg: Config): { factors: PrashnaFactor[]; que
 
 // ---------------------------------------------------------------- scaling against typical skies
 
-/** 100 skies across several years, built once (the same ones every run), to measure what a "typical" reading is. */
-let referenceSkies: PrashnaSky[] | null = null;
-function skies(): PrashnaSky[] {
-  if (referenceSkies) return referenceSkies;
+/** 48 skies across several years (the same ones every run), to measure what a "typical" reading is. Built on demand, one at a time. */
+const REFERENCE_COUNT = 48;
+const referenceDates: Date[] = (() => {
   let seed = 20240607;
   const rnd = () => ((seed = (seed * 1664525 + 1013904223) >>> 0) / 4294967296);
   const start = Date.UTC(2025, 0, 1);
-  referenceSkies = Array.from({ length: 100 }, () => castPrashnaCharts(new Date(start + rnd() * 6 * 365.25 * 86400000)));
+  return Array.from({ length: REFERENCE_COUNT }, () => new Date(start + rnd() * 6 * 365.25 * 86400000));
+})();
+const referenceSkies: PrashnaSky[] = [];
+function skyAt(i: number): PrashnaSky {
+  while (referenceSkies.length <= i) referenceSkies.push(castPrashnaCharts(referenceDates[referenceSkies.length]));
+  return referenceSkies[i];
+}
+function skies(): PrashnaSky[] {
+  if (referenceSkies.length < REFERENCE_COUNT) skyAt(REFERENCE_COUNT - 1);
   return referenceSkies;
 }
 
@@ -487,9 +494,21 @@ export function readPrashna(intent: IntentType, sky: PrashnaSky, options: ReadOp
 
 export const PRASHNA_PROFILES = PROFILES;
 
-/** Builds the reference skies and the usual scales ahead of time (called once after the server starts), so the first question is not slow. */
-export function warmUpPrashna(): number {
+/**
+ * Builds the reference skies and the usual scales ahead of time (called once after the server starts), so the
+ * first question is not slow. It hands control back between steps, so the server keeps answering (health
+ * checks, other requests) while it works; a question that arrives earlier simply finishes the work itself.
+ */
+export async function warmUpPrashna(): Promise<number> {
   const t0 = Date.now();
-  for (const intent of Object.keys(PROFILES) as IntentType[]) scaleFor(configFor(intent, ""), NO_TUNING);
+  const pause = () => new Promise<void>((resolve) => setImmediate(resolve));
+  for (let i = 0; i < REFERENCE_COUNT; i++) {
+    skyAt(i);
+    await pause();
+  }
+  for (const intent of Object.keys(PROFILES) as IntentType[]) {
+    scaleFor(configFor(intent, ""), NO_TUNING);
+    await pause();
+  }
   return Date.now() - t0;
 }

@@ -79,7 +79,13 @@ export function detectEmotion(input: string): EmotionAnalysis {
   let strength = top.score + (top.key === "calm" ? 0 : cueScore) + Math.min(1.5, otherFeelings * 0.5) + (masked ? 1 : 0);
   if (top.key === "calm") strength = Math.min(strength, 1.9); // calm is never "intense"
   if (cueScore > 0 && top.key !== "calm") notes.push(`Intensity raised by words like "${cues.flatMap((c) => c.hits.map((h) => h.matched)).slice(0, 3).join('", "')}".`);
-  if (otherFeelings > 0 && top.key !== "calm") notes.push(`${otherFeelings} other feeling${otherFeelings > 1 ? "s" : ""} also present, which raises the intensity.`);
+  if (otherFeelings > 0 && top.key !== "calm") {
+    const named = live
+      .filter((r) => r.key !== top.key && r.key !== "calm" && r.score >= 1)
+      .map((r) => `${r.key} (${r.hits.filter((h) => h.effective > 0).map((h) => `"${h.matched}"`).join(", ")})`)
+      .join("; ");
+    notes.push(`Other feeling${otherFeelings > 1 ? "s" : ""} also present, which raises the intensity: ${named}.`);
+  }
   let intensity: EmotionResult["intensity"] = strength >= 4 ? "high" : strength >= 2 ? "medium" : "low";
   if (crisis) {
     intensity = "high";

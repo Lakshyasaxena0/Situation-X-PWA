@@ -60,7 +60,7 @@ export function siviReport(simulation: SimulationResult, intent: IntentResult, e
     (p.uncertainties.length ? `. Uncertain: ${p.uncertainties.join("; ")}` : "");
   return {
     key: "SIVI",
-    role: "Compares the choices open to you. It lists what you want, the facts and limits you stated, and for every path its benefits, downsides and what is still uncertain, then explains why one path may be better. It does not predict the future. When the AI is on, the AI reads your whole situation and builds the paths; otherwise SIVI gives general paths from the intent and emotion.",
+    role: "Finds what your question is about, from your words in context.",
     name: "SIVI - Simulated Intelligent & Variable Intentions",
     area: "paths",
     active: true,
@@ -87,7 +87,7 @@ const FILTER_VERDICT: Record<SafetyDecision["action"], string> = {
 function filterReport(safety: SafetyDecision): ModuleReport {
   return {
     key: "FILTER",
-    role: "Reads your message in context before anything else (who is being hurt, whether it is an intention, a plan or a request for instructions, negation like \"I don't want to hurt anyone\", exaggeration like \"I could kill him\", and protection like \"how do I stop him\") and decides: pass it on, answer with care, steer to safe options, or refuse. It never deletes words from your text. The AI's answer is checked again before you see it.",
+    role: "Checks your message in context for harm, and steers or refuses when needed.",
     name: "Ethical filter",
     area: "intent",
     active: safety.action !== "allow",
@@ -104,7 +104,7 @@ export function rsmiReport(silence: SilenceReading): ModuleReport {
     key: "RSMI",
     name: "RSMI - Reasonable Silence Module",
     area: "silence",
-    role: "Notices when your question mentions a silence (someone went quiet, did not reply, stopped talking). It does not read minds: it lists the reasonable meanings that silence can have, ranks them from the facts you gave (who, after what, how long, any signs of how it felt) and says what to check before believing any of them.",
+    role: "Studies a silence you describe and lists what it may mean.",
     active: true,
     verdict: `${whose} ${silence.channel === "in_person" ? "in conversation" : silence.channel === "organisation" ? "from an organisation" : silence.channel === "call" ? "on calls" : "in messages"}, after ${silence.trigger}. Most likely: ${top.meaning}.`,
     evidence: [
@@ -156,7 +156,7 @@ function buildModuleReports(
     },
     {
       key: "MANU",
-      role: "Reads the feelings in your words (stress, worry, anger, sadness, confusion, calm), including phrases like \"gusse mein\" or \"samajh nahi aa raha\", negation, past versus now, and \"I am fine\" that hides distress. It estimates how strong the feeling sounds. It does not diagnose anything.",
+      role: "Estimates the feelings in your words and how strong they sound.",
       name: "MANU - Mood & Mind Analysis and Navigation Unit",
       area: "emotion",
       active: emotion.score > 0,
@@ -183,7 +183,7 @@ function buildModuleReports(
     siviReport(simulation, intent, emotion),
     {
       key: "ASTRO",
-      role: "Casts the Prashna chart for the moment you ask, reads the house and planets that rule your kind of question, and scores it. Dashas (Vimshottari and Chara) are added only when you ask about timing.",
+      role: "Reads the Prashna chart for the moment you ask.",
       name: "ASTRO - Prashna chart",
       area: "astrology",
       active: useAstrology,

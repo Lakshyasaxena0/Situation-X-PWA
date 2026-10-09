@@ -37,6 +37,14 @@ export function Shell({ children }: ShellProps) {
     return location === href || (href === "/oracle" && location === "/");
   }
 
+  /** The only way the app signs you out: you stay signed in until you press this. */
+  const LogoutButton = () => (
+    <Button type="button" variant="outline" size="sm" className="w-full justify-start gap-2" onClick={() => signOut({ redirectUrl: "/" })}>
+      <LogOut className="w-4 h-4" />
+      Log out
+    </Button>
+  );
+
   const NavLinks = () => (
     <>
       {navItems.map((item) => (
@@ -81,19 +89,9 @@ export function Shell({ children }: ShellProps) {
               <NavLinks />
             </nav>
             <CreditBadge />
-            <div className="mt-auto">
-              {user && (
-                <div className="pt-4 border-t border-border">
-                  <p className="text-xs text-muted-foreground mb-3 truncate">{user.primaryEmailAddress?.emailAddress}</p>
-                  <button
-                    onClick={() => signOut({ redirectUrl: "/" })}
-                    className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
-                  >
-                    <LogOut className="w-4 h-4" />
-                    Sign out
-                  </button>
-                </div>
-              )}
+            <div className="mt-auto pt-4 border-t border-border space-y-3">
+              {user && <p className="text-xs text-muted-foreground truncate">{user.primaryEmailAddress?.emailAddress}</p>}
+              <LogoutButton />
             </div>
           </SheetContent>
         </Sheet>
@@ -114,18 +112,10 @@ export function Shell({ children }: ShellProps) {
           <CreditBadge />
         </div>
 
-        {user && (
-          <div className="px-4 py-4 border-t border-border">
-            <p className="text-xs text-muted-foreground truncate mb-2">{user.primaryEmailAddress?.emailAddress}</p>
-            <button
-              onClick={() => signOut({ redirectUrl: "/" })}
-              className="flex items-center gap-2 text-xs text-muted-foreground hover:text-foreground transition-colors"
-            >
-              <LogOut className="w-3.5 h-3.5" />
-              Sign out
-            </button>
-          </div>
-        )}
+        <div className="px-4 py-4 border-t border-border space-y-3">
+          {user && <p className="text-xs text-muted-foreground truncate">{user.primaryEmailAddress?.emailAddress}</p>}
+          <LogoutButton />
+        </div>
       </aside>
 
       {/* Main Content */}

@@ -57,13 +57,20 @@ function ClerkQueryClientCacheInvalidator() {
   const prevUserIdRef = useRef<string | null | undefined>(undefined);
 
   useEffect(() => {
-    const unsubscribe = addListener(({ user }) => {
+    // Clear the cached data and the last analysis only when a signed-in person signs out or another
+    // account takes over. Signing in (or the first load of the page, when the user is not known yet)
+    // must never wipe the analysis on screen.
+    const unsubscribe = addListener(({ user, session }) => {
       const userId = user?.id ?? null;
-      if (prevUserIdRef.current !== undefined && prevUserIdRef.current !== userId) {
+      const prev = prevUserIdRef.current;
+      const switched = typeof prev === "string" && typeof userId === "string" && prev !== userId;
+      const signedOut = typeof prev === "string" && userId === null && !session;
+      if (switched || signedOut) {
         qc.clear();
         clearAnalysisSession();
       }
-      prevUserIdRef.current = userId;
+      if (userId !== null || signedOut) prevUserIdRef.current = userId;
+      else if (prev === undefined) prevUserIdRef.current = null;
     });
     return unsubscribe;
   }, [addListener, qc]);

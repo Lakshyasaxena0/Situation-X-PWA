@@ -286,7 +286,7 @@ router.post("/analysis/analyze", async (req, res) => {
         key: "AI" as const,
         name: "AI - reasoning",
         area: "synthesis" as const,
-        role: "Reads your whole situation and reasons about it like an advisor (options, risks, what is unknown), scores it on the merits, then weighs the astrology as a second opinion.",
+        role: "Reasons about your whole situation and weighs the astrology as a second opinion.",
         active: aiAnswered,
         verdict: aiAnswered
           ? `Own judgment ${synthesis.logicScore}/100${synthesis.astroAlignment ? `; astrology ${synthesis.astroAlignment} it` : ""}; final ${synthesis.score}/100 (${synthesis.verdict}).`

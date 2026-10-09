@@ -30,7 +30,7 @@ app.listen(port, (err) => {
   logger.info({ database: databaseTarget() }, "Database target (password not shown)");
   void ensureSchema();
   // The astrology measures each reading against a set of typical skies; build it now, not during the first question.
-  setTimeout(() => logger.info({ ms: warmUpPrashna() }, "Astrology reference skies ready"), 200);
+  setTimeout(() => void warmUpPrashna().then((ms) => logger.info({ ms }, "Astrology reference skies ready")).catch((err) => logger.warn({ err }, "Astrology warm-up skipped")), 200);
 
   // Billing readiness, so a missing key is noticed at deploy time and not by a customer.
   if (paywallEnabled() && !razorpayConfigured()) {
