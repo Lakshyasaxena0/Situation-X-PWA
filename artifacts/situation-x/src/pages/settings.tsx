@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Shell } from "@/components/layout/Shell";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
+import { ChangePassword } from "@/components/ChangePassword";
 import { PlacePicker } from "@/components/PlacePicker";
 import { clearAnalysisSession } from "@/lib/analysisSession";
 import { DEFAULT_PLACE } from "@/lib/places";
@@ -105,6 +106,10 @@ export default function Settings() {
             </Section>
           </>
         )}
+
+        <Section title="Password" hint="Change the password of the account you are signed in with.">
+          <ChangePassword />
+        </Section>
 
         <Section title="This device">
           <div className="flex flex-wrap gap-2">
