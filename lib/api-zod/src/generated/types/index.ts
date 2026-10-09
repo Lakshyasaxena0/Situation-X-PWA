@@ -75,6 +75,8 @@ export * from "./finalVerdictRiskLevel";
 export * from "./getAnalysisHistoryParams";
 export * from "./getFeedbackListParams";
 export * from "./healthStatus";
+export * from "./indirectRoute";
+export * from "./indirectRouteSource";
 export * from "./insufficientCreditsResponse";
 export * from "./intentResult";
 export * from "./intentResultConfidence";

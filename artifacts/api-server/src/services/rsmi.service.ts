@@ -51,17 +51,20 @@ const IN_PERSON_SILENCE = [
   /\bgot\s+(?:silent|quiet)\b/, /\bsilen(?:ce|t)\b/, /\bsaid\s+nothing\b/, /\bdidn'?t\s+say\s+(?:anything|a\s+word|much)\b/, /\bnot\s+say\s+anything\b/,
   /\bawkward\s+(?:pause|silence)\b/, /\blong\s+pause\b/, /\bpaused\b/, /\bno\s+words\b/, /\bspeechless\b/, /\bstared\b/, /\bno\s+reaction\b/,
   /\breaction\s+nahi\b/, /\bkoi\s+reaction\b.*\bnahi\b/, /\bmuh\s+band\b|\bmunh\s+band\b/,
+  /\bgo(?:ne)?\s+(?:cold|blank)\b/, /\bwent\s+blank\b/, /\bfroze\b|\bfroze\s+up\b/, /\bturned\s+away\b/, /\bkept\s+(?:quiet|silent)\b/, /\bdidn'?t\s+(?:respond|react|answer|speak|talk)\b/, /\bno\s+response\b/, /\bcold\s+shoulder\b/, /\bsilent\s+treatment\b/, /\bgive?\s+me\s+the\s+silent\b/,
+  /\bsannata\b|\bsannaata\b/, /\bmaun\b/, /\bchupi\s+saadh\b/, /\bkuch\s+nahi\s+(?:keh|kah)a?\b/, /\bjawab\s+nahi\s+diya\b/, /\bmuh\s+pher\b|\bmunh\s+pher\b/, /\bnazar(?:en)?\s+(?:chura|phera)\b/, /\bbaat\s+nahi\s+(?:ki|kar(?:ta|ti|na))\b/, /\bbolna\s+chhod\b/, /मौन|सन्नाटा/,
 ];
 const MESSAGE_SILENCE = [
   /\breply\s+(?:nahi|nhi)\b/, /\brply\s+(?:nahi|nhi)\b/, /\bjawab\s+(?:nahi|nhi)\b/, /\bresponse\s+(?:nahi|nhi)\b/, /रिप्लाई\s+नहीं|जवाब\s+नहीं/,
   /\bseen\s+(?:kar|ker|but|bt)\b/, /\bseen\s+kiya\b/, /\bon\s+read\b/, /\bghost(?:ed|ing|s)?\b/, /\bignor(?:e|ed|es|ing)\b/, /\bignore\s+kar/,
   /\bno\s+repl(?:y|ies)\b/, /\b(?:not|hasn'?t|haven'?t|didn'?t|doesn'?t|isn't)\s+(?:been\s+)?(?:replying|replied|reply|responding|responded|text(?:ed)?\s+back|answer(?:ed|ing)?)\b/,
   /\bleft\s+me\s+(?:on\s+)?(?:read|seen)\b/, /\bmessage\s+ka\s+(?:reply|jawab)\b/, /\bbaat\s+(?:karna\s+band|nahi\s+kar|nhi\s+kar)\b/,
+  /\bleft\s+(?:me\s+)?(?:on\s+)?(?:delivered|unread)\b/, /\bon\s+delivered\b/, /\bblue\s+tick/, /\blast\s+seen\b/, /\bblocked\s+me\b/, /\bunfollow(?:ed)?\b/, /\bleft\s+the\s+(?:group|chat)\b/, /\bkeeps?\s+(?:me\s+)?waiting\b/, /\bdelayed?\s+repl(?:y|ies)\b/, /\breply\s+late\b/, /\bseen\s+zone\b/, /\bmsg\s+(?:ka\s+)?(?:reply|jawab)\s+(?:nahi|nhi)\b/, /\bkoi\s+(?:reply|jawab|khabar)\s+(?:nahi|nhi)\b/, /\bbaat\s+band\b/, /\bblock\s+kar\b/,
   /\bstopped\s+(?:talking|texting|replying|responding)\b/, /\bno\s+(?:text|message|msg|dm)\b/, /\bnot\s+(?:talking|texting)\b/,
 ];
-const CALL_SILENCE = [/\bcall\s+(?:nahi|nhi)\s+(?:uthaya|uthayi|utha|uthata|uthati|kiya|kar)/, /\bphone\s+(?:nahi|nhi)\s+(?:uthaya|uthayi|utha)/, /\bdidn'?t\s+(?:pick\s+up|answer\s+(?:my\s+)?(?:call|phone))/, /\bnot\s+(?:picking|answering)\b/, /\bcalls?\s+(?:ignored|declined|cut)\b/, /\bcall\s+cut\s+kar/];
-const ORG_CUES = /\b(hr|recruiter|interviewer|interview|company|client|office|application|offer\s+letter|offer|visa|college|university|bank|landlord|vendor|customer|investor|committee)\b/;
-const MESSAGE_CUES = /\b(message|msg|text|texted|whatsapp|dm|insta|email|mail|chat|seen|reply|rply|read|online)\b|रिप्लाई/;
+const CALL_SILENCE = [/\bcall\s+(?:nahi|nhi)\s+(?:uthaya|uthayi|utha|uthata|uthati|kiya|kar)/, /\bphone\s+(?:nahi|nhi)\s+(?:uthaya|uthayi|utha)/, /\bdidn'?t\s+(?:pick\s+up|answer\s+(?:my\s+)?(?:call|phone))/, /\bnot\s+(?:picking|answering)\b/, /\bcalls?\s+(?:ignored|declined|cut)\b/, /\bcall\s+cut\s+kar/, /\bhung\s+up\b/, /\bcall\s+(?:nahi|nhi)\s+(?:lagaya|laga|diya|lete|leta|leti)\b/, /\bvoicemail\b/, /\bmissed\s+calls?\b/, /\bphone\s+(?:switched\s+off|band)\b/, /\bnot\s+(?:calling|calling\s+back)\b/, /\bcall\s+back\s+(?:nahi|nhi)\b/, /\bkaat\s+diya\b/];
+const ORG_CUES = /\b(hr|recruiter|interviewer|interview|company|client|office|application|offer\s+letter|offer|visa|college|university|bank|landlord|vendor|customer|investor|committee|manager|principal|professor|teacher|supervisor|team|panel|authority|department|ministry|insurance|lender|agent|employer|admission|scholarship|embassy|consulate|court)\b/;
+const MESSAGE_CUES = /\b(message|msg|text|texted|texting|whatsapp|wa|dm|insta|instagram|snap|snapchat|telegram|email|mail|chat|seen|reply|rply|read|online|typing|story|status)\b|रिप्लाई/;
 
 const SELF_SILENCE = /\b(?:main|mai|maine|mene|mein|i|me)\b[^.!?\n]{0,25}\b(?:chup|khamosh|kuch\s+(?:bhi\s+)?nahi\s+(?:bola|boli|kaha)|silent|quiet|said\s+nothing|didn'?t\s+(?:say|reply|respond|answer))\b/;
 

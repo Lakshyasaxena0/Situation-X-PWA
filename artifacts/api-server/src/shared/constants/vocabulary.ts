@@ -65,7 +65,7 @@ export const INTENT_VOCABULARY: Vocabulary = {
 
 /** Negators that come BEFORE the word they negate ("I do not want to fight", "no problem"). */
 export const NEGATORS_BEFORE = new Set([
-  "not", "no", "never", "dont", "doesnt", "didnt", "wont", "wouldnt", "cant", "cannot", "couldnt", "isnt", "arent", "wasnt", "werent", "shouldnt", "without", "neither", "nor", "avoid", "avoiding", "stop", "stopping", "nahi", "nahin", "nhi", "nai", "mat", "bina", "नहीं", "नही", "मत", "बिना",
+  "not", "no", "never", "dont", "doesnt", "didnt", "wont", "wouldnt", "cant", "cannot", "couldnt", "isnt", "arent", "wasnt", "werent", "shouldnt", "without", "neither", "nor", "avoid", "avoiding", "stop", "stopping", "nahi", "nahin", "nhi", "nai", "mat", "bina", "hardly", "barely", "नहीं", "नही", "मत", "बिना",
 ]);
 
 /** Hindi puts the negator AFTER the word ("ladhai nahi karni", "dard nahi hai"). */
@@ -76,8 +76,8 @@ export const DESIRE_CUES = new Set([
   "want", "wanna", "wish", "like", "need", "plan", "planning", "should", "shouldnt", "avoid", "stop", "chahta", "chahti", "chahiye", "chahte", "karna", "karni", "karne", "karunga", "karungi", "karu", "bachna", "चाहता", "चाहती", "चाहिए", "करना", "करनी",
 ]);
 
-export const INTENSIFIERS = new Set(["very", "really", "so", "extremely", "totally", "completely", "badly", "bahut", "bohot", "bohat", "kaafi", "behad", "bilkul", "बहुत", "काफी"]);
-export const DIMINISHERS = new Set(["slightly", "little", "bit", "somewhat", "thoda", "thodi", "thora", "थोड़ा", "थोड़ी"]);
+export const INTENSIFIERS = new Set(["very", "really", "so", "extremely", "totally", "completely", "badly", "bahut", "bohot", "bohat", "kaafi", "behad", "bilkul", "bahot", "zyada", "zyaada", "ekdum", "deeply", "terribly", "awfully", "utterly", "incredibly", "seriously", "genuinely", "बहुत", "काफी", "बेहद", "ज़्यादा"]);
+export const DIMINISHERS = new Set(["slightly", "little", "bit", "somewhat", "thoda", "thodi", "thora", "zara", "halka", "halki", "mildly", "थोड़ा", "थोड़ी", "हल्का"]);
 
 /** Words that start a new clause: a negator before them does not reach across. */
 export const CLAUSE_BREAKS = /(?:[,;:()—]+|\b(?:but|however|although|though|lekin|magar|parantu|kintu|while|whereas)\b|(?:लेकिन|मगर|परंतु|किंतु))/giu;
@@ -109,40 +109,60 @@ export const EMOTION_VOCABULARY: Vocabulary = {
     ...feel(1.5, "overwhelm*", "burnout", "tension le", "exhausted"),
     ...feel(1, "stress*", "pressure", "burden", "tension", "deadline", "dabav", "load", "\u0924\u0928\u093e\u0935", "\u0926\u092c\u093e\u0935"),
     ...feel(0.5, "too much", "no time", "thak*", "tired", "\u0925\u0915"),
+    ...feel(2, "dimaag kharab", "sar phat", "head is bursting", "mental pressure", "nervous breakdown", "breaking down", "zindagi bojh"),
+    ...feel(1.5, "swamped", "drained", "worn out", "sleepless", "neend nahi", "neend nhi", "mentally tired", "thak gaya hu", "thak gayi hu", "pareshan*", "pareshaan*", "परेशान"),
+    ...feel(1, "stressful", "workload", "tight schedule", "too busy", "rush", "chaotic", "hectic", "jhanjhat", "bojh", "bhaag daud"),
   ],
   anxious: [
     ...feel(2, "chinta ho rahi", "chinta ho raha", "dar lag raha", "dar lag rahi", "cant stop worrying", "cant stop thinking", "cant sleep", "what if", "kya hoga"),
     ...feel(1.5, "overthink*", "ghabra*", "ghabrahat", "panic*", "dread", "bechaini", "\u0918\u092c\u0930\u093e\u0939\u091f"),
     ...feel(1, "anxious", "anxiety", "worried", "worry", "worries", "worrying", "fear", "scared", "afraid", "nervous", "uneasy", "chinta", "dar", "darr", "\u091a\u093f\u0902\u0924\u093e", "\u0921\u0930"),
+    ...feel(2, "dil ghabra", "dil baith", "heart racing", "heart is racing", "palpitation*", "sweating", "hands shaking", "bura khayal", "kuch bura na ho", "dar ke mare"),
+    ...feel(1.5, "restless", "apprehensive", "terrified", "frightened", "tense", "on edge", "jittery", "khauf", "ashanka", "andesha", "fikar", "fikr", "bhay", "भय", "फिक्र"),
+    ...feel(1, "doubtful", "insecure", "insecurity", "hesitat*", "wary", "suspicious", "bhaybheet", "sahma", "sahm gaya", "hichkichahat", "संकोच"),
   ],
   angry: [
     ...feel(2, "gusse mein", "gussa aa raha", "gussa aa rahi", "fed up", "sick of", "sick and tired", "khoon khaul"),
     ...feel(1.5, "furious", "rage", "pissed", "bhadak*", "krodh", "nafrat", "\u0928\u092b\u0930\u0924"),
     ...feel(1, "angry", "anger", "frustrat*", "irritat*", "annoy*", "hate", "hated", "resent*", "mad", "gussa", "chidh*", "\u0917\u0941\u0938\u094d\u0938\u093e", "\u091a\u093f\u0922\u093c"),
+    ...feel(2, "blood boil*", "losing my temper", "lost my temper", "cant control my anger", "bardasht se bahar", "aag lag", "dimaag garam", "pagal kar diya"),
+    ...feel(1.5, "outraged", "livid", "enraged", "disgusted", "betrayed", "fuming", "bitter", "bitterness", "vengeful", "nafrat hai", "krodhit", "tamatam"),
+    ...feel(1, "upset", "offended", "insulted", "disrespected", "cranky", "agitated", "naraz", "naaraz", "khafa", "gussay", "jalan", "jealous*", "नाराज़", "नाराज"),
   ],
   sad: [
     ...feel(2, "bura lag raha", "bura lag rahi", "dil toot", "dil tut", "feeling low", "feel low", "heartbroken", "heart broken", "hopeless", "worthless"),
     ...feel(1.5, "bura lag", "toot gaya", "ro raha", "ro rahi", "depressed", "depression", "lonely", "grief", "give up", "let down"),
     ...feel(1, "sad", "hurt", "cry", "crying", "tears", "regret*", "disappointed", "empty", "dukh", "udaas", "udas", "rona", "afsos", "pachta*", "\u0909\u0926\u093e\u0938", "\u0926\u0941\u0916"),
     ...feel(0.5, "alone", "miss", "akela", "akeli", "low"),
+    ...feel(2, "dil bhar aaya", "no one cares", "nobody cares", "feel invisible", "feel empty", "tut gaya hu", "toot gayi hu", "toot chuka", "broken inside", "rona aa raha"),
+    ...feel(1.5, "miserable", "devastated", "gloomy", "numb", "helpless", "guilty", "guilt", "ashamed", "shame", "hurting", "ro padha", "ro padi", "aansu", "dard hota", "mayoos", "nirash", "निराश", "मायूस"),
+    ...feel(1, "unhappy", "sorrow", "mourning", "missing", "left out", "rejected", "unloved", "ignored", "neglected", "bekar lag", "dil dukha", "dukhi", "pachtawa", "दुखी"),
   ],
   confused: [
     ...feel(2, "samajh nahi aa raha", "samajh nahi aa rahi", "cant decide", "mixed feelings", "dont know what to do", "kya karu samajh nahi", "\u0909\u0932\u091d\u0928"),
     ...feel(1.5, "not sure", "dont know", "pata nahi", "samajh nahi", "uljh*", "ulajh*", "dwidha", "torn between", "\u092a\u0924\u093e \u0928\u0939\u0940\u0902", "\u0938\u092e\u091d \u0928\u0939\u0940\u0902"),
     ...feel(1, "confus*", "uncertain*", "doubt*", "unsure", "no idea", "torn", "dilemma", "confuse"),
     ...feel(0.5, "lost"),
+    ...feel(2, "kuch samajh nahi", "dimag kaam nahi", "cant think straight", "dont know where to start", "kya sahi kya galat", "kis taraf jau", "ek taraf dil ek taraf dimaag"),
+    ...feel(1.5, "perplexed", "puzzled", "baffled", "stuck between", "at a crossroads", "crossroad", "dolna", "asamanjas", "sansay", "uljhan mein", "dubidha", "दुविधा", "असमंजस"),
+    ...feel(1, "hesitant", "indecisive", "ambiguous", "doubtful", "shayad", "pata nhi", "pta nhi", "kya pata"),
   ],
   calm: [
     ...feel(1, "theek hoon", "theek hu", "sab theek", "all good", "im fine", "i am fine", "im okay", "i am okay", "doing fine", "at peace", "thinking clearly", "clear headed", "shant", "\u0920\u0940\u0915 \u0939\u0942\u0902", "\u0936\u093e\u0902\u0924"),
     ...feel(1, "calm", "peaceful", "relaxed", "composed", "stable", "normal"),
     ...feel(0.5, "fine", "okay", "theek hai", "theek"),
+    ...feel(1.5, "feeling better", "feel better", "relieved", "content", "satisfied", "at ease", "no worries", "sab badhiya", "sab mast", "mast hoon", "badhiya", "sukoon", "chain se", "nishchint", "सुकून", "निश्चिंत"),
+    ...feel(1, "hopeful", "optimistic", "positive", "confident", "grateful", "thankful", "happy", "glad", "khush", "khushi", "santusht", "sambhal gaya", "सब ठीक", "खुश"),
+    ...feel(0.5, "alright", "chalta hai", "theek thaak"),
   ],
 };
 
 /** Words that make a feeling bigger or an overall state worse. Added to the intensity, not to the emotion. */
 export const INTENSITY_CUES: Vocabulary = {
   absolute: [...entries(0.5, "cancel")("always", "never", "everything", "nothing", "no one", "nobody", "everyone", "hamesha", "kabhi nahi", "sab kuch", "kuch nahi", "koi nahi", "\u0939\u092e\u0947\u0936\u093e")],
+  absolute2: [...entries(0.5, "cancel")("all the time", "every time", "again and again", "forever", "ever again", "no matter what", "whole life", "poori zindagi", "har baar", "har waqt", "baar baar", "kabhi bhi nahi", "hamesha ke liye", "kisi ko nahi", "sabke saamne")],
   limit: [...entries(1, "cancel")("cant take", "cant anymore", "cant do this", "breaking point", "too much", "unbearable", "bardasht", "bas ab", "thak gaya", "thak gayi")],
+  limit2: [...entries(1, "cancel")("had enough", "last straw", "at my limit", "end of my rope", "cannot go on", "cant go on", "no strength left", "give up on everything", "sahan nahi", "bardasht nahi", "bardaasht nahi", "ab aur nahi", "bahut ho gaya", "haar gaya", "haar gayi", "himmat nahi", "taqat nahi")],
 };
 
 /** Phrases that mean the person may be in danger. MANU only raises a flag so the answer is written with care. */

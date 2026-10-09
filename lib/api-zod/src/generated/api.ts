@@ -376,6 +376,19 @@ export const AnalyzeSituationResponse = zod.object({
     .describe(
       "RSMI - the meanings a silence described in the question can have (possibilities, not mind reading)",
     ),
+  indirectRoute: zod
+    .object({
+      blocker: zod.string(),
+      cues: zod.array(zod.string()),
+      idea: zod.string(),
+      steps: zod.array(zod.string()),
+      fairness: zod.string(),
+      source: zod.enum(["rules", "ai"]),
+    })
+    .optional()
+    .describe(
+      "AJIT - a clever but ethical way round a direct route that looks closed",
+    ),
   clarifications: zod
     .array(
       zod.object({
@@ -848,6 +861,19 @@ export const GetAnalysisHistoryResponse = zod.object({
             .optional()
             .describe(
               "RSMI - the meanings a silence described in the question can have (possibilities, not mind reading)",
+            ),
+          indirectRoute: zod
+            .object({
+              blocker: zod.string(),
+              cues: zod.array(zod.string()),
+              idea: zod.string(),
+              steps: zod.array(zod.string()),
+              fairness: zod.string(),
+              source: zod.enum(["rules", "ai"]),
+            })
+            .optional()
+            .describe(
+              "AJIT - a clever but ethical way round a direct route that looks closed",
             ),
           clarifications: zod
             .array(
@@ -1349,6 +1375,19 @@ export const GetAnalysisByIdResponse = zod.object({
         .optional()
         .describe(
           "RSMI - the meanings a silence described in the question can have (possibilities, not mind reading)",
+        ),
+      indirectRoute: zod
+        .object({
+          blocker: zod.string(),
+          cues: zod.array(zod.string()),
+          idea: zod.string(),
+          steps: zod.array(zod.string()),
+          fairness: zod.string(),
+          source: zod.enum(["rules", "ai"]),
+        })
+        .optional()
+        .describe(
+          "AJIT - a clever but ethical way round a direct route that looks closed",
         ),
       clarifications: zod
         .array(

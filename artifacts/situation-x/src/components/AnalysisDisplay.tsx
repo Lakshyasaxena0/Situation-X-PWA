@@ -450,6 +450,22 @@ const LIKELIHOOD_STYLE: Record<string, string> = {
   "less likely": "bg-transparent text-muted-foreground border-border",
 };
 
+/** AJIT: a clever but ethical way round a direct route that looks closed. Shown only when the question says so. */
+function IndirectRouteView({ route }: { route: AnalysisResult["indirectRoute"] }) {
+  if (!route) return null;
+  return (
+    <div className="mt-3 rounded-md border border-primary/30 bg-primary/5 p-3">
+      <p className="text-xs font-mono font-bold text-foreground mb-1">ANOTHER WAY ROUND</p>
+      <p className="text-xs text-muted-foreground">{route.blocker}</p>
+      <p className="mt-2 text-sm text-foreground">{route.idea}</p>
+      <ol className="mt-2 text-xs text-muted-foreground space-y-1 list-decimal pl-4">
+        {route.steps.map((st, i) => <li key={i}>{st}</li>)}
+      </ol>
+      <p className="mt-2 text-[11px] text-muted-foreground">{route.fairness}</p>
+    </div>
+  );
+}
+
 /** RSMI: the meanings a described silence can have. Only shown when the question mentioned a silence. */
 function SilenceCard({ result }: { result: AnalysisResult }) {
   const s = result.silence;
@@ -600,6 +616,7 @@ function AnalysisBody({ result, header }: { result: AnalysisResult; header: Reac
             <span className="text-xs text-muted-foreground">score: {result.intent.score}</span>
           </div>
         )}
+        <IndirectRouteView route={result.indirectRoute} />
         <ModuleReports reports={reportsFor(result, "intent")} />
       </EngineCard>
 

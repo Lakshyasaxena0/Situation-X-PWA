@@ -5,6 +5,7 @@ import type { ReasoningDepth } from "./credit-cost.service.js";
 import { applyCalibration, type Calibration } from "./calibration.service.js";
 import { logger } from "../lib/logger.js";
 import { checkOutputSafety } from "./safety.service.js";
+import { describeRoute, mergeRoute, routeTexts, type IndirectRoute } from "./workaround.service.js";
 import { describeSilence, mergeSilence, silenceTexts, type SilenceReading } from "./rsmi.service.js";
 import { mergeContext, parseAiSimulation, type SimulationResult } from "./sivi.service.js";
 import type { TimingResult } from "./timing.service.js";
@@ -63,6 +64,8 @@ export type Synthesis = {
   simulation?: SimulationResult;
   /** RSMI: the AI's refined reading of the silence in the question (only when the question mentions one). */
   silence?: SilenceReading;
+  /** AJIT: a clever but ethical way round a blocked direct route (only when the question says the way is closed). */
+  indirectRoute?: IndirectRoute;
   /** Set when the AI answered but the safety check withheld its answer (the route turns it into a note). */
   withheld?: "safety";
 };
@@ -297,7 +300,7 @@ Hints from the app's specialised modules (they are keyword-based and can be wron
 - AJIT (intent): ${engine.intent.intent}, confidence ${engine.intent.confidence}${engine.intent.secondary ? `, also touches ${engine.intent.secondary}` : ""}${engine.intent.stance === "avoid" ? ", and the person seems to want to AVOID what they name" : ""}
 - MANU (emotion, a text-based estimate only, never a diagnosis): ${engine.emotion.emotion}, intensity ${engine.emotion.intensity}${engine.emotion.secondary ? `, with ${engine.emotion.secondary} too` : ""}${engine.emotion.masked ? "; the person says they are fine but the message sounds distressed" : ""}${engine.emotion.crisis ? "; THE TEXT MAY POINT TO A PERSON IN DANGER: be gentle, say you are concerned, and kindly encourage reaching a trusted person or a local helpline now, before any advice" : ""}
 - SIVI (rule-based draft of the paths, only from the intent and emotion, so general): best path "${engine.simulation.bestPath.action}" (risk ${engine.simulation.bestPath.risk}, stability ${engine.simulation.bestPath.stability}); alternatives: ${alternatives || "none"}. Build better, situation-specific paths yourself in STEP 1.
-${engine.silence ? `- RSMI (silence): ${describeSilence(engine.silence)} Facts not given: ${engine.silence.unknowns.join('; ') || 'none'}.\n` : ""}
+${engine.silence ? `- RSMI (silence): ${describeSilence(engine.silence)} Facts not given: ${engine.silence.unknowns.join('; ') || 'none'}.\n` : ""}${engine.route ? `- AJIT (indirect route): ${describeRoute(engine.route)}\n` : ""}
 ${engine.safety.guard ? `${engine.safety.guard}\n\n` : ""}STEP 1 - YOUR OWN JUDGMENT. Do this first, from the situation itself, with logic, evidence, common sense, psychology and practical wisdom:
 - What is really being asked? Which facts are stated and which assumptions are you making?
 - What are the realistic options, including waiting, doing nothing, or a middle path?
@@ -305,7 +308,7 @@ ${engine.safety.guard ? `${engine.safety.guard}\n\n` : ""}STEP 1 - YOUR OWN JUDG
 - Is the person's emotional state likely to be distorting the question?
 - What missing information would change your answer?
 - SIVI TASK (paths): write the situation context and compare 3-4 concrete paths for THIS person (use their own facts, not generic advice): desiredOutcome in their terms (if they never said, state your best reading), knownFacts they actually stated (never invent), and constraints (money, time, people, rules) they mentioned. For each path give its real benefits, downsides and uncertainties, whether they could undo it (reversible), and its risk and stability (low/medium/high). Always include a low-effort option such as waiting or gathering information. Name the best path by its index, then explain in pathComparison why it beats the others and when another path would be better. This compares options; it does not predict the future.
-${engine.silence ? `- RSMI TASK (silence): the question mentions a silence. List 3-4 reasonable meanings it can have for THIS situation (who, after what, in which channel, for how long), ranked, each with likelihood "more likely" | "possible" | "less likely" and a short reason from the person's own facts. Silence is ambiguous: never claim to know what the other person thinks or feels, never accuse them, and say what the person can check or ask. If the silence is the person's own, say how it may have been read. Give 2-4 checks and up to 3 facts that would change the reading.\n` : ""}Then give logicScore (0-100): how likely it is that going ahead as the person is asking turns out well, judged on the merits alone. 70+ means YES, 45-69 CONDITIONAL, below 45 NO.
+${engine.route ? `- INDIRECT ROUTE TASK: the direct way to what the person wants looks closed. Name the blocker in their terms, then give a clever but ETHICAL way round it that still reaches the same goal: a different person to ask, a smaller first step, an official or neutral channel, a fair trial, or a way to remove the blocker. It must be honest and fair: no lying, no pressure or manipulation, no breaking of rules or laws, no tricking or harming anyone, no secret workarounds against someone's clear wishes. Use THEIR facts, not generic advice. Give 3-5 ordered steps and one line on why it is fair to everyone involved.\n` : ""}${engine.silence ? `- RSMI TASK (silence): the question mentions a silence. List 3-4 reasonable meanings it can have for THIS situation (who, after what, in which channel, for how long), ranked, each with likelihood "more likely" | "possible" | "less likely" and a short reason from the person's own facts. Silence is ambiguous: never claim to know what the other person thinks or feels, never accuse them, and say what the person can check or ask. If the silence is the person's own, say how it may have been read. Give 2-4 checks and up to 3 facts that would change the reading.\n` : ""}Then give logicScore (0-100): how likely it is that going ahead as the person is asking turns out well, judged on the merits alone. 70+ means YES, 45-69 CONDITIONAL, below 45 NO.
 
 ${step2}
 
@@ -314,7 +317,7 @@ ${step3}
 Rules: speak in tendencies, never promise outcomes; do not invent facts about the person; for health, legal, money-critical or safety matters recommend a qualified professional where it matters; be candid but kind; no cosmic fluff. Write every text value in ${language}; keep the JSON keys in English.
 
 Reply with ONLY a JSON object, no prose, with exactly these keys in this order:
-{"situationAnalysis": "<4-6 sentences: what is really being asked, key facts and assumptions, the options and their trade-offs>", "risks": ["<up to 3 short risks>"], "situationContext": {"desiredOutcome": "<what the person wants>", "knownFacts": ["<up to 4 facts they stated>"], "constraints": ["<up to 4 limits they mentioned>"]}, "paths": [{"action": "<a concrete path>", "benefits": ["<up to 3>"], "downsides": ["<up to 3>"], "uncertainties": ["<up to 2>"], "reversible": true | false, "risk": "low" | "medium" | "high", "stability": "low" | "medium" | "high"}], "bestPath": <0-based index into paths>, "pathComparison": "<2-3 sentences: why the best path beats the others, and when another would be better>", ${engine.silence ? `"silence": {"meanings": [{"meaning": "<what the silence may mean>", "likelihood": "more likely" | "possible" | "less likely", "why": "<short reason from their facts>"}], "checks": ["<2-4 ways to find out, without pressure>"], "unknowns": ["<up to 3 facts that would change this>"]}, ` : ""}"keyUnknowns": ["<up to 3 things that would change the answer>"], "logicScore": <integer 0-100>, ${useAstro ? `"astrologyAssessment": "<2-3 sentences naming the specific planets, houses, charts or dasha periods that drive the astrology verdict and what they imply for timing or caution>", "astroAlignment": "supports" | "mixed" | "contradicts",` : ""} "finalScore": <integer 0-100>, "summary": "<3-4 sentences: the final answer, direct and practical, reconciling both lenses>", "advice": "<the single most important next step>", "nextSteps": ["<2-4 ordered concrete steps>"], "timeframeDays": <integer, days until the outcome should become visible, ${MIN_TIMEFRAME_DAYS}-${MAX_TIMEFRAME_DAYS}>}`;
+{"situationAnalysis": "<4-6 sentences: what is really being asked, key facts and assumptions, the options and their trade-offs>", "risks": ["<up to 3 short risks>"], "situationContext": {"desiredOutcome": "<what the person wants>", "knownFacts": ["<up to 4 facts they stated>"], "constraints": ["<up to 4 limits they mentioned>"]}, "paths": [{"action": "<a concrete path>", "benefits": ["<up to 3>"], "downsides": ["<up to 3>"], "uncertainties": ["<up to 2>"], "reversible": true | false, "risk": "low" | "medium" | "high", "stability": "low" | "medium" | "high"}], "bestPath": <0-based index into paths>, "pathComparison": "<2-3 sentences: why the best path beats the others, and when another would be better>", ${engine.silence ? `"silence": {"meanings": [{"meaning": "<what the silence may mean>", "likelihood": "more likely" | "possible" | "less likely", "why": "<short reason from their facts>"}], "checks": ["<2-4 ways to find out, without pressure>"], "unknowns": ["<up to 3 facts that would change this>"]}, ` : ""}${engine.route ? `"indirectRoute": {"blocker": "<what is in the way, in their terms>", "idea": "<1-2 sentences: the other route to the same goal>", "steps": ["<3-5 ordered concrete steps>"], "fairness": "<one line: why this is honest and fair to everyone>"}, ` : ""}"keyUnknowns": ["<up to 3 things that would change the answer>"], "logicScore": <integer 0-100>, ${useAstro ? `"astrologyAssessment": "<2-3 sentences naming the specific planets, houses, charts or dasha periods that drive the astrology verdict and what they imply for timing or caution>", "astroAlignment": "supports" | "mixed" | "contradicts",` : ""} "finalScore": <integer 0-100>, "summary": "<3-4 sentences: the final answer, direct and practical, reconciling both lenses>", "advice": "<the single most important next step>", "nextSteps": ["<2-4 ordered concrete steps>"], "timeframeDays": <integer, days until the outcome should become visible, ${MIN_TIMEFRAME_DAYS}-${MAX_TIMEFRAME_DAYS}>}`;
 }
 
 function text(value: unknown, max: number): string | null {
@@ -346,6 +349,8 @@ export type AiAnswer = {
   simulation: SimulationResult | null;
   /** The AI's reading of a silence, unvalidated (merged by `mergeSilence`). */
   silence: unknown;
+  /** The AI's indirect route, unvalidated (merged by `mergeRoute`). */
+  indirectRoute: unknown;
 };
 
 /** Validates the model's JSON. Returns null when it is unusable. */
@@ -376,6 +381,7 @@ export function parseAiAnswer(raw: string | null | undefined): AiAnswer | null {
     timeframeDays: clampDays(o.timeframeDays),
     simulation: parseAiSimulation(o),
     silence: o.silence,
+    indirectRoute: o.indirectRoute,
   };
 }
 
@@ -427,6 +433,8 @@ export async function synthesize(
   ];
   const silence = engine.silence ? mergeSilence(engine.silence, ai.silence) : undefined;
   if (silence && silence.source === "ai") written.push(...silenceTexts(silence));
+  const indirectRoute = engine.route ? mergeRoute(engine.route, ai.indirectRoute) : undefined;
+  if (indirectRoute && indirectRoute.source === "ai") written.push(...routeTexts(indirectRoute));
   const safe = checkOutputSafety(written);
   if (!safe.ok) {
     logger.warn({ reasons: safe.reasons }, "AI answer withheld by the safety check");
@@ -460,6 +468,7 @@ export async function synthesize(
       weights: { logic: 1, astro: 0 },
       simulation: aiSimulation,
       silence,
+      indirectRoute,
     };
   }
   const astro = astroScoreOf(engine);
@@ -491,5 +500,6 @@ export async function synthesize(
     weights: { logic: Math.round((1 - share) * 100) / 100, astro: share },
     simulation: aiSimulation,
     silence,
+    indirectRoute,
   };
 }

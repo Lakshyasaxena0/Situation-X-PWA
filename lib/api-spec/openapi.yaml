@@ -652,6 +652,35 @@ components:
         - round
         - max
 
+    IndirectRoute:
+      type: object
+      description: AJIT - a clever but ethical way round a direct route that looks closed
+      properties:
+        blocker:
+          type: string
+        cues:
+          type: array
+          items:
+            type: string
+        idea:
+          type: string
+        steps:
+          type: array
+          items:
+            type: string
+        fairness:
+          type: string
+        source:
+          type: string
+          enum: [rules, ai]
+      required:
+        - blocker
+        - cues
+        - idea
+        - steps
+        - fairness
+        - source
+
     SilenceMeaning:
       type: object
       properties:
@@ -1327,6 +1356,8 @@ components:
           $ref: "#/components/schemas/SafetyNotice"
         silence:
           $ref: "#/components/schemas/SilenceReading"
+        indirectRoute:
+          $ref: "#/components/schemas/IndirectRoute"
         clarifications:
           type: array
           items:

@@ -23,6 +23,7 @@ export type AnalysisTexts = {
   modules?: { key: string; role?: string; verdict?: string; evidence?: string[] }[];
   astro?: { interpretation?: string; timingSummary?: string; activations?: string[] };
   silence?: { trigger?: string; meanings?: { meaning?: string; why?: string }[]; unknowns?: string[]; checks?: string[]; caution?: string };
+  indirectRoute?: { blocker?: string; idea?: string; steps?: string[]; fairness?: string };
 };
 
 const str = (v: unknown): string | undefined => (typeof v === "string" && v.trim() ? v : undefined);
@@ -43,6 +44,7 @@ export function extractTexts(fa: Record<string, unknown>): AnalysisTexts {
   const astro = obj(fa.astro);
   const timing = obj(astro.timing);
   const silence = obj(fa.silence);
+  const route = obj(fa.indirectRoute);
   const modules = Array.isArray(fa.modules) ? (fa.modules as unknown[]).map(obj) : [];
   return {
     summary: str(fa.summary),
@@ -72,6 +74,9 @@ export function extractTexts(fa: Record<string, unknown>): AnalysisTexts {
           checks: strs(silence.checks),
           caution: str(silence.caution),
         }
+      : undefined,
+    indirectRoute: Array.isArray(route.steps)
+      ? { blocker: str(route.blocker), idea: str(route.idea), steps: strs(route.steps), fairness: str(route.fairness) }
       : undefined,
   };
 }

@@ -4,6 +4,7 @@ import { simulatePaths, type SimulationResult } from "./sivi.service.js";
 import { analyzeAstro, type AstroResult } from "./astro.service.js";
 import type { Tuning } from "./prashna.service.js";
 import { detectSilence, type SilenceReading } from "./rsmi.service.js";
+import { detectObstacle, ruleRoute, describeRoute, type IndirectRoute } from "./workaround.service.js";
 import { assessSafety, type SafetyDecision } from "./safety.service.js";
 import type { Language } from "./analysis-options.js";
 
@@ -19,6 +20,8 @@ export type EngineResponse = {
   astro: AstroResult;
   /** RSMI: the meanings a silence in the question can have; null when the question mentions no silence. */
   silence: SilenceReading | null;
+  /** AJIT: a clever but ethical way round a blocked direct route; null when nothing in the question says the way is closed. */
+  route: IndirectRoute | null;
   /** What the ethical filter decided about the message (read in context; nothing is deleted from the text). */
   safety: SafetyDecision;
   /** What each module did for this question: whether it was active, its verdict and the evidence. */
@@ -60,7 +63,7 @@ export function siviReport(simulation: SimulationResult, intent: IntentResult, e
     (p.uncertainties.length ? `. Uncertain: ${p.uncertainties.join("; ")}` : "");
   return {
     key: "SIVI",
-    role: "Finds what your question is about, from your words in context.",
+    role: "Compares the paths open to you: their benefits, downsides and what is uncertain.",
     name: "SIVI - Simulated Intelligent & Variable Intentions",
     area: "paths",
     active: true,
@@ -122,6 +125,7 @@ function buildModuleReports(
   astro: AstroResult,
   useAstrology: boolean,
   silence: SilenceReading | null,
+  route: IndirectRoute | null,
 ): ModuleReport[] {
   const emotion = emotionAnalysis.result;
   const intent = intentAnalysis.result;
@@ -136,7 +140,7 @@ function buildModuleReports(
     ...(silence ? [rsmiReport(silence)] : []),
     {
       key: "AJIT",
-      role: "Reads your words in context (English, Hinglish, Hindi): topic words, negation (\"I don't want to fight\" is not wanting to fight), intensity and which sentence is the question, then decides what it is about. It still works from words, so the AI re-reads your full text for meaning.",
+      role: "Finds what your question is about, from your words in context.",
       name: "AJIT - intent detection",
       area: "intent",
       active: intent.intent !== "unclear",
@@ -146,13 +150,16 @@ function buildModuleReports(
           : `Intent: ${intent.intent} (${intent.confidence} confidence, evidence ${intent.score})` +
             (intent.secondary ? `, also touches ${intent.secondary}` : "") +
             (intent.stance === "avoid" ? ". You seem to want to AVOID what you name, not pursue it." : "."),
-      evidence: intentAnalysis.ranking.map(
-        (r) =>
-          `${r.key} ${r.score}: ` +
-          r.hits
-            .map((h) => `"${h.matched}"${h.negated ? (h.effective === 0 ? " (negated, ignored)" : h.avoids ? " (negated, wanting to avoid it)" : " (negated)") : ""}`)
-            .join(", "),
-      ),
+      evidence: [
+        ...intentAnalysis.ranking.map(
+          (r) =>
+            `${r.key} ${r.score}: ` +
+            r.hits
+              .map((h) => `"${h.matched}"${h.negated ? (h.effective === 0 ? " (negated, ignored)" : h.avoids ? " (negated, wanting to avoid it)" : " (negated)") : ""}`)
+              .join(", "),
+        ),
+        ...(route ? [`Indirect route: ${describeRoute(route)} A fair way round is shown below.`] : []),
+      ],
     },
     {
       key: "MANU",
@@ -222,6 +229,9 @@ export function runEngine(input: string, options: EngineOptions = {}): EngineRes
   const emotionResult = emotionAnalysis.result;
   const simulationResult = simulatePaths(intentResult, emotionResult, cleanInput);
   const silence = detectSilence(cleanInput);
+  // Only offered when the filter found nothing wrong: a way round must never help a harmful aim.
+  const blockCues = safety.action === "allow" ? detectObstacle(cleanInput) : null;
+  const route = blockCues ? ruleRoute(intentResult.intent, blockCues) : null;
   const finalVerdict = deriveFinalVerdict(simulationResult, emotionResult);
   // ASTRO casts the Prashna charts (D1, D3, D9, D10) for the moment of the question and reads
   // the ones that matter for the intent AJIT detected. No birth details are involved.
@@ -234,7 +244,8 @@ export function runEngine(input: string, options: EngineOptions = {}): EngineRes
     finalVerdict,
     astro: astroResult,
     silence,
+    route,
     safety,
-    modules: buildModuleReports(safety, intentAnalysis, emotionAnalysis, simulationResult, astroResult, useAstrology, silence),
+    modules: buildModuleReports(safety, intentAnalysis, emotionAnalysis, simulationResult, astroResult, useAstrology, silence, route),
   };
 }

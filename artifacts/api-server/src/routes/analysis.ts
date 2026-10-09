@@ -253,7 +253,7 @@ router.post("/analysis/analyze", async (req, res) => {
     // Step 2: AI and astrology work together on the final answer. The AI sees every module's
     // output plus the dasha/transits, and past follow-up accuracy tempers the result.
     const calibration = await getCalibration(engineResult.intent.intent);
-    const { simulation: aiSimulation, withheld, silence: aiSilence, ...synthesis } = await synthesize(situation, engineResult, calibration, undefined, cost.depth, options);
+    const { simulation: aiSimulation, withheld, silence: aiSilence, indirectRoute: aiRoute, ...synthesis } = await synthesize(situation, engineResult, calibration, undefined, cost.depth, options);
     // When the AI read the whole situation, its paths replace the rule-based ones (SIVI says which it used).
     const simulation = aiSimulation ?? engineResult.simulation;
     const finalVerdict = aiSimulation
@@ -308,6 +308,7 @@ router.post("/analysis/analyze", async (req, res) => {
       finalVerdict,
       astro: publicAstro(engineResult.astro),
       silence: aiSilence ?? engineResult.silence ?? undefined,
+      indirectRoute: aiRoute ?? engineResult.route ?? undefined,
       clarifications: fromPath ? undefined : parsed.data.clarifications.length ? parsed.data.clarifications : undefined,
       // Only what the person needs to see: a notice when the filter steered or cared for them.
       safety: { action: engineResult.safety.action, category: engineResult.safety.category, message: engineResult.safety.message },

@@ -121,6 +121,26 @@ export interface ClarifyResponse {
   source?: ClarifyResponseSource;
 }
 
+export type IndirectRouteSource =
+  (typeof IndirectRouteSource)[keyof typeof IndirectRouteSource];
+
+export const IndirectRouteSource = {
+  rules: "rules",
+  ai: "ai",
+} as const;
+
+/**
+ * AJIT - a clever but ethical way round a direct route that looks closed
+ */
+export interface IndirectRoute {
+  blocker: string;
+  cues: string[];
+  idea: string;
+  steps: string[];
+  fairness: string;
+  source: IndirectRouteSource;
+}
+
 export type SilenceMeaningLikelihood =
   (typeof SilenceMeaningLikelihood)[keyof typeof SilenceMeaningLikelihood];
 
@@ -840,6 +860,7 @@ export interface AnalysisResult {
   simulation: SimulationResult;
   safety?: SafetyNotice;
   silence?: SilenceReading;
+  indirectRoute?: IndirectRoute;
   clarifications?: Clarification[];
   finalVerdict: FinalVerdict;
   astro: AstroResult;

@@ -11,6 +11,7 @@ import type { Clarification } from "./clarification";
 import type { CreditsUsed } from "./creditsUsed";
 import type { EmotionResult } from "./emotionResult";
 import type { FinalVerdict } from "./finalVerdict";
+import type { IndirectRoute } from "./indirectRoute";
 import type { IntentResult } from "./intentResult";
 import type { ModuleReport } from "./moduleReport";
 import type { SafetyNotice } from "./safetyNotice";
@@ -26,6 +27,7 @@ export interface AnalysisResult {
   simulation: SimulationResult;
   safety?: SafetyNotice;
   silence?: SilenceReading;
+  indirectRoute?: IndirectRoute;
   clarifications?: Clarification[];
   finalVerdict: FinalVerdict;
   astro: AstroResult;

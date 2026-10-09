@@ -16,6 +16,7 @@ export type Texts = {
   modules?: { key: string; role?: string; verdict?: string; evidence?: string[] }[];
   astro?: { interpretation?: string; timingSummary?: string; activations?: string[] };
   silence?: { trigger?: string; meanings?: { meaning?: string; why?: string }[]; unknowns?: string[]; checks?: string[]; caution?: string };
+  indirectRoute?: { blocker?: string; idea?: string; steps?: string[]; fairness?: string };
 };
 
 const pick = <T>(translated: T | undefined, original: T): T => (translated === undefined || translated === null || translated === "" ? original : translated);
@@ -85,6 +86,15 @@ export function applyTexts(result: AnalysisResult, t: Texts | undefined): Analys
           caution: pick(t.silence?.caution, result.silence.caution),
         }
       : result.silence,
+    indirectRoute: result.indirectRoute
+      ? {
+          ...result.indirectRoute,
+          blocker: pick(t.indirectRoute?.blocker, result.indirectRoute.blocker),
+          idea: pick(t.indirectRoute?.idea, result.indirectRoute.idea),
+          steps: pickList(t.indirectRoute?.steps, result.indirectRoute.steps) ?? result.indirectRoute.steps,
+          fairness: pick(t.indirectRoute?.fairness, result.indirectRoute.fairness),
+        }
+      : result.indirectRoute,
     modules: result.modules?.map((m, i) => {
       const tm = t.modules?.[i];
       if (!tm || tm.key !== m.key) return m;
