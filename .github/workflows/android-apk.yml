@@ -79,7 +79,14 @@ jobs:
 
       - name: Build the APK
         working-directory: android-app/android
-        run: ./gradlew assembleRelease --no-daemon
+        run: |
+          chmod +x ./gradlew
+          if ! ./gradlew assembleRelease --no-daemon --stacktrace > "$RUNNER_TEMP/gradle.log" 2>&1; then
+            # Put the reason on the run page (Annotations), so a failure can be read without opening the log.
+            { grep -n -A12 "What went wrong" "$RUNNER_TEMP/gradle.log" | head -c 1800; echo; echo ---; tail -n 25 "$RUNNER_TEMP/gradle.log" | head -c 1500; } > "$RUNNER_TEMP/why.txt"
+            echo "::error title=Gradle build failed::$(sed -e 's/%/%25/g' -e 's/\r//g' "$RUNNER_TEMP/why.txt" | awk '{printf "%s%%0A", $0}')"
+            exit 1
+          fi
 
       - name: Name the file
         run: cp android/app/build/outputs/apk/release/app-release.apk Situation-X.apk
