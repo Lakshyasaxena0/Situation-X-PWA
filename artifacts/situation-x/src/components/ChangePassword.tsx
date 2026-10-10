@@ -31,6 +31,7 @@ export function ChangePassword() {
   // Clerk may ask the person to confirm it is really them (a small pop-up) before a password change; this
   // hook shows that pop-up and then repeats the call, so the old password does not have to be typed.
   const updatePassword = useReverification((params: { newPassword: string; currentPassword?: string; signOutOfOtherSessions?: boolean }) => user!.updatePassword(params));
+  const [show, setShow] = useState(false);
   const [askCurrent, setAskCurrent] = useState(false);
   const [current, setCurrent] = useState("");
   const [next, setNext] = useState("");
@@ -77,17 +78,21 @@ export function ChangePassword() {
       {askCurrent && (
         <div>
           <Label htmlFor="pw-current" className="text-xs text-muted-foreground">Current password</Label>
-          <Input id="pw-current" type="password" autoComplete="current-password" value={current} onChange={(e) => setCurrent(e.target.value)} disabled={busy} />
+          <Input id="pw-current" type={show ? "text" : "password"} autoComplete="current-password" value={current} autoCapitalize="off" autoCorrect="off" spellCheck={false} onChange={(e) => setCurrent(e.target.value)} disabled={busy} />
         </div>
       )}
       <div>
         <Label htmlFor="pw-new" className="text-xs text-muted-foreground">New password</Label>
-        <Input id="pw-new" type="password" autoComplete="new-password" value={next} onChange={(e) => setNext(e.target.value)} disabled={busy} />
+        <Input id="pw-new" type={show ? "text" : "password"} autoComplete="new-password" value={next} autoCapitalize="off" autoCorrect="off" spellCheck={false} onChange={(e) => setNext(e.target.value)} disabled={busy} />
       </div>
       <div>
         <Label htmlFor="pw-again" className="text-xs text-muted-foreground">New password again</Label>
-        <Input id="pw-again" type="password" autoComplete="new-password" value={again} onChange={(e) => setAgain(e.target.value)} disabled={busy} />
+        <Input id="pw-again" type={show ? "text" : "password"} autoComplete="new-password" value={again} autoCapitalize="off" autoCorrect="off" spellCheck={false} onChange={(e) => setAgain(e.target.value)} disabled={busy} />
       </div>
+      <label className="flex items-center gap-2 text-xs text-muted-foreground">
+        <input type="checkbox" checked={show} onChange={(e) => setShow(e.target.checked)} />
+        Show the password (to check what you typed)
+      </label>
       <label className="flex items-center gap-2 text-xs text-muted-foreground">
         <input type="checkbox" checked={signOutOthers} onChange={(e) => setSignOutOthers(e.target.checked)} disabled={busy} />
         Sign out of my other devices

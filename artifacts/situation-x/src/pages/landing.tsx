@@ -74,13 +74,6 @@ export default function Landing() {
             Sign In
           </a>
         </div>
-        {/* Android app: built by the "Build Android APK" workflow and published as a GitHub Release. */}
-        <a
-          href="https://github.com/Lakshyasaxena0/Situation-X-PWA/releases/latest/download/Situation-X.apk"
-          className="mt-4 text-sm text-muted-foreground underline underline-offset-4 hover:text-foreground"
-        >
-          Download the Android app (APK)
-        </a>
       </main>
 
       <footer className="relative border-t border-border px-6 py-4 text-center text-xs text-muted-foreground">
