@@ -90,7 +90,26 @@ export function databaseTarget(): { host: string; port: string; user: string; da
   }
 }
 
-export const pool = new Pool(resolvePoolConfig());
+/**
+ * Hosted databases (Supabase) close idle connections and can go quiet without telling the driver, which
+ * then waits forever and the screen shows a spinner that never ends. These limits make every wait end:
+ * a connection that cannot be made in 10 s, or a query that takes over 20 s, fails with a clear error
+ * instead of hanging, idle connections are recycled before the host drops them, and TCP keep-alive
+ * notices dead ones.
+ */
+const POOL_LIMITS: pg.PoolConfig = {
+  max: Number(process.env.DB_POOL_MAX) || 8,
+  idleTimeoutMillis: 20_000,
+  connectionTimeoutMillis: 10_000,
+  query_timeout: 20_000,
+  keepAlive: true,
+};
+
+export const pool = new Pool({ ...resolvePoolConfig(), ...POOL_LIMITS });
+// An idle connection that the host closes raises an 'error' event; without a listener it would crash the server.
+pool.on("error", (err) => {
+  console.error("Database connection error (idle client removed):", err.message);
+});
 export const db = drizzle(pool, { schema });
 
 export * from "./schema";

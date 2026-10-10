@@ -41,10 +41,21 @@ export default function History() {
   const [page, setPage] = useState(0);
   const limit = 15;
 
-  const { data, isLoading, isError } = useGetAnalysisHistory(
+  const { data, isLoading, isError, refetch } = useGetAnalysisHistory(
     { limit, offset: page * limit },
-    { query: { queryKey: getGetAnalysisHistoryQueryKey({ limit, offset: page * limit }) } }
+    { query: { queryKey: getGetAnalysisHistoryQueryKey({ limit, offset: page * limit }), retry: 1 } }
   );
+
+  // A spinner that never ends tells the person nothing: after a few seconds say what may be happening.
+  const [slow, setSlow] = useState(false);
+  useEffect(() => {
+    if (!isLoading) {
+      setSlow(false);
+      return;
+    }
+    const t = setTimeout(() => setSlow(true), 6000);
+    return () => clearTimeout(t);
+  }, [isLoading]);
 
   const deleteM = useDeleteAnalysis({
     mutation: {
@@ -87,11 +98,17 @@ export default function History() {
             <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
           </div>
         )}
+        {isLoading && slow && (
+          <p className="text-center text-xs text-muted-foreground -mt-10 mb-10">
+            This is taking longer than usual. The server may be waking up; it will load by itself.
+          </p>
+        )}
 
         {isError && (
           <div className="text-center py-16 text-muted-foreground">
             <p className="text-lg font-medium">Couldn&apos;t load your history.</p>
-            <p className="text-sm mt-1">Please refresh the page or sign in again.</p>
+            <p className="text-sm mt-1">Please try again, or sign in again.</p>
+            <Button variant="outline" size="sm" className="mt-3" onClick={() => void refetch()}>Try again</Button>
           </div>
         )}
 
