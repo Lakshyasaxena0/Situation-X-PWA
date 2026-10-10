@@ -13,6 +13,7 @@ import Pricing from "@/pages/pricing";
 import Invite from "@/pages/invite";
 import Settings from "@/pages/settings";
 import { clearAnalysisSession } from "@/lib/analysisSession";
+import { ServerWakeUp } from "@/components/ServerWakeUp";
 import { ReferralRedeemer } from "@/components/ReferralRedeemer";
 import { capturePendingReferral } from "@/lib/referralLink";
 
@@ -182,6 +183,7 @@ function ClerkProviderWithRoutes() {
       <QueryClientProvider client={queryClient}>
         <TooltipProvider>
           <ClerkQueryClientCacheInvalidator />
+          <ServerWakeUp />
           <Show when="signed-in">
             <ReferralRedeemer />
           </Show>

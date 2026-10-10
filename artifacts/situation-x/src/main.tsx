@@ -13,3 +13,15 @@ if (import.meta.env.PROD && "serviceWorker" in navigator) {
     });
   });
 }
+
+// After a new version goes live, an app screen saved on the device may ask for a file that no longer
+// exists. Reload once (the background refresh has by then saved the new screen) instead of staying blank.
+window.addEventListener("vite:preloadError", () => {
+  try {
+    if (window.sessionStorage.getItem("sx_reloaded_for_update")) return;
+    window.sessionStorage.setItem("sx_reloaded_for_update", "1");
+  } catch {
+    /* reload anyway */
+  }
+  window.location.reload();
+});
