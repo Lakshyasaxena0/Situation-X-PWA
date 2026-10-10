@@ -1,0 +1,15 @@
+{
+  "appId": "com.faraksh.situationx",
+  "appName": "Situation X",
+  "webDir": "www",
+  "server": {
+    "url": "https://situation-x-pwa.onrender.com",
+    "cleartext": false,
+    "errorPath": "error.html",
+    "allowNavigation": ["situation-x-pwa.onrender.com", "*.clerk.accounts.dev", "*.clerk.com", "accounts.google.com", "*.razorpay.com"]
+  },
+  "android": {
+    "allowMixedContent": false,
+    "backgroundColor": "#080c16"
+  }
+}
