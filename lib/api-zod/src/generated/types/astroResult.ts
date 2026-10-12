@@ -6,6 +6,7 @@
  * OpenAPI spec version: 0.1.0
  */
 import type { AstroInfluence } from "./astroInfluence";
+import type { AstroOutlook } from "./astroOutlook";
 import type { AstroResultAscendant } from "./astroResultAscendant";
 import type { AstroResultLocation } from "./astroResultLocation";
 import type { AstroResultTuning } from "./astroResultTuning";
@@ -20,6 +21,7 @@ export interface AstroResult {
   tuning?: AstroResultTuning;
   prashna?: PrashnaReading;
   timing?: TimingResult;
+  outlook?: AstroOutlook;
   /** The place the chart was cast for */
   location?: AstroResultLocation;
 }

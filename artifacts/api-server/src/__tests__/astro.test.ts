@@ -64,7 +64,7 @@ test("Engine: module reports say which modules were active and what they conclud
   const r = runEngine("Should I quit my job? I am worried and stressed about my career and salary", {});
   const by = Object.fromEntries(r.modules.map((m) => [m.key, m]));
   assert.equal(by.AJIT.active, true);
-  assert.match(by.AJIT.verdict, /Intent:/);
+  assert.match(by.AJIT.verdict, /mostly about/);
   assert.ok(by.AJIT.evidence.length > 0);
   assert.equal(by.MANU.active, true);
   assert.ok(by.MANU.evidence.some((e) => e.includes("worried") || e.includes("stress")));

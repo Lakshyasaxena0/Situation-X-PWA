@@ -17,6 +17,7 @@ import { castPrashnaCharts } from "./vedic.service.js";
 import { readPrashna, NO_TUNING, type PrashnaReading, type Tuning } from "./prashna.service.js";
 import { vimshottariAt, type DashaLevel, type VimshottariDasha } from "./dasha.service.js";
 import { analyzeTiming, isTimeBased, type TimingResult } from "./timing.service.js";
+import { buildOutlook, type Outlook } from "./outlook.service.js";
 import {
   BODY_NAMES,
   julianDayFromDate,
@@ -61,6 +62,8 @@ export type AstroResult = {
   prashna: PrashnaReading;
   /** Running dashas (Vimshottari + Chara) of the Prashna chart. Only present when the question asks about timing. */
   timing?: TimingResult;
+  /** Chance (%) that the matter happens and the anticipated timing. */
+  outlook: Outlook;
   calculatedAt: string;
   location: { latitude: number; longitude: number };
 };
@@ -155,6 +158,8 @@ export function analyzeAstro(
   // Dashas are consulted only when the question is about timing ("when", "kab tak", "how long").
   const timing = isTimeBased(text) ? analyzeTiming(intent, { at: now, latitude, longitude, text }) : undefined;
 
+  const outlook = buildOutlook(intent, sky, prashna, { text, at: now, timeBased: timing !== undefined });
+
   const influence: AstroInfluence = {
     dominantPlanet: prashna.dominantPlanet,
     stability: prashna.stability,
@@ -174,6 +179,7 @@ export function analyzeAstro(
     dasha,
     prashna,
     timing,
+    outlook,
     calculatedAt: now.toISOString(),
     location: { latitude, longitude },
   };

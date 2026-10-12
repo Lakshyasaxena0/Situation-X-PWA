@@ -21,7 +21,7 @@ export type AnalysisTexts = {
     alternatives?: PathTexts[];
   };
   modules?: { key: string; role?: string; verdict?: string; evidence?: string[] }[];
-  astro?: { interpretation?: string; timingSummary?: string; activations?: string[] };
+  astro?: { interpretation?: string; timingSummary?: string; activations?: string[]; outlook?: { headline?: string; favours?: string[]; against?: string[]; timingText?: string; timingBasis?: string; dashaCheck?: string; timingNote?: string }; };
   silence?: { trigger?: string; meanings?: { meaning?: string; why?: string }[]; unknowns?: string[]; checks?: string[]; caution?: string };
   indirectRoute?: { blocker?: string; idea?: string; steps?: string[]; fairness?: string };
 };
@@ -43,6 +43,8 @@ export function extractTexts(fa: Record<string, unknown>): AnalysisTexts {
   const ctx = obj(sim.context);
   const astro = obj(fa.astro);
   const timing = obj(astro.timing);
+  const outlook = obj(astro.outlook);
+  const otiming = obj(outlook.timing);
   const silence = obj(fa.silence);
   const route = obj(fa.indirectRoute);
   const modules = Array.isArray(fa.modules) ? (fa.modules as unknown[]).map(obj) : [];
@@ -65,7 +67,11 @@ export function extractTexts(fa: Record<string, unknown>): AnalysisTexts {
       alternatives: Array.isArray(sim.alternatives) ? (sim.alternatives as unknown[]).map(pathTexts) : undefined,
     },
     modules: modules.map((m) => ({ key: String(m.key ?? ""), role: str(m.role), verdict: str(m.verdict), evidence: strs(m.evidence) })),
-    astro: { interpretation: str(astro.interpretation), timingSummary: str(timing.summary), activations: strs(timing.activations) },
+    astro: { interpretation: str(astro.interpretation), timingSummary: str(timing.summary), activations: strs(timing.activations),
+      outlook: outlook.headline
+        ? { headline: str(outlook.headline), favours: strs(outlook.favours), against: strs(outlook.against), timingText: str(otiming.text), timingBasis: str(otiming.basis), dashaCheck: str(otiming.dashaCheck), timingNote: str(outlook.timingNote) }
+        : undefined,
+    },
     silence: Array.isArray(silence.meanings)
       ? {
           trigger: str(silence.trigger),

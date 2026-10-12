@@ -12,5 +12,6 @@ export type SynthesisSource =
 export const SynthesisSource = {
   "ai+astro": "ai+astro",
   ai: "ai",
+  inbuilt: "inbuilt",
   engine: "engine",
 } as const;

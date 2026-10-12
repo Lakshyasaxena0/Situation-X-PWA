@@ -12,6 +12,16 @@ function needsCurrentPassword(err: unknown): boolean {
   return e?.meta?.paramName === "current_password" || /current[_ ]password/i.test(`${e?.code ?? ""} ${e?.longMessage ?? ""} ${e?.message ?? ""}`);
 }
 
+const KNOWN: Record<string, string> = {
+  form_password_pwned: "This password has appeared in a data leak, so it is not accepted. Choose a different one.",
+  form_password_not_strong_enough: "This password is too easy to guess. Add more letters, numbers or symbols.",
+  form_password_length_too_short: "The new password is too short.",
+  form_password_size_in_bytes_exceeded: "The new password is too long.",
+  form_password_incorrect: "The current password is not correct.",
+  form_password_validation_failed: "The current password is not correct.",
+  session_exists: "You are already signed in on this device.",
+};
+
 function messageOf(err: unknown): string {
   const e = err as ClerkLikeError & { errors?: { code?: string }[] };
   const code = e?.errors?.[0]?.code ?? "";
@@ -19,7 +29,9 @@ function messageOf(err: unknown): string {
   if (/reverification/i.test(code)) {
     return "For safety the sign-in provider needs a recent sign-in first. Log out, sign in again, then set the new password.";
   }
-  return e?.errors?.[0]?.longMessage ?? e?.errors?.[0]?.message ?? e?.message ?? "Could not change the password. Please try again.";
+  if (KNOWN[code]) return KNOWN[code];
+  const text = e?.errors?.[0]?.longMessage ?? e?.errors?.[0]?.message ?? e?.message ?? "Could not change the password.";
+  return `${text}${code ? ` (code: ${code})` : ""} If this keeps happening, log out and use "Forgot password?" on the sign-in page: it emails you a code to set a new password.`;
 }
 
 /**

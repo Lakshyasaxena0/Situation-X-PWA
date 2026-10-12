@@ -284,18 +284,18 @@ router.post("/analysis/analyze", async (req, res) => {
       ...engineResult.modules.map((m) => (m.key === "SIVI" ? siviReport(simulation, engineResult.intent, engineResult.emotion) : m)),
       {
         key: "AI" as const,
-        name: "AI - reasoning",
+        name: "Reasoning",
         area: "synthesis" as const,
-        role: "Reasons about your whole situation and weighs the astrology as a second opinion.",
-        active: aiAnswered,
+        role: "Thinks through your whole situation and weighs the chart as a second opinion.",
+        active: aiAnswered || synthesis.source === "inbuilt",
         verdict: aiAnswered
-          ? `Own judgment ${synthesis.logicScore}/100${synthesis.astroAlignment ? `; astrology ${synthesis.astroAlignment} it` : ""}; final ${synthesis.score}/100 (${synthesis.verdict}).`
+          ? `Reasoning score ${synthesis.logicScore}/100${synthesis.astroAlignment ? `; the chart ${synthesis.astroAlignment === "supports" ? "agrees" : synthesis.astroAlignment === "contradicts" ? "disagrees" : "partly agrees"}` : ""}; final ${synthesis.score}/100 (${synthesis.verdict}).`
           : withheld === "safety"
-            ? "The AI's answer was held back by the safety check, so the engine and astrology answer is shown (AI credits refunded)."
-            : options.useAi
-            ? "The AI could not answer this time, so the engine and astrology answer is shown (AI credits refunded)."
+            ? "The online AI's answer was held back by the safety check, so the built-in reasoner wrote the answer instead (AI credits refunded)."
+            : synthesis.source === "inbuilt"
+            ? `The online AI was busy this time, so the built-in reasoner wrote the answer from all modules${synthesis.usedAstrology ? " and the chart" : ""} (AI credits refunded). Final ${synthesis.score}/100 (${synthesis.verdict}).`
             : "Switched off in your settings.",
-        evidence: synthesis.reasoning ? [synthesis.reasoning] : [],
+        evidence: synthesis.reasoning ? synthesis.reasoning.split(/\n+/).map((l) => l.replace(/^\s*[•\-*]\s*/, "").trim()).filter(Boolean) : [],
       },
     ];
     const fullAnalysis = {

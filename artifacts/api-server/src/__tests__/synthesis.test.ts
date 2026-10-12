@@ -76,10 +76,19 @@ test("Synthesis: both off gives the module answer", async () => {
   assert.match(s.astroInsight, /switched off/);
 });
 
-test("Synthesis: unusable AI output falls back to the engine answer", async () => {
+test("Synthesis: unusable AI output is answered by the built-in reasoner (full answer, no 'unavailable' state)", async () => {
   const s = await synthesize(text, engine, NO_CALIBRATION, async () => "not json", "standard");
-  assert.equal(s.source, "engine");
+  assert.equal(s.source, "inbuilt");
   assert.equal(s.usedAi, false);
+  assert.equal(s.usedAstrology, true);
+  assert.ok(s.reasoning && s.reasoning.includes("•"));
+  assert.ok((s.nextSteps ?? []).length >= 2);
+  assert.ok(s.astroScore !== undefined && s.weights);
+});
+
+test("Synthesis: a failing AI call is answered by the built-in reasoner too", async () => {
+  const s = await synthesize(text, engine, NO_CALIBRATION, async () => { throw new Error("429"); }, "standard");
+  assert.equal(s.source, "inbuilt");
 });
 
 test("Cost: switching astrology or AI off removes their credits", () => {

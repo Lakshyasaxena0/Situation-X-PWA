@@ -184,7 +184,7 @@ function SituationContextView({ ctx }: { ctx: NonNullable<SimulationView["contex
   if (!ctx.desiredOutcome && ctx.knownFacts.length === 0 && ctx.constraints.length === 0) return null;
   return (
     <div className="rounded border border-border bg-card px-3 py-2 space-y-2">
-      <div className="text-xs text-muted-foreground font-mono">SITUATION AS SIVI READ IT</div>
+      <div className="text-xs font-semibold text-foreground">Your situation, as understood</div>
       {ctx.desiredOutcome && (
         <p className="text-sm text-foreground">
           <span className="font-semibold">You want: </span>
@@ -198,36 +198,61 @@ function SituationContextView({ ctx }: { ctx: NonNullable<SimulationView["contex
   );
 }
 
-function EngineCard({ code, title, children, right }: { code: string; title: string; children: React.ReactNode; right?: React.ReactNode }) {
+/** Splits a text into short points: lines first, then sentences. Leading bullets are removed. */
+export function toPoints(text?: string | null): string[] {
+  if (!text) return [];
+  const lines = text.split(/\n+/).map((l) => l.replace(/^\s*(?:[•\-*]|\d+[.)])\s*/, "").trim()).filter(Boolean);
+  if (lines.length > 1) return lines;
+  const one = lines[0] ?? "";
+  const sentences = one.match(/[^.!?]+[.!?]+(?:\s|$)|[^.!?]+$/g)?.map((x) => x.trim()).filter(Boolean) ?? [one];
+  return sentences.length > 1 ? sentences : [one];
+}
+
+function Points({ items, className = "" }: { items: string[]; className?: string }) {
+  if (items.length === 0) return null;
   return (
-    <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} className="bg-card border border-card-border rounded-lg p-5 shadow-sm">
-      <div className="flex items-center gap-2 mb-4 border-b border-border pb-3">
-        <span className="text-xs font-mono font-bold text-primary-foreground bg-primary px-2 py-0.5 rounded">{code}</span>
-        <span className="text-sm font-semibold text-foreground">{title}</span>
-        {right && <span className="ml-auto">{right}</span>}
-      </div>
-      {children}
+    <ul className={`list-disc pl-5 space-y-1 text-sm ${className}`}>
+      {items.map((it, i) => (
+        <li key={i}>{it}</li>
+      ))}
+    </ul>
+  );
+}
+
+/** A module card that stays closed until tapped; the closed card shows a one-line result. */
+function EngineCard({ code, title, summary, children, defaultOpen = false }: { code: string; title: string; summary?: React.ReactNode; children: React.ReactNode; defaultOpen?: boolean }) {
+  const [open, setOpen] = useState(defaultOpen);
+  return (
+    <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} className="bg-card border border-card-border rounded-lg shadow-sm">
+      <button type="button" onClick={() => setOpen((o) => !o)} aria-expanded={open} className="w-full text-left p-4 sm:p-5">
+        <span className="flex items-center gap-2">
+          <span className="text-xs font-mono font-bold text-primary-foreground bg-primary px-2 py-0.5 rounded">{code}</span>
+          <span className="text-sm font-semibold text-foreground">{title}</span>
+          <span className="ml-auto shrink-0 text-muted-foreground">{open ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}</span>
+        </span>
+        {!open && summary && <span className="mt-2 block text-sm text-foreground">{summary}</span>}
+      </button>
+      {open && <div className="border-t border-border px-4 pb-4 pt-4 sm:px-5 sm:pb-5">{children}</div>}
     </motion.div>
   );
 }
 
 /** Which modules took part and what each one concluded about this question. */
-function ModuleReports({ reports }: { reports: ModuleReport[] }) {
+function ModuleReports({ reports, heading }: { reports: ModuleReport[]; heading: string }) {
   if (reports.length === 0) return null;
   return (
-    <div className="mt-4 space-y-2.5 border-t border-border pt-3">
-      {reports.some((m) => m.active) && <div className="text-[11px] font-mono text-muted-foreground tracking-wide">WHAT THIS MODULE SAW</div>}
+    <div className="space-y-2.5">
+      {reports.some((m) => m.active) && <div className="text-xs font-semibold text-foreground">{heading}</div>}
       {reports.map((m) =>
         m.active ? (
           <div key={m.key} className="rounded-md bg-muted/50 p-3">
             <div className="flex items-start gap-2">
               <CheckCircle2 className="w-4 h-4 mt-0.5 shrink-0 text-green-700" />
               <div className="min-w-0">
-                <div className="text-sm font-semibold text-foreground">{m.name}</div>
                 {m.role && <p className="text-xs text-muted-foreground italic mb-1">{m.role}</p>}
-                <p className="text-sm text-foreground">{m.verdict}</p>
+                <p className="text-sm font-medium text-foreground">{m.verdict}</p>
                 {m.evidence.length > 0 && (
-                  <ul className="mt-1 list-disc pl-4 text-xs text-muted-foreground space-y-0.5">
+                  <ul className="mt-1 list-disc pl-4 text-xs text-muted-foreground space-y-1">
                     {m.evidence.map((e, i) => (
                       <li key={i}>{e}</li>
                     ))}
@@ -363,83 +388,136 @@ function TimingSection({ timing }: { timing: TimingResult }) {
   );
 }
 
-/** The astrology card: a short summary that expands (down arrow) into the ascendant, the main reasons and, for timing questions, the dashas. */
-function AstroCard({ result, reports }: { result: AnalysisResult; reports: ModuleReport[] }) {
+const DEFAULT_PLACE = { latitude: 28.6139, longitude: 77.209 };
+
+function Section({ title, children }: { title: string; children: React.ReactNode }) {
+  return (
+    <div className="space-y-1.5">
+      <div className="text-xs font-semibold text-foreground">{title}</div>
+      {children}
+    </div>
+  );
+}
+
+/** ASTRO: will it happen (chance in %), and by when. The chart facts it used are listed in short points. */
+function AstroCard({ result }: { result: AnalysisResult }) {
   const [settings] = useSettings();
-  const [open, setOpen] = useState(settings.expandAstrology);
+  const [showDasha, setShowDasha] = useState(false);
   const astroOn = result.options?.useAstrology !== false;
   const astro = result.astro;
+  const o = astro.outlook;
   // Older saved analyses stored the whole chart; only its rising sign is shown, never the chart itself.
   const legacy = astro as unknown as { vedicD1?: { ascendant: string; ascendantDegree: number } };
   const asc = astro.ascendant ?? (legacy.vedicD1 ? { sign: legacy.vedicD1.ascendant, degree: legacy.vedicD1.ascendantDegree, lord: "" } : null);
-  const reasons = (astro.prashna?.factors ?? [])
-    .filter((f) => f.label !== "Scale centering")
-    .sort((x, y) => Math.abs(y.effect) - Math.abs(x.effect))
-    .slice(0, 4);
 
   if (!astroOn) {
     return (
-      <EngineCard code="ASTRO" title="Astrological Context">
+      <EngineCard code="ASTRO" title="Astrology (Prashna chart)" summary={<span className="text-muted-foreground">Not activated (switched off in Settings).</span>}>
         <p className="text-sm text-muted-foreground">Not activated (switched off in Settings).</p>
       </EngineCard>
     );
   }
 
+  const loc = astro.location;
+  const isDefault = !loc || (Math.abs(loc.latitude - DEFAULT_PLACE.latitude) < 0.001 && Math.abs(loc.longitude - DEFAULT_PLACE.longitude) < 0.001);
+  const placeName = isDefault ? "New Delhi (default)" : settings.location && Math.abs(settings.location.latitude - loc.latitude) < 0.01 ? settings.location.name : "the place you set";
+  const chanceColor = !o ? "" : o.level === "high" ? "bg-green-600" : o.level === "fair" ? "bg-amber-500" : "bg-red-600";
+  const summary = o ? (
+    <span className="flex flex-wrap items-center gap-x-3 gap-y-1">
+      <span className="font-semibold">{o.chance}% chance</span>
+      <span className="text-muted-foreground">{o.timing ? `Expected: ${o.timing.text}` : "No clear date from the chart"}</span>
+    </span>
+  ) : (
+    <span className={signalColor(astro.influence.signal as Signal)}>{astro.influence.signal}</span>
+  );
+
   return (
-    <EngineCard code="ASTRO" title="Astrological Context">
-      <button
-        type="button"
-        onClick={() => setOpen((o) => !o)}
-        aria-expanded={open}
-        className="w-full flex items-center justify-between gap-3 text-left"
-      >
-        <span className="flex items-center gap-3 flex-wrap">
-          <span className="text-lg font-bold text-foreground">{astro.influence.dominantPlanet}</span>
-          <span className={`text-sm font-semibold ${signalColor(astro.influence.signal as Signal)}`}>{astro.influence.signal}</span>
-          <Badge label={`risk: ${astro.influence.risk}`} className={riskColor(astro.influence.risk as RiskLevel)} />
-        </span>
-        <span className="flex items-center gap-1 text-xs text-muted-foreground shrink-0">
-          {open ? "Hide details" : "Show details"}
-          {open ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
-        </span>
-      </button>
-      <ModuleReports reports={reports} />
-
-      {open && (
-        <div className="mt-4 space-y-4">
-          <p className="text-sm text-muted-foreground">{astro.interpretation}</p>
-          {astro.timing ? <TimingSection timing={astro.timing} /> : <p className="text-xs text-muted-foreground border-t border-border pt-3">Dashas (Vimshottari and Chara) are used only when a question asks about timing, such as &ldquo;when&rdquo; or &ldquo;how long&rdquo;.</p>}
-
-          {(asc || astro.prashna) && (
-            <div className="space-y-2 border-t border-border pt-3">
-              <div className="text-xs font-mono text-muted-foreground">
-                QUESTION MOMENT &middot; cast for when you asked
-                {astro.prashna && ` · ${astro.prashna.topic}`}
-                {astro.location && ` · lat ${astro.location.latitude.toFixed(2)}, lon ${astro.location.longitude.toFixed(2)}`}
+    <EngineCard code="ASTRO" title="Astrology (Prashna chart)" summary={summary} defaultOpen={settings.expandAstrology}>
+      <div className="space-y-4">
+        {o ? (
+          <>
+            <Section title="1. Will it happen?">
+              <div className="flex items-center gap-3">
+                <span className="text-3xl font-bold text-foreground">{o.chance}%</span>
+                <div className="flex-1">
+                  <div className="h-2 rounded bg-muted overflow-hidden" role="img" aria-label={`${o.chance} percent chance`}>
+                    <div className={`h-full ${chanceColor}`} style={{ width: `${o.chance}%` }} />
+                  </div>
+                  <p className="mt-1 text-xs text-muted-foreground">{o.headline}</p>
+                </div>
               </div>
-              {asc && (
-                <p className="text-sm">
-                  <span className="text-muted-foreground">Ascendant (Lagna): </span>
-                  <strong className="text-foreground">{asc.sign}</strong> {asc.degree.toFixed(2)}&deg;
-                  {asc.lord ? <span className="text-muted-foreground"> &middot; lord {asc.lord}</span> : null}
-                </p>
+              {o.favours.length > 0 && (
+                <div>
+                  <div className="text-[11px] font-mono text-green-700 mb-0.5">WHAT HELPS</div>
+                  <Points items={o.favours} className="text-foreground" />
+                </div>
               )}
-              {astro.prashna && (
-                <p className="text-sm text-muted-foreground">
-                  Moon in {astro.prashna.moonSign} ({astro.prashna.moonNakshatra}, {astro.prashna.moonWaxing ? "waxing" : "waning"}).
-                </p>
+              {o.against.length > 0 && (
+                <div>
+                  <div className="text-[11px] font-mono text-red-700 mb-0.5">WHAT HOLDS IT BACK</div>
+                  <Points items={o.against} className="text-foreground" />
+                </div>
               )}
-              {reasons.length > 0 && (
-                <ul className="text-xs text-muted-foreground space-y-1 list-disc pl-4">
-                  {reasons.map((f, i) => (
-                    <li key={i}>{f.detail}</li>
-                  ))}
-                </ul>
+            </Section>
+
+            <Section title="2. By when?">
+              {o.timing ? (
+                <Points
+                  className="text-foreground"
+                  items={[
+                    `Expected time: ${o.timing.text}, between ${o.timing.from} and ${o.timing.to}.`,
+                    `How sure: ${o.timing.confidence}. It is a guide, not a promise.`,
+                    o.timing.basis,
+                    ...(o.timing.dashaCheck ? [o.timing.dashaCheck] : []),
+                  ]}
+                />
+              ) : (
+                <Points className="text-foreground" items={[o.timingNote ?? "The chart gives no clear date."]} />
               )}
-            </div>
-          )}
-        </div>
-      )}
+            </Section>
+          </>
+        ) : (
+          <Points className="text-foreground" items={toPoints(astro.interpretation)} />
+        )}
+
+        <Section title={o ? "3. Chart used" : "Chart used"}>
+          <ul className="list-disc pl-5 space-y-1 text-sm text-foreground">
+            {asc && (
+              <li>
+                Rising sign (Lagna): <strong>{asc.sign}</strong> {asc.degree.toFixed(2)}&deg;{asc.lord ? `, ruled by ${asc.lord}` : ""}
+              </li>
+            )}
+            {astro.prashna && (
+              <li>
+                Moon in {astro.prashna.moonSign} ({astro.prashna.moonNakshatra}, {astro.prashna.moonWaxing ? "growing" : "shrinking"})
+              </li>
+            )}
+            {astro.prashna && <li>Topic read: {astro.prashna.topic}</li>}
+            {loc && (
+              <li>
+                Place used: <strong>{placeName}</strong> (lat {loc.latitude.toFixed(2)}, lon {loc.longitude.toFixed(2)})
+                {isDefault && (
+                  <>
+                    {" "}
+                    &middot; <Link href="/settings" className="text-primary underline underline-offset-2">set your place</Link> for a more exact chart
+                  </>
+                )}
+              </li>
+            )}
+            <li>Chart is cast for the moment you asked.</li>
+          </ul>
+        </Section>
+
+        {astro.timing && (
+          <div>
+            <button type="button" onClick={() => setShowDasha((x) => !x)} aria-expanded={showDasha} className="inline-flex items-center gap-1 text-xs text-primary underline underline-offset-2">
+              {showDasha ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
+              {showDasha ? "Hide dasha details" : "Show dasha details (for timing questions)"}
+            </button>
+            {showDasha && <div className="mt-3"><TimingSection timing={astro.timing} /></div>}
+          </div>
+        )}
+      </div>
     </EngineCard>
   );
 }
@@ -450,18 +528,21 @@ const LIKELIHOOD_STYLE: Record<string, string> = {
   "less likely": "bg-transparent text-muted-foreground border-border",
 };
 
-/** AJIT: a clever but ethical way round a direct route that looks closed. Shown only when the question says so. */
+/** AJIT: a clever but ethical way round a direct route that looks closed. Shown only when the question says so, below the intent. */
 function IndirectRouteView({ route }: { route: AnalysisResult["indirectRoute"] }) {
   if (!route) return null;
   return (
-    <div className="mt-3 rounded-md border border-primary/30 bg-primary/5 p-3">
-      <p className="text-xs font-mono font-bold text-foreground mb-1">ANOTHER WAY ROUND</p>
-      <p className="text-xs text-muted-foreground">{route.blocker}</p>
-      <p className="mt-2 text-sm text-foreground">{route.idea}</p>
-      <ol className="mt-2 text-xs text-muted-foreground space-y-1 list-decimal pl-4">
-        {route.steps.map((st, i) => <li key={i}>{st}</li>)}
-      </ol>
-      <p className="mt-2 text-[11px] text-muted-foreground">{route.fairness}</p>
+    <div className="mt-4 rounded-md border border-primary/30 bg-primary/5 p-3 space-y-2">
+      <p className="text-xs font-semibold text-foreground">Another way round</p>
+      <p className="text-xs text-muted-foreground">What is in the way: {route.blocker}</p>
+      <p className="text-sm text-foreground">{route.idea}</p>
+      <div>
+        <div className="text-[11px] font-mono text-muted-foreground mb-0.5">STEPS</div>
+        <ol className="text-sm text-foreground space-y-1 list-decimal pl-5">
+          {route.steps.map((st, i) => <li key={i}>{st}</li>)}
+        </ol>
+      </div>
+      <p className="text-xs text-muted-foreground">Why it is fair: {route.fairness}</p>
     </div>
   );
 }
@@ -472,42 +553,46 @@ function SilenceCard({ result }: { result: AnalysisResult }) {
   if (!s) return null;
   const who = s.subject === "self" ? "Your silence" : s.who ? `${s.who[0].toUpperCase()}${s.who.slice(1)}'s silence` : "The silence";
   const where = { in_person: "in conversation", message: "in messages", call: "on calls", organisation: "from an organisation" }[s.channel];
+  const top = s.meanings[0];
   return (
-    <EngineCard code="RSMI" title="Reasonable Silence">
-      <p className="text-sm text-muted-foreground">
-        {who} {where}, after {s.trigger}
-        {s.duration.text ? ` (${s.duration.text})` : ""}. What it may mean:
-      </p>
-      <ul className="mt-3 space-y-3">
-        {s.meanings.map((m, i) => (
-          <li key={i} className="text-sm">
-            <div className="flex items-start gap-2">
-              <span className={`shrink-0 mt-0.5 rounded border px-1.5 py-0.5 text-[10px] uppercase tracking-wide ${LIKELIHOOD_STYLE[m.likelihood] ?? ""}`}>{m.likelihood}</span>
-              <span className="text-foreground font-medium">{m.meaning}</span>
-            </div>
-            <p className="text-xs text-muted-foreground mt-1 ml-0.5">{m.why}</p>
-          </li>
-        ))}
-      </ul>
-      {s.checks.length > 0 && (
-        <div className="mt-4 border-t border-border pt-3">
-          <p className="text-xs font-mono font-bold text-foreground mb-1">HOW TO FIND OUT</p>
-          <ul className="text-xs text-muted-foreground space-y-1 list-disc pl-4">
-            {s.checks.map((c, i) => <li key={i}>{c}</li>)}
+    <EngineCard code="RSMI" title="Silence reading" summary={top ? <>Most likely: {top.meaning}</> : undefined}>
+      <div className="space-y-4">
+        <p className="text-sm text-foreground">
+          {who} {where}, after {s.trigger}
+          {s.duration.text ? ` (${s.duration.text})` : ""}.
+        </p>
+        <div>
+          <div className="text-xs font-semibold text-foreground mb-1">What it may mean</div>
+          <ul className="space-y-2.5">
+            {s.meanings.map((m, i) => (
+              <li key={i} className="text-sm">
+                <div className="flex items-start gap-2">
+                  <span className={`shrink-0 mt-0.5 rounded border px-1.5 py-0.5 text-[10px] uppercase tracking-wide ${LIKELIHOOD_STYLE[m.likelihood] ?? ""}`}>{m.likelihood}</span>
+                  <span className="text-foreground font-medium">{m.meaning}</span>
+                </div>
+                <p className="text-xs text-muted-foreground mt-1">{m.why}</p>
+              </li>
+            ))}
           </ul>
         </div>
-      )}
-      {s.unknowns.length > 0 && (
-        <p className="mt-3 text-xs text-muted-foreground">
-          <span className="font-semibold text-foreground">Not known yet: </span>
-          {s.unknowns.join("; ")}.
-        </p>
-      )}
-      <p className="mt-3 text-xs text-muted-foreground">{s.caution}</p>
-      {result.clarifications && result.clarifications.length > 0 && (
-        <p className="mt-2 text-xs text-muted-foreground">Used your answers: {result.clarifications.map((c) => c.answer).join("; ")}.</p>
-      )}
-      <ModuleReports reports={reportsFor(result, "silence")} />
+        {s.checks.length > 0 && (
+          <div>
+            <div className="text-xs font-semibold text-foreground mb-1">How to find out</div>
+            <Points items={s.checks} className="text-foreground" />
+          </div>
+        )}
+        {s.unknowns.length > 0 && (
+          <div>
+            <div className="text-xs font-semibold text-foreground mb-1">Not known yet</div>
+            <Points items={s.unknowns} className="text-foreground" />
+          </div>
+        )}
+        <p className="text-xs text-muted-foreground">{s.caution}</p>
+        {result.clarifications && result.clarifications.length > 0 && (
+          <p className="text-xs text-muted-foreground">Used your answers: {result.clarifications.map((c) => c.answer).join("; ")}.</p>
+        )}
+        <ModuleReports reports={reportsFor(result, "silence")} heading="What the RSMI module found" />
+      </div>
     </EngineCard>
   );
 }
@@ -596,53 +681,147 @@ export function AnalysisDisplay({ result: original }: { result: AnalysisResult }
   return <AnalysisBody result={result} header={<LanguageSwitch result={original} lang={lang} setLang={choose} busy={translate.isPending} error={error} />} />;
 }
 
+function sourceLabel(syn: NonNullable<AnalysisResult["synthesis"]>, aiOff: boolean): string {
+  if (syn.source === "ai+astro") return "Online AI + astrology";
+  if (syn.source === "ai") return "Online AI";
+  if (aiOff) return syn.usedAstrology ? "Modules + astrology (AI is off in Settings)" : "Modules only";
+  return syn.usedAstrology ? "Built-in reasoning + astrology" : "Built-in reasoning";
+}
+
+function summaryLine(result: AnalysisResult, area: ModuleReport["area"]): React.ReactNode {
+  const m = reportsFor(result, area)[0];
+  if (!m) return undefined;
+  return m.active ? m.verdict : <span className="text-muted-foreground">Not activated for this question.</span>;
+}
+
 function AnalysisBody({ result, header }: { result: AnalysisResult; header: React.ReactNode }) {
   const syn = result.synthesis;
-  const astroOn = result.options?.useAstrology !== false;
   const aiReport = (result.modules ?? []).find((m) => m.key === "AI");
+  const aiOff = result.options?.useAi === false;
+  const outlook = result.astro?.outlook;
+  const reasoningPoints = toPoints(syn?.reasoning);
+  const summaryPoints = toPoints(result.summary);
   return (
-    <div className="space-y-4 mt-6">
+    <div className="space-y-3 mt-6">
       {header}
       {result.safety && (result.safety.action === "support" || result.safety.action === "redirect") && result.safety.message && (
         <div role="note" className="rounded-lg border border-primary/40 bg-primary/10 p-4 text-sm leading-relaxed text-foreground">
           {result.safety.message}
         </div>
       )}
-      <EngineCard code="AJIT" title="Intent Analysis">
-        {result.intent.intent !== "unclear" && (
-          <div className="flex items-center gap-3 flex-wrap">
-            <span className="text-lg font-bold text-foreground capitalize">{result.intent.intent}</span>
-            <Badge label={result.intent.confidence} className={intensityColor(result.intent.confidence)} />
-            <span className="text-xs text-muted-foreground">score: {result.intent.score}</span>
+
+      <motion.div
+        initial={{ opacity: 0, y: 12 }}
+        animate={{ opacity: 1, y: 0 }}
+        className={`border rounded-lg p-4 sm:p-5 ${
+          result.finalVerdict.riskLevel === "low" ? "border-green-600/40 bg-green-500/5" : result.finalVerdict.riskLevel === "high" ? "border-red-600/40 bg-red-500/5" : "border-amber-600/40 bg-amber-500/5"
+        }`}
+      >
+        <div className="flex flex-wrap items-center gap-2 mb-2">
+          <span className="text-xs font-mono font-bold text-foreground">YOUR ANSWER</span>
+          <Badge label={`${result.finalVerdict.riskLevel} risk`} className={riskColor(result.finalVerdict.riskLevel as RiskLevel)} />
+          {syn && <Badge label={syn.verdict} className="text-foreground bg-muted border-border" />}
+        </div>
+        <p className="text-base font-semibold text-foreground mb-3">{result.finalVerdict.recommendedAction}</p>
+        <Points items={summaryPoints} className="text-foreground" />
+
+        {syn && (
+          <div className="mt-4 space-y-4 text-sm">
+            {outlook && result.options?.useAstrology !== false && (
+              <div className="rounded border border-border/60 bg-muted/30 p-3">
+                <div className="text-xs font-semibold text-foreground mb-1">What the chart says</div>
+                <ul className="list-disc pl-5 space-y-1 text-foreground">
+                  <li>
+                    Chance it happens: <strong>{outlook.chance}%</strong> ({outlook.level})
+                  </li>
+                  <li>{outlook.timing ? <>Expected time: <strong>{outlook.timing.text}</strong> ({outlook.timing.from} to {outlook.timing.to})</> : "No clear date from the chart."}</li>
+                  {syn.astroAlignment && (
+                    <li className={syn.astroAlignment === "supports" ? "text-green-700" : syn.astroAlignment === "contradicts" ? "text-red-700" : "text-amber-700"}>
+                      {syn.astroAlignment === "supports" ? "The chart agrees with the reasoning." : syn.astroAlignment === "contradicts" ? "The chart disagrees with the reasoning, so go carefully." : "The chart partly agrees with the reasoning."}
+                    </li>
+                  )}
+                </ul>
+              </div>
+            )}
+            {reasoningPoints.length > 0 && (
+              <div>
+                <div className="text-xs font-semibold text-foreground mb-1">Why</div>
+                <Points items={reasoningPoints} className="text-foreground" />
+              </div>
+            )}
+            {syn.risks && syn.risks.length > 0 && (
+              <div>
+                <div className="text-xs font-semibold text-foreground mb-1">Risks</div>
+                <Points items={syn.risks} className="text-foreground" />
+              </div>
+            )}
+            {syn.keyUnknowns && syn.keyUnknowns.length > 0 && (
+              <div>
+                <div className="text-xs font-semibold text-foreground mb-1">What could change this</div>
+                <Points items={syn.keyUnknowns} className="text-foreground" />
+              </div>
+            )}
+            <div>
+              <div className="text-xs font-semibold text-foreground mb-1">What to do next</div>
+              {syn.nextSteps && syn.nextSteps.length > 0 ? (
+                <ol className="list-decimal pl-5 space-y-1 text-foreground">
+                  {syn.nextSteps.map((r, i) => (
+                    <li key={i}>{r}</li>
+                  ))}
+                </ol>
+              ) : (
+                <Points items={toPoints(syn.advice)} className="text-foreground" />
+              )}
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Score {result.overallScore}/100 &middot; confidence {syn.confidence} &middot; {sourceLabel(syn, aiOff)}
+              {syn.logicScore !== undefined && syn.weights ? ` · reasoning ${syn.logicScore}${syn.astroScore !== undefined ? `, astrology ${syn.astroScore}` : ""}` : ""}
+              {syn.calibration?.applied && ` · past accuracy ${Math.round(syn.calibration.hitRate * 100)}% (${syn.calibration.samples} follow-ups)`}. We&rsquo;ll ask how it turned out in about {syn.timeframeDays} days.
+            </p>
           </div>
         )}
-        <IndirectRouteView route={result.indirectRoute} />
-        <ModuleReports reports={reportsFor(result, "intent")} />
+      </motion.div>
+
+      <p className="pt-2 text-xs font-semibold text-muted-foreground">Modules used (tap to open)</p>
+
+      <EngineCard code="AJIT" title="Intent detection" summary={summaryLine(result, "intent")}>
+        <div className="space-y-3">
+          {result.intent.intent !== "unclear" && (
+            <div className="flex items-center gap-3 flex-wrap">
+              <span className="text-lg font-bold text-foreground capitalize">{result.intent.intent}</span>
+              <Badge label={result.intent.confidence} className={intensityColor(result.intent.confidence)} />
+            </div>
+          )}
+          <ModuleReports reports={reportsFor(result, "intent")} heading="What the AJIT module found" />
+          <IndirectRouteView route={result.indirectRoute} />
+        </div>
       </EngineCard>
 
-      <EngineCard code="MANU" title="Emotion Mapping">
-        {result.emotion.score > 0 && (
-          <div className="flex items-center gap-3 flex-wrap">
-            <span className="text-lg font-bold text-foreground capitalize">{result.emotion.emotion}</span>
-            <Badge label={result.emotion.intensity} className={intensityColor(result.emotion.intensity)} />
-            <span className="text-xs text-muted-foreground">score: {result.emotion.score}</span>
-          </div>
-        )}
-        <ModuleReports reports={reportsFor(result, "emotion")} />
+      <EngineCard code="MANU" title="Mood reading" summary={summaryLine(result, "emotion")}>
+        <div className="space-y-3">
+          {result.emotion.score > 0 && (
+            <div className="flex items-center gap-3 flex-wrap">
+              <span className="text-lg font-bold text-foreground capitalize">{result.emotion.emotion}</span>
+              <Badge label={result.emotion.intensity} className={intensityColor(result.emotion.intensity)} />
+            </div>
+          )}
+          <ModuleReports reports={reportsFor(result, "emotion")} heading="What the MANU module found" />
+        </div>
       </EngineCard>
 
       <SilenceCard result={result} />
 
-      <EngineCard code="SIVI" title="Alternative Path Simulation">
-        <div className="space-y-3">
+      <EngineCard code="SIVI" title="Choices compared" summary={summaryLine(result, "paths")}>
+        <div className="space-y-4">
+          <ModuleReports reports={reportsFor(result, "paths")} heading="Recommendation by SIVI module" />
           {result.simulation.context && <SituationContextView ctx={result.simulation.context} />}
           <div>
-            <div className="text-xs text-muted-foreground mb-1 font-mono">RECOMMENDED PATH</div>
+            <div className="text-xs font-semibold text-foreground mb-1">Best choice</div>
             <PathView path={result.simulation.bestPath} best analysisId={result.id} pathIndex={0} />
           </div>
           {result.simulation.alternatives.length > 0 && (
             <div>
-              <div className="text-xs text-muted-foreground mb-1 font-mono">ALTERNATIVES</div>
+              <div className="text-xs font-semibold text-foreground mb-1">Other choices</div>
               <div className="space-y-2">
                 {result.simulation.alternatives.map((alt, i) => (
                   <PathView key={i} path={alt} analysisId={result.id} pathIndex={i + 1} />
@@ -652,115 +831,27 @@ function AnalysisBody({ result, header }: { result: AnalysisResult; header: Reac
           )}
           {result.simulation.comparison && (
             <div className="rounded border border-border bg-card px-3 py-2">
-              <div className="text-xs text-muted-foreground mb-1 font-mono">WHY THIS ORDER</div>
-              <p className="text-sm text-foreground leading-relaxed">{result.simulation.comparison}</p>
+              <div className="text-xs font-semibold text-foreground mb-1">Why this order</div>
+              <Points items={toPoints(result.simulation.comparison)} className="text-foreground" />
             </div>
           )}
           {result.simulation.source && (
             <p className="text-xs text-muted-foreground">
               {result.simulation.source === "ai"
-                ? "Paths built by the AI from your whole situation. They compare options; they do not predict the future."
-                : "General paths from the intent and emotion (the AI was off or unavailable). They compare options; they do not predict the future."}
+                ? "Choices were built by the AI from your whole situation. They compare options; they do not predict the future."
+                : "Choices are general ones based on the topic and mood of your question. They compare options; they do not predict the future."}
             </p>
           )}
         </div>
-        <ModuleReports reports={reportsFor(result, "paths")} />
       </EngineCard>
 
-      <AstroCard result={result} reports={reportsFor(result, "astrology")} />
+      <AstroCard result={result} />
 
-      <motion.div
-        initial={{ opacity: 0, y: 12 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.2 }}
-        className={`border rounded-lg p-5 ${
-          result.finalVerdict.riskLevel === "low" ? "border-green-600/40 bg-green-500/5" : result.finalVerdict.riskLevel === "high" ? "border-red-600/40 bg-red-500/5" : "border-amber-600/40 bg-amber-500/5"
-        }`}
-      >
-        <div className="flex items-center gap-2 mb-3">
-          <span className="text-xs font-mono font-bold text-foreground">VERDICT</span>
-          <Badge label={`${result.finalVerdict.riskLevel} risk`} className={riskColor(result.finalVerdict.riskLevel as RiskLevel)} />
-          <span className="text-xs text-muted-foreground">score: {result.overallScore}</span>
-        </div>
-        <p className="text-base font-semibold text-foreground mb-2">{result.finalVerdict.recommendedAction}</p>
-        <p className="text-sm text-muted-foreground mb-3">{result.finalVerdict.reasoning}</p>
-        <p className="text-sm text-foreground border-t border-border/50 pt-3">{result.summary}</p>
-        {syn && (
-          <div className="mt-3 space-y-3 text-sm">
-            {syn.logicScore !== undefined && syn.weights && (
-              <div className="rounded border border-border/60 bg-muted/30 p-3">
-                <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs">
-                  <span>
-                    <span className="font-mono font-bold text-foreground">AI JUDGMENT</span> {syn.logicScore} <span className="text-muted-foreground">({Math.round(syn.weights.logic * 100)}%)</span>
-                  </span>
-                  {syn.astroScore !== undefined && (
-                    <span>
-                      <span className="font-mono font-bold text-foreground">ASTROLOGY</span> {syn.astroScore} <span className="text-muted-foreground">({Math.round(syn.weights.astro * 100)}%)</span>
-                    </span>
-                  )}
-                  <span>
-                    <span className="font-mono font-bold text-foreground">FINAL</span> {syn.score} &middot; {syn.verdict}
-                  </span>
-                  {syn.astroAlignment && (
-                    <span className={syn.astroAlignment === "supports" ? "text-green-700" : syn.astroAlignment === "contradicts" ? "text-red-700" : "text-amber-700"}>
-                      astrology {syn.astroAlignment === "supports" ? "agrees with the AI" : syn.astroAlignment === "contradicts" ? "disagrees with the AI" : "partly agrees with the AI"}
-                    </span>
-                  )}
-                </div>
-              </div>
-            )}
-            {syn.reasoning && (
-              <p className="text-muted-foreground">
-                <span className="font-mono text-xs font-bold text-foreground">REASONING </span>
-                {syn.reasoning}
-              </p>
-            )}
-            {astroOn && (
-              <p className="text-muted-foreground">
-                <span className="font-mono text-xs font-bold text-foreground">ASTRO </span>
-                {syn.astroInsight}
-              </p>
-            )}
-            {syn.risks && syn.risks.length > 0 && (
-              <div className="text-muted-foreground">
-                <span className="font-mono text-xs font-bold text-foreground">RISKS</span>
-                <ul className="list-disc pl-5 mt-1 space-y-0.5">
-                  {syn.risks.map((r, i) => (
-                    <li key={i}>{r}</li>
-                  ))}
-                </ul>
-              </div>
-            )}
-            {syn.keyUnknowns && syn.keyUnknowns.length > 0 && (
-              <div className="text-muted-foreground">
-                <span className="font-mono text-xs font-bold text-foreground">WHAT WOULD CHANGE THIS</span>
-                <ul className="list-disc pl-5 mt-1 space-y-0.5">
-                  {syn.keyUnknowns.map((r, i) => (
-                    <li key={i}>{r}</li>
-                  ))}
-                </ul>
-              </div>
-            )}
-            <p className="text-foreground">
-              <span className="font-mono text-xs font-bold">NEXT STEP </span>
-              {syn.advice}
-            </p>
-            {syn.nextSteps && syn.nextSteps.length > 0 && (
-              <ol className="list-decimal pl-5 space-y-0.5 text-muted-foreground">
-                {syn.nextSteps.map((r, i) => (
-                  <li key={i}>{r}</li>
-                ))}
-              </ol>
-            )}
-            <p className="text-xs text-muted-foreground">
-              Final answer: {syn.verdict} &middot; confidence {syn.confidence}
-              {syn.source === "ai+astro" ? " · AI + astrology" : syn.source === "ai" ? " · AI only" : syn.usedAi === false && result.options?.useAi === false ? " · modules + astrology (AI off)" : " · engine only (AI unavailable)"}
-              {syn.calibration?.applied && ` · past accuracy ${Math.round(syn.calibration.hitRate * 100)}% (${syn.calibration.samples} follow-ups)`}. We&rsquo;ll ask how it turned out in about {syn.timeframeDays} days.
-            </p>
-          </div>
-        )}
-        {aiReport && <ModuleReports reports={[aiReport]} />}
-      </motion.div>
+      {aiReport && (
+        <EngineCard code="AI" title="Reasoning" summary={aiReport.active ? undefined : <span className="text-muted-foreground">{aiReport.verdict}</span>}>
+          <ModuleReports reports={[aiReport]} heading="How the answer was reasoned" />
+        </EngineCard>
+      )}
       <CreditsUsedCard result={result} />
     </div>
   );

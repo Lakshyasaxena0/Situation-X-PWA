@@ -557,6 +557,29 @@ export const AnalyzeSituationResponse = zod.object({
       .describe(
         "Running dashas and whether they touch the house the question is about",
       ),
+    outlook: zod
+      .object({
+        chance: zod.number().describe("Chance in percent (5-95)"),
+        level: zod.enum(["high", "fair", "low"]),
+        headline: zod.string(),
+        favours: zod.array(zod.string()),
+        against: zod.array(zod.string()),
+        timing: zod
+          .object({
+            text: zod.string(),
+            from: zod.string(),
+            to: zod.string(),
+            confidence: zod.enum(["low", "medium", "high"]),
+            basis: zod.string(),
+            dashaCheck: zod.string().optional(),
+          })
+          .nullish(),
+        timingNote: zod.string().nullish(),
+      })
+      .optional()
+      .describe(
+        "The chance that the matter happens and the anticipated timing, read from the Prashna chart",
+      ),
     location: zod
       .object({
         latitude: zod.number(),
@@ -576,7 +599,7 @@ export const AnalyzeSituationResponse = zod.object({
       astroInsight: zod.string(),
       advice: zod.string(),
       timeframeDays: zod.number(),
-      source: zod.enum(["ai+astro", "ai", "engine"]),
+      source: zod.enum(["ai+astro", "ai", "inbuilt", "engine"]),
       usedAi: zod.boolean().optional(),
       usedAstrology: zod.boolean().optional(),
       calibration: zod
@@ -1047,6 +1070,29 @@ export const GetAnalysisHistoryResponse = zod.object({
               .describe(
                 "Running dashas and whether they touch the house the question is about",
               ),
+            outlook: zod
+              .object({
+                chance: zod.number().describe("Chance in percent (5-95)"),
+                level: zod.enum(["high", "fair", "low"]),
+                headline: zod.string(),
+                favours: zod.array(zod.string()),
+                against: zod.array(zod.string()),
+                timing: zod
+                  .object({
+                    text: zod.string(),
+                    from: zod.string(),
+                    to: zod.string(),
+                    confidence: zod.enum(["low", "medium", "high"]),
+                    basis: zod.string(),
+                    dashaCheck: zod.string().optional(),
+                  })
+                  .nullish(),
+                timingNote: zod.string().nullish(),
+              })
+              .optional()
+              .describe(
+                "The chance that the matter happens and the anticipated timing, read from the Prashna chart",
+              ),
             location: zod
               .object({
                 latitude: zod.number(),
@@ -1066,7 +1112,7 @@ export const GetAnalysisHistoryResponse = zod.object({
               astroInsight: zod.string(),
               advice: zod.string(),
               timeframeDays: zod.number(),
-              source: zod.enum(["ai+astro", "ai", "engine"]),
+              source: zod.enum(["ai+astro", "ai", "inbuilt", "engine"]),
               usedAi: zod.boolean().optional(),
               usedAstrology: zod.boolean().optional(),
               calibration: zod
@@ -1561,6 +1607,29 @@ export const GetAnalysisByIdResponse = zod.object({
           .describe(
             "Running dashas and whether they touch the house the question is about",
           ),
+        outlook: zod
+          .object({
+            chance: zod.number().describe("Chance in percent (5-95)"),
+            level: zod.enum(["high", "fair", "low"]),
+            headline: zod.string(),
+            favours: zod.array(zod.string()),
+            against: zod.array(zod.string()),
+            timing: zod
+              .object({
+                text: zod.string(),
+                from: zod.string(),
+                to: zod.string(),
+                confidence: zod.enum(["low", "medium", "high"]),
+                basis: zod.string(),
+                dashaCheck: zod.string().optional(),
+              })
+              .nullish(),
+            timingNote: zod.string().nullish(),
+          })
+          .optional()
+          .describe(
+            "The chance that the matter happens and the anticipated timing, read from the Prashna chart",
+          ),
         location: zod
           .object({
             latitude: zod.number(),
@@ -1580,7 +1649,7 @@ export const GetAnalysisByIdResponse = zod.object({
           astroInsight: zod.string(),
           advice: zod.string(),
           timeframeDays: zod.number(),
-          source: zod.enum(["ai+astro", "ai", "engine"]),
+          source: zod.enum(["ai+astro", "ai", "inbuilt", "engine"]),
           usedAi: zod.boolean().optional(),
           usedAstrology: zod.boolean().optional(),
           calibration: zod

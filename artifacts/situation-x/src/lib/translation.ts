@@ -14,7 +14,7 @@ export type Texts = {
     alternatives?: PathTexts[];
   };
   modules?: { key: string; role?: string; verdict?: string; evidence?: string[] }[];
-  astro?: { interpretation?: string; timingSummary?: string; activations?: string[] };
+  astro?: { interpretation?: string; timingSummary?: string; activations?: string[]; outlook?: { headline?: string; favours?: string[]; against?: string[]; timingText?: string; timingBasis?: string; dashaCheck?: string; timingNote?: string }; };
   silence?: { trigger?: string; meanings?: { meaning?: string; why?: string }[]; unknowns?: string[]; checks?: string[]; caution?: string };
   indirectRoute?: { blocker?: string; idea?: string; steps?: string[]; fairness?: string };
 };
@@ -110,6 +110,23 @@ export function applyTexts(result: AnalysisResult, t: Texts | undefined): Analys
             activations: pickList(t.astro?.activations, result.astro.timing.activations) ?? result.astro.timing.activations,
           }
         : result.astro.timing,
+      outlook: result.astro.outlook
+        ? {
+            ...result.astro.outlook,
+            headline: pick(t.astro?.outlook?.headline, result.astro.outlook.headline),
+            favours: pickList(t.astro?.outlook?.favours, result.astro.outlook.favours) ?? result.astro.outlook.favours,
+            against: pickList(t.astro?.outlook?.against, result.astro.outlook.against) ?? result.astro.outlook.against,
+            timingNote: result.astro.outlook.timingNote ? pick(t.astro?.outlook?.timingNote, result.astro.outlook.timingNote) : result.astro.outlook.timingNote,
+            timing: result.astro.outlook.timing
+              ? {
+                  ...result.astro.outlook.timing,
+                  text: pick(t.astro?.outlook?.timingText, result.astro.outlook.timing.text),
+                  basis: pick(t.astro?.outlook?.timingBasis, result.astro.outlook.timing.basis),
+                  dashaCheck: result.astro.outlook.timing.dashaCheck ? pick(t.astro?.outlook?.dashaCheck, result.astro.outlook.timing.dashaCheck) : result.astro.outlook.timing.dashaCheck,
+                }
+              : result.astro.outlook.timing,
+          }
+        : result.astro.outlook,
     },
   };
 }

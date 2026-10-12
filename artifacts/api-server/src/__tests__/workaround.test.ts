@@ -20,7 +20,7 @@ test("indirect route: offered by the engine only when the way looks closed and t
   assert.ok(closed.route);
   assert.equal(closed.route!.source, "rules");
   assert.ok(closed.route!.steps.length >= 3);
-  assert.match(closed.modules.find((m) => m.key === "AJIT")!.evidence.join(" "), /Indirect route/);
+  assert.match(closed.modules.find((m) => m.key === "AJIT")!.evidence.join(" "), /fair way round/);
   const open = runEngine("Should I accept the new job offer from the startup or stay in my company?");
   assert.equal(open.route, null);
 });

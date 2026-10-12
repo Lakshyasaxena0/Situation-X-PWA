@@ -676,6 +676,47 @@ export interface AstroInfluence {
   signal: AstroInfluenceSignal;
 }
 
+export type AstroOutlookLevel =
+  (typeof AstroOutlookLevel)[keyof typeof AstroOutlookLevel];
+
+export const AstroOutlookLevel = {
+  high: "high",
+  fair: "fair",
+  low: "low",
+} as const;
+
+export type AstroOutlookTimingConfidence =
+  (typeof AstroOutlookTimingConfidence)[keyof typeof AstroOutlookTimingConfidence];
+
+export const AstroOutlookTimingConfidence = {
+  low: "low",
+  medium: "medium",
+  high: "high",
+} as const;
+
+export type AstroOutlookTiming = {
+  text: string;
+  from: string;
+  to: string;
+  confidence: AstroOutlookTimingConfidence;
+  basis: string;
+  dashaCheck?: string;
+} | null;
+
+/**
+ * The chance that the matter happens and the anticipated timing, read from the Prashna chart
+ */
+export interface AstroOutlook {
+  /** Chance in percent (5-95) */
+  chance: number;
+  level: AstroOutlookLevel;
+  headline: string;
+  favours: string[];
+  against: string[];
+  timing?: AstroOutlookTiming;
+  timingNote?: string | null;
+}
+
 /**
  * The rising sign at the moment of the question (the only part of the chart that is shown)
  */
@@ -706,6 +747,7 @@ export interface AstroResult {
   tuning?: AstroResultTuning;
   prashna?: PrashnaReading;
   timing?: TimingResult;
+  outlook?: AstroOutlook;
   /** The place the chart was cast for */
   location?: AstroResultLocation;
 }
@@ -743,6 +785,7 @@ export type SynthesisSource =
 export const SynthesisSource = {
   "ai+astro": "ai+astro",
   ai: "ai",
+  inbuilt: "inbuilt",
   engine: "engine",
 } as const;
 

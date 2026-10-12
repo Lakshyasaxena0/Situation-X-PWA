@@ -4,7 +4,7 @@ import { simulatePaths, type SimulationResult } from "./sivi.service.js";
 import { analyzeAstro, type AstroResult } from "./astro.service.js";
 import type { Tuning } from "./prashna.service.js";
 import { detectSilence, type SilenceReading } from "./rsmi.service.js";
-import { detectObstacle, ruleRoute, describeRoute, type IndirectRoute } from "./workaround.service.js";
+import { detectObstacle, ruleRoute, type IndirectRoute } from "./workaround.service.js";
 import { assessSafety, type SafetyDecision } from "./safety.service.js";
 import type { Language } from "./analysis-options.js";
 
@@ -56,26 +56,20 @@ export type EngineOptions = {
 export function siviReport(simulation: SimulationResult, intent: IntentResult, emotion: EmotionResult): ModuleReport {
   const best = simulation.bestPath;
   const ctx = simulation.context;
-  const describe = (p: SimulationResult["bestPath"], label: string) =>
-    `${label}: ${p.action} - risk ${p.risk}, stability ${p.stability}, ${p.reversible ? "can be undone" : "hard to undo"}` +
-    (p.benefits.length ? `. Benefits: ${p.benefits.join("; ")}` : "") +
-    (p.downsides.length ? `. Downsides: ${p.downsides.join("; ")}` : "") +
-    (p.uncertainties.length ? `. Uncertain: ${p.uncertainties.join("; ")}` : "");
   return {
     key: "SIVI",
-    role: "Compares the paths open to you: their benefits, downsides and what is uncertain.",
+    role: "Compares the choices open to you and picks the safest useful one.",
     name: "SIVI - Simulated Intelligent & Variable Intentions",
     area: "paths",
     active: true,
-    verdict: `Best path: "${best.action}" (risk ${best.risk}, stability ${best.stability}). ${simulation.source === "ai" ? "Paths built by the AI from your full situation." : "General paths from the intent and emotion (rule-based)."}`,
+    verdict: `Go with: ${best.action}`,
     evidence: [
-      `Wants: ${ctx.desiredOutcome}${ctx.inferred ? " (guessed from the kind of question)" : ""}`,
-      ...ctx.knownFacts.map((f) => `Fact: ${f}`),
-      ...ctx.constraints.map((c) => `Limit: ${c}`),
-      ...(simulation.source === "rules" ? [`Built from intent "${intent.intent}" and emotion "${emotion.emotion}".`] : []),
-      describe(best, "Best"),
-      ...simulation.alternatives.map((p) => describe(p, "Alternative")),
-      `Why: ${simulation.comparison}`,
+      `Risk is ${best.risk}, steadiness is ${best.stability}, and it ${best.reversible ? "can be undone" : "is hard to undo"}.`,
+      `You want: ${ctx.desiredOutcome}${ctx.inferred ? " (we guessed this from your question)" : ""}`,
+      ...(best.benefits.length ? [`Good side: ${best.benefits.slice(0, 2).join("; ")}`] : []),
+      ...(best.downsides.length ? [`Watch out: ${best.downsides.slice(0, 2).join("; ")}`] : []),
+      ...(simulation.comparison ? [`Why this one: ${simulation.comparison}`] : []),
+      simulation.source === "ai" ? "Choices were built by the AI from your whole situation." : "Choices are general ones based on the topic and mood of your question.",
     ],
   };
 }
@@ -129,12 +123,6 @@ function buildModuleReports(
 ): ModuleReport[] {
   const emotion = emotionAnalysis.result;
   const intent = intentAnalysis.result;
-  const topFactors = astro.prashna.factors
-    .filter((f) => f.label !== "Scale centering")
-    .sort((a, b) => Math.abs(b.effect) - Math.abs(a.effect))
-    .slice(0, 3)
-    .map((f) => `${f.effect > 0 ? "+" : ""}${f.effect}: ${f.detail}`);
-
   return [
     filterReport(safety),
     ...(silence ? [rsmiReport(silence)] : []),
@@ -146,19 +134,19 @@ function buildModuleReports(
       active: intent.intent !== "unclear",
       verdict:
         intent.intent === "unclear"
-          ? "No clear topic found, so the question is read as a general outlook."
-          : `Intent: ${intent.intent} (${intent.confidence} confidence, evidence ${intent.score})` +
-            (intent.secondary ? `, also touches ${intent.secondary}` : "") +
-            (intent.stance === "avoid" ? ". You seem to want to AVOID what you name, not pursue it." : "."),
+          ? "No clear topic found, so your question is read in a general way."
+          : `Your question is mostly about ${intent.intent} (${intent.confidence} confidence)` +
+            (intent.secondary ? `, and also touches ${intent.secondary}` : "") +
+            (intent.stance === "avoid" ? ". It sounds like you want to AVOID what you name, not get it." : "."),
       evidence: [
         ...intentAnalysis.ranking.map(
-          (r) =>
-            `${r.key} ${r.score}: ` +
+          (r, i) =>
+            `${i === 0 ? "Words that point to" : "Weaker signs of"} ${r.key}: ` +
             r.hits
               .map((h) => `"${h.matched}"${h.negated ? (h.effective === 0 ? " (negated, ignored)" : h.avoids ? " (negated, wanting to avoid it)" : " (negated)") : ""}`)
               .join(", "),
         ),
-        ...(route ? [`Indirect route: ${describeRoute(route)} A fair way round is shown below.`] : []),
+        ...(route ? [`The direct way looks closed, so a fair way round is shown below.`] : []),
       ],
     },
     {
@@ -169,17 +157,17 @@ function buildModuleReports(
       active: emotion.score > 0,
       verdict:
         emotion.score > 0
-          ? `Emotion: ${emotion.emotion} (${emotion.intensity} intensity, evidence ${emotion.score})` +
-            (emotion.secondary ? `, with ${emotion.secondary} close behind` : "") +
-            (emotion.masked ? ". You say you are fine, but the rest of the message sounds distressed." : ".") +
-            " This describes how the words sound, not a diagnosis."
+          ? `You sound ${emotion.emotion} (${emotion.intensity} feeling)` +
+            (emotion.secondary ? `, with some ${emotion.secondary} too` : "") +
+            (emotion.masked ? ". You say you are fine, but the rest of your message sounds upset." : ".") +
+            " This is only how the words sound. It is not a diagnosis."
           : emotion.crisis
             ? "Words that may point to a person in danger were found. This is not a diagnosis."
             : "No emotion words found, so the tone is treated as unclear (confused, low intensity).",
       evidence: [
         ...emotionAnalysis.ranking.map(
-          (r) =>
-            `${r.key} ${r.score}: ` +
+          (r, i) =>
+            `${i === 0 ? "Words that show" : "Weaker signs of"} ${r.key}: ` +
             r.hits
               .map((h) => `"${h.matched}"${h.negated ? " (negated, ignored)" : ""}${h.past ? " (about the past, softer)" : ""}${h.emphasized ? " (stressed)" : ""}`)
               .join(", "),
@@ -190,14 +178,20 @@ function buildModuleReports(
     siviReport(simulation, intent, emotion),
     {
       key: "ASTRO",
-      role: "Reads the Prashna chart for the moment you ask.",
+      role: "Reads the chart of the moment you asked, to tell if it can happen and when.",
       name: "ASTRO - Prashna chart",
       area: "astrology",
       active: useAstrology,
       verdict: useAstrology
-        ? `${astro.prashna.topic}: ${astro.prashna.signal} (score ${astro.prashna.score}), house ${astro.prashna.primaryHouse}, dominant planet ${astro.prashna.dominantPlanet}.`
+        ? astro.outlook.headline
         : "Switched off in your settings; not used in the answer.",
-      evidence: useAstrology ? topFactors : [],
+      evidence: useAstrology
+        ? [
+            ...(astro.outlook.timing ? [`Expected time: ${astro.outlook.timing.text} (${astro.outlook.timing.from} to ${astro.outlook.timing.to}).`] : astro.outlook.timingNote ? [astro.outlook.timingNote] : []),
+            ...astro.outlook.favours.map((f) => `Helps: ${f}`),
+            ...astro.outlook.against.map((f) => `Hurts: ${f}`),
+          ]
+        : [],
     },
   ];
 }

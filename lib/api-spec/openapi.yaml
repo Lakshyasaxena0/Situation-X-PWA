@@ -1291,6 +1291,49 @@ components:
         - risk
         - signal
 
+    AstroOutlook:
+      type: object
+      description: The chance that the matter happens and the anticipated timing, read from the Prashna chart
+      properties:
+        chance:
+          type: integer
+          description: Chance in percent (5-95)
+        level:
+          type: string
+          enum: [high, fair, low]
+        headline:
+          type: string
+        favours:
+          type: array
+          items:
+            type: string
+        against:
+          type: array
+          items:
+            type: string
+        timing:
+          type: object
+          nullable: true
+          properties:
+            text:
+              type: string
+            from:
+              type: string
+            to:
+              type: string
+            confidence:
+              type: string
+              enum: [low, medium, high]
+            basis:
+              type: string
+            dashaCheck:
+              type: string
+          required: [text, from, to, confidence, basis]
+        timingNote:
+          type: string
+          nullable: true
+      required: [chance, level, headline, favours, against]
+
     AstroResult:
       type: object
       properties:
@@ -1324,6 +1367,8 @@ components:
           $ref: "#/components/schemas/PrashnaReading"
         timing:
           $ref: "#/components/schemas/TimingResult"
+        outlook:
+          $ref: "#/components/schemas/AstroOutlook"
         location:
           type: object
           description: The place the chart was cast for
@@ -1428,7 +1473,7 @@ components:
           type: integer
         source:
           type: string
-          enum: [ai+astro, ai, engine]
+          enum: [ai+astro, ai, inbuilt, engine]
         usedAi:
           type: boolean
         usedAstrology:

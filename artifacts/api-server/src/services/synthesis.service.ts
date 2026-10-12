@@ -9,6 +9,7 @@ import { describeRoute, mergeRoute, routeTexts, type IndirectRoute } from "./wor
 import { describeSilence, mergeSilence, silenceTexts, type SilenceReading } from "./rsmi.service.js";
 import { mergeContext, parseAiSimulation, type SimulationResult } from "./sivi.service.js";
 import type { TimingResult } from "./timing.service.js";
+import { localAnswer } from "./local-reasoner.service.js";
 import { DEFAULT_OPTIONS, LANGUAGE_NAMES, type AnalysisOptions } from "./analysis-options.js";
 
 /**
@@ -42,7 +43,7 @@ export type Synthesis = {
   astroInsight: string;
   advice: string;
   timeframeDays: number;
-  source: "ai+astro" | "ai" | "engine";
+  source: "ai+astro" | "ai" | "inbuilt" | "engine";
   /** Whether the AI / the astrology took part in this answer (Settings can switch either off). */
   usedAi: boolean;
   usedAstrology: boolean;
@@ -256,6 +257,13 @@ function describeTransits(engine: EngineResponse): string {
   return [
     `Current transits: ${planets}`,
     `Astro module result: dominant planet ${a.influence.dominantPlanet}, signal ${a.influence.signal}, stability ${a.influence.stability}, risk ${a.influence.risk}`,
+    ...(a.outlook
+      ? [
+          `Chart outlook: about ${a.outlook.chance}% chance that the matter happens (${a.outlook.level}).` +
+            (a.outlook.timing ? ` Anticipated timing from the chart: ${a.outlook.timing.text} (${a.outlook.timing.from} to ${a.outlook.timing.to}), ${a.outlook.timing.confidence} confidence; ${a.outlook.timing.basis}` : ` No date from the chart: ${a.outlook.timingNote ?? ""}`) +
+            ` State this chance and timing plainly in your astrologyAssessment; do not invent a different number.`,
+        ]
+      : []),
     ...(a.timing ? [describeTiming(a.timing)] : ["Dashas are not part of this reading: the question does not ask about timing."]),
   ].join("\n");
 }
@@ -314,10 +322,10 @@ ${step2}
 
 ${step3}
 
-Rules: speak in tendencies, never promise outcomes; do not invent facts about the person; for health, legal, money-critical or safety matters recommend a qualified professional where it matters; be candid but kind; no cosmic fluff. Write every text value in ${language}; keep the JSON keys in English.
+Rules: speak in tendencies, never promise outcomes; do not invent facts about the person; for health, legal, money-critical or safety matters recommend a qualified professional where it matters; be candid but kind; no cosmic fluff. Use simple, everyday words that a school student understands: short sentences, no jargon, and explain any astrology word in a few plain words. Write every text value in ${language}; keep the JSON keys in English.
 
 Reply with ONLY a JSON object, no prose, with exactly these keys in this order:
-{"situationAnalysis": "<4-6 sentences: what is really being asked, key facts and assumptions, the options and their trade-offs>", "risks": ["<up to 3 short risks>"], "situationContext": {"desiredOutcome": "<what the person wants>", "knownFacts": ["<up to 4 facts they stated>"], "constraints": ["<up to 4 limits they mentioned>"]}, "paths": [{"action": "<a concrete path>", "benefits": ["<up to 3>"], "downsides": ["<up to 3>"], "uncertainties": ["<up to 2>"], "reversible": true | false, "risk": "low" | "medium" | "high", "stability": "low" | "medium" | "high"}], "bestPath": <0-based index into paths>, "pathComparison": "<2-3 sentences: why the best path beats the others, and when another would be better>", ${engine.silence ? `"silence": {"meanings": [{"meaning": "<what the silence may mean>", "likelihood": "more likely" | "possible" | "less likely", "why": "<short reason from their facts>"}], "checks": ["<2-4 ways to find out, without pressure>"], "unknowns": ["<up to 3 facts that would change this>"]}, ` : ""}${engine.route ? `"indirectRoute": {"blocker": "<what is in the way, in their terms>", "idea": "<1-2 sentences: the other route to the same goal>", "steps": ["<3-5 ordered concrete steps>"], "fairness": "<one line: why this is honest and fair to everyone>"}, ` : ""}"keyUnknowns": ["<up to 3 things that would change the answer>"], "logicScore": <integer 0-100>, ${useAstro ? `"astrologyAssessment": "<2-3 sentences naming the specific planets, houses, charts or dasha periods that drive the astrology verdict and what they imply for timing or caution>", "astroAlignment": "supports" | "mixed" | "contradicts",` : ""} "finalScore": <integer 0-100>, "summary": "<3-4 sentences: the final answer, direct and practical, reconciling both lenses>", "advice": "<the single most important next step>", "nextSteps": ["<2-4 ordered concrete steps>"], "timeframeDays": <integer, days until the outcome should become visible, ${MIN_TIMEFRAME_DAYS}-${MAX_TIMEFRAME_DAYS}>}`;
+{"situationAnalysis": "<3-5 SHORT bullet points, each starting with \u2022 and separated by a newline: what is really being asked, key facts, the options and their trade-offs>", "risks": ["<up to 3 short risks>"], "situationContext": {"desiredOutcome": "<what the person wants>", "knownFacts": ["<up to 4 facts they stated>"], "constraints": ["<up to 4 limits they mentioned>"]}, "paths": [{"action": "<a concrete path>", "benefits": ["<up to 3>"], "downsides": ["<up to 3>"], "uncertainties": ["<up to 2>"], "reversible": true | false, "risk": "low" | "medium" | "high", "stability": "low" | "medium" | "high"}], "bestPath": <0-based index into paths>, "pathComparison": "<2-3 sentences: why the best path beats the others, and when another would be better>", ${engine.silence ? `"silence": {"meanings": [{"meaning": "<what the silence may mean>", "likelihood": "more likely" | "possible" | "less likely", "why": "<short reason from their facts>"}], "checks": ["<2-4 ways to find out, without pressure>"], "unknowns": ["<up to 3 facts that would change this>"]}, ` : ""}${engine.route ? `"indirectRoute": {"blocker": "<what is in the way, in their terms>", "idea": "<1-2 sentences: the other route to the same goal>", "steps": ["<3-5 ordered concrete steps>"], "fairness": "<one line: why this is honest and fair to everyone>"}, ` : ""}"keyUnknowns": ["<up to 3 things that would change the answer>"], "logicScore": <integer 0-100>, ${useAstro ? `"astrologyAssessment": "<2-3 short sentences: the chance in % and the anticipated timing from the chart, naming the specific planets, houses, charts or dasha periods that drive the astrology verdict and what they imply for timing or caution>", "astroAlignment": "supports" | "mixed" | "contradicts",` : ""} "finalScore": <integer 0-100>, "summary": "<2-3 short sentences: the final answer, direct and practical, reconciling both lenses>", "advice": "<the single most important next step>", "nextSteps": ["<2-4 ordered concrete steps>"], "timeframeDays": <integer, days until the outcome should become visible, ${MIN_TIMEFRAME_DAYS}-${MAX_TIMEFRAME_DAYS}>}`;
 }
 
 function text(value: unknown, max: number): string | null {
@@ -423,10 +431,11 @@ export async function synthesize(
   } catch (err) {
     logger.warn({ err }, "AI synthesis failed, using engine answer");
   }
-  if (!ai) return fallback;
+  // The online AI did not answer: the built-in reasoner writes the answer from the modules instead.
+  if (!ai) return compose(engine, cal, options, fallback, localAnswer(engine, baselineScore(engine, false)), true, {});
 
   // The ethical filter also checks what the AI wrote. If anything in it recommends harm, the whole AI
-  // answer is withheld and the module answer is shown instead.
+  // answer is withheld and the built-in answer is shown instead.
   const written = [
     ai.summary, ai.advice ?? "", ai.reasoning ?? "", ai.astrologyAssessment ?? "", ...ai.risks, ...ai.nextSteps, ...ai.keyUnknowns,
     ...(ai.simulation ? [ai.simulation.comparison, ...[ai.simulation.bestPath, ...ai.simulation.alternatives].flatMap((p) => [p.action, ...p.benefits, ...p.downsides, ...p.uncertainties])] : []),
@@ -438,68 +447,84 @@ export async function synthesize(
   const safe = checkOutputSafety(written);
   if (!safe.ok) {
     logger.warn({ reasons: safe.reasons }, "AI answer withheld by the safety check");
-    return { ...fallback, withheld: "safety" };
+    return { ...compose(engine, cal, options, fallback, localAnswer(engine, baselineScore(engine, false)), true, {}), withheld: "safety" };
   }
 
   const aiSimulation = ai.simulation ? mergeContext(ai.simulation, engine.simulation) : undefined;
+  return compose(engine, cal, options, fallback, ai, false, { simulation: aiSimulation, silence, indirectRoute });
+}
 
-  // Two lenses, fixed weights. The AI may only fine-tune the blend, within a small, justified margin.
+/**
+ * Two lenses, fixed weights. The AI may only fine-tune the blend, within a small, justified margin.
+ * `local` = the answer was written by the built-in reasoner (no online AI): it is blended the same way.
+ */
+function compose(
+  engine: EngineResponse,
+  cal: Calibration,
+  options: AnalysisOptions,
+  fallback: Synthesis,
+  ai: AiAnswer,
+  local: boolean,
+  extra: { simulation?: SimulationResult; silence?: SilenceReading; indirectRoute?: IndirectRoute },
+): Synthesis {
+  const { simulation, silence, indirectRoute } = extra;
+  // When the chart gave a clear anticipated timing, the follow-up window matches it.
+  const outlookDays = (() => {
+    const t = engine.astro.outlook?.timing;
+    if (!options.useAstrology || !t) return null;
+    const mid = (Date.parse(t.from) + Date.parse(t.to)) / 2;
+    const d = Math.round((mid - Date.parse(engine.astro.calculatedAt)) / 86400000);
+    return Number.isFinite(d) ? clampDays(d) : null;
+  })();
+  const timeframeDays = outlookDays ?? ai.timeframeDays;
+  const common = {
+    usedAi: !local,
+    calibration: cal,
+    logicScore: ai.logicScore,
+    reasoning: ai.reasoning ?? undefined,
+    risks: ai.risks,
+    keyUnknowns: ai.keyUnknowns,
+    nextSteps: ai.nextSteps,
+    simulation,
+    silence,
+    indirectRoute,
+    timeframeDays,
+  };
   if (!options.useAstrology) {
-    // The AI alone: its own judgment, nudged by at most the same margin, then calibrated.
     const alone = clamp(ai.finalScore ?? ai.logicScore, ai.logicScore - MAX_AI_ADJUSTMENT, ai.logicScore + MAX_AI_ADJUSTMENT);
     const score = applyCalibration(alone, cal);
     return {
+      ...common,
       verdict: verdictFromScore(score),
       score,
       confidence: confidenceFor(engine, cal, "mixed", false),
       summary: ai.summary,
       astroInsight: "Astrology is switched off in your settings.",
       advice: ai.advice ?? fallback.advice,
-      timeframeDays: ai.timeframeDays,
-      source: "ai",
-      usedAi: true,
+      source: local ? "inbuilt" : "ai",
       usedAstrology: false,
-      calibration: cal,
-      logicScore: ai.logicScore,
-      reasoning: ai.reasoning ?? undefined,
-      risks: ai.risks,
-      keyUnknowns: ai.keyUnknowns,
-      nextSteps: ai.nextSteps,
       weights: { logic: 1, astro: 0 },
-      simulation: aiSimulation,
-      silence,
-      indirectRoute,
     };
   }
   const astro = astroScoreOf(engine);
   const share = engine.astro.tuning?.astroShare ?? ASTRO_SHARE;
   const blend = blendScores(ai.logicScore, astro, share);
   const reconciled = clamp(ai.finalScore ?? blend, blend - MAX_AI_ADJUSTMENT, blend + MAX_AI_ADJUSTMENT);
-  // Calibration is applied last so the learning loop also tempers the AI's number.
+  // Calibration is applied last so the learning loop also tempers the number.
   const score = applyCalibration(reconciled, cal);
   const alignment = alignmentOf(ai.logicScore, astro);
   return {
+    ...common,
     verdict: verdictFromScore(score),
     score,
     confidence: confidenceFor(engine, cal, alignment),
     summary: ai.summary,
     astroInsight: ai.astrologyAssessment ?? fallback.astroInsight,
     advice: ai.advice ?? fallback.advice,
-    timeframeDays: ai.timeframeDays,
-    source: "ai+astro",
-    usedAi: true,
+    source: local ? "inbuilt" : "ai+astro",
     usedAstrology: true,
-    calibration: cal,
-    logicScore: ai.logicScore,
     astroScore: astro,
     astroAlignment: alignment,
-    reasoning: ai.reasoning ?? undefined,
-    risks: ai.risks,
-    keyUnknowns: ai.keyUnknowns,
-    nextSteps: ai.nextSteps,
     weights: { logic: Math.round((1 - share) * 100) / 100, astro: share },
-    simulation: aiSimulation,
-    silence,
-    indirectRoute,
   };
 }
