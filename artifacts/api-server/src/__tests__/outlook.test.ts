@@ -39,5 +39,7 @@ test("Prashna trace: lagna, Moon, concerned house, 6/8/12 lords and the blend ar
   assert.match(titles, /house, sign and planet/);
   for (const t of a.prashna.trace) assert.ok(t.points.length >= 2 && t.points.every((p) => p.length > 5));
   assert.equal(a.prashna.trace.find((t) => /6th, 8th/.test(t.title))!.points.length, 3);
+  assert.match(titles, /dasha/);
+  assert.match(titles, /Mrityu Bhaga/);
   console.log(a.prashna.trace.map((t) => `## ${t.title}\n- ${t.points.join("\n- ")}`).join("\n"));
 });

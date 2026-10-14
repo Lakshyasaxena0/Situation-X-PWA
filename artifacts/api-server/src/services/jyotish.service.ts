@@ -463,6 +463,27 @@ export function lagnaProfile(view: SkyView): LagnaProfile {
 
 // ---------------------------------------------------------------- planet condition
 
+/**
+ * Mrityu Bhaga: the sensitive degree (1-30) of each planet in each sign, Aries to Pisces, as given in the
+ * commonly cited classical table. A planet within one degree of it is treated as weakened. The nodes have none.
+ */
+const MRITYU_BHAGA: Record<Graha, number[]> = {
+  Sun: [20, 9, 12, 6, 8, 24, 16, 17, 22, 2, 3, 23],
+  Moon: [26, 12, 13, 25, 24, 11, 26, 14, 13, 25, 5, 12],
+  Mars: [19, 28, 25, 23, 29, 28, 14, 21, 2, 15, 11, 6],
+  Mercury: [15, 14, 13, 12, 8, 18, 20, 10, 21, 22, 7, 5],
+  Jupiter: [19, 29, 12, 27, 6, 4, 13, 10, 17, 11, 15, 28],
+  Venus: [28, 15, 11, 17, 10, 13, 4, 6, 27, 12, 29, 19],
+  Saturn: [10, 4, 7, 9, 12, 16, 3, 18, 28, 14, 13, 15],
+};
+
+/** True when the planet stands within one degree of its Mrityu Bhaga point. */
+export function inMrityuBhaga(view: SkyView, n: BodyName): boolean {
+  if (!isGraha(n)) return false;
+  const s = view.p[n];
+  return Math.abs(s.deg - MRITYU_BHAGA[n][s.sign]) <= 1;
+}
+
 export function conditionNotes(view: SkyView, n: BodyName): string[] {
   const s = view.p[n];
   const out: string[] = [];
@@ -474,5 +495,6 @@ export function conditionNotes(view: SkyView, n: BodyName): string[] {
   if (s.retro && (n !== "Rahu" && n !== "Ketu")) out.push("retrograde");
   if (s.combust) out.push("combust");
   if (s.cazimi) out.push("cazimi (in the heart of the Sun)");
+  if (inMrityuBhaga(view, n)) out.push("in Mrityu Bhaga (a sensitive, weakening degree)");
   return out;
 }

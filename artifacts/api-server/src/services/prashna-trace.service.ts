@@ -13,21 +13,34 @@ import { RASHI_NAMES, SIGN_RULERS } from "./vedic.service.js";
 import type { BodyName } from "./ephemeris.service.js";
 import {
   aspectsOnHouse,
+  compoundRelation,
   conditionNotes,
+  inMrityuBhaga,
   isBenefic,
+  isGraha,
   lordOf,
   moonProfile,
-  nakshatraOf,
+  naturalRelation,
   occupantsOf,
   ordinal,
-  naturalRelation,
+  temporalRelation,
+  type BhavaBala,
   type Graha,
+  type ShadbalaRow,
   type SkyView,
 } from "./jyotish.service.js";
+import { vimshottariAt } from "./dasha.service.js";
 import { HOUSE_SIGNIFICATIONS, SIGN_KARAKATVA } from "./significations.js";
 
 export type TraceSection = { title: string; points: string[] };
-export type TraceInput = { primaryHouse: number; supportHouses: number[]; topic: string; karakas: string[] };
+export type TraceInput = {
+  primaryHouse: number;
+  supportHouses: number[];
+  topic: string;
+  karakas: string[];
+  /** Shadbala per planet and bhava bala per house of the same sky (adds the strength to every "goes to" line). */
+  strength?: { sb: Record<Graha, ShadbalaRow>; bb: Record<number, BhavaBala> };
+};
 
 const SHORT_MEANING = (h: number) => (HOUSE_SIGNIFICATIONS[h] ?? "").split(",").slice(0, 3).join(",").trim();
 const signTraits = (signIdx: number) => (SIGN_KARAKATVA[signIdx] ?? "").split(":")[1]?.split(",").slice(0, 3).join(",").trim() ?? "";
@@ -43,7 +56,7 @@ function company(view: SkyView, n: BodyName): { with: BodyName[]; seenBy: BodyNa
 }
 
 /** "goes to the 10th (work, status) in Capricorn (friend's sign), with Mars, seen by Jupiter (benefic)". */
-function whereItGoes(view: SkyView, n: BodyName): string {
+function whereItGoes(view: SkyView, n: BodyName, strength?: TraceInput["strength"]): string {
   const s = view.p[n];
   const owner = SIGN_RULERS[s.sign];
   const rel = s.dignity === "own" ? "its own sign" : s.dignity === "exalted" ? "its sign of exaltation" : s.dignity === "debilitated" ? "its sign of fall" : owner === n ? "its own sign" : naturalRelation(n, owner) === 1 ? `a friend's sign (${owner})` : naturalRelation(n, owner) === -1 ? `an enemy's sign (${owner})` : `a neutral sign (${owner})`;
@@ -52,6 +65,8 @@ function whereItGoes(view: SkyView, n: BodyName): string {
   return (
     `goes to the ${ordinal(s.house)} house (${SHORT_MEANING(s.house)}) in ${s.signName}, ${rel}` +
     (cond.length ? `; it is ${cond.join(", ")}` : "") +
+    (strength && isGraha(n) ? `; its strength (shadbala) is ${strength.sb[n].level}` : "") +
+    (strength ? `; that house is ${strength.bb[s.house].level} in strength (bhava bala)` : "") +
     (c.with.length ? `; with ${list(c.with)}` : "") +
     (c.seenBy.length ? `; seen by ${c.seenBy.map((x) => `${x}${isBenefic(view, x) ? " (benefic)" : " (malefic)"}`).join(", ")}` : "")
   );
@@ -59,8 +74,37 @@ function whereItGoes(view: SkyView, n: BodyName): string {
 
 const exchange = (view: SkyView, a: BodyName, b: BodyName) => a !== b && SIGN_RULERS[view.p[a].sign] === b && SIGN_RULERS[view.p[b].sign] === a;
 
+
+function dashaLords(view: SkyView): { level: string; planet: BodyName; end: string }[] {
+  const d = vimshottariAt(view.p.Moon.lon, view.sky.castAt, view.sky.castAt);
+  return [
+    { level: "Mahadasha", planet: d.mahadasha.planet as BodyName, end: d.mahadasha.endDate },
+    { level: "Antardasha", planet: d.antardasha.planet as BodyName, end: d.antardasha.endDate },
+    { level: "Pratyantardasha", planet: d.pratyantardasha.planet as BodyName, end: d.pratyantardasha.endDate },
+  ];
+}
+
+/** What a planet stands for in this question (lagna lord, lord of the matter, 6/8/12 lord, significator). */
+function rolesOf(view: SkyView, n: BodyName, input: TraceInput, focus: Set<number>): string[] {
+  const r: string[] = [];
+  if (lordOf(view, 1) === n) r.push("the lagna lord (you)");
+  if (lordOf(view, input.primaryHouse) === n) r.push(`the lord of the ${ordinal(input.primaryHouse)} (the matter)`);
+  if (input.karakas.includes(n)) r.push("a natural significator of this matter");
+  for (const h of DUSTHANAS) if (lordOf(view, h) === n && !focus.has(h)) r.push(`the lord of the ${ordinal(h)} (hurdles)`);
+  return r;
+}
+
+function assessPlanet(view: SkyView, n: BodyName, st?: TraceInput["strength"]): { strong: boolean; weak: boolean } {
+  const s = view.p[n];
+  const sbLevel = st && isGraha(n) ? st.sb[n].level : "adequate";
+  const weak = sbLevel === "weak" || s.dignity === "debilitated" || s.combust || inMrityuBhaga(view, n) || [6, 8, 12].includes(s.house);
+  const strong = !weak && (sbLevel === "strong" || s.dignity === "exalted" || s.dignity === "own");
+  return { strong, weak };
+}
+
 export function traceReading(view: SkyView, input: TraceInput): TraceSection[] {
   const { primaryHouse: qh } = input;
+  const st = input.strength;
   const out: TraceSection[] = [];
   const lagnaLord = lordOf(view, 1);
   const qLord = lordOf(view, qh);
@@ -69,7 +113,7 @@ export function traceReading(view: SkyView, input: TraceInput): TraceSection[] {
   // 1. Lagna
   const lagna: string[] = [
     `${RASHI_NAMES[view.ascSign]} is rising at ${view.ascDeg.toFixed(1)}° (${signNature(view.ascSign)}): ${signTraits(view.ascSign)}.`,
-    `Its lord ${lagnaLord} ${whereItGoes(view, lagnaLord)}.`,
+    `Its lord ${lagnaLord} ${whereItGoes(view, lagnaLord, st)}.`,
   ];
   const ll = view.p[lagnaLord].house;
   lagna.push(
@@ -90,8 +134,8 @@ export function traceReading(view: SkyView, input: TraceInput): TraceSection[] {
     `Moon is in ${mp.sign}, the ${ordinal(mp.house)} house (${SHORT_MEANING(mp.house)}); nakshatra ${mp.nakshatra}.`,
     `${mp.waxing ? "Growing" : "Shrinking"} Moon, ${mp.dignity === "neutral" ? "in a neutral sign" : `${mp.dignity} sign`}${mp.with.length ? `, with ${list(mp.with)}` : ""}.`,
   ];
-  if (moonSignLord !== "Moon") moon.push(`Moon's sign lord ${moonSignLord} ${whereItGoes(view, moonSignLord)}.`);
-  if (nakLord in view.p && nakLord !== moonSignLord && nakLord !== "Moon") moon.push(`Moon's nakshatra lord ${nakLord} ${whereItGoes(view, nakLord)}.`);
+  if (moonSignLord !== "Moon") moon.push(`Moon's sign lord ${moonSignLord} ${whereItGoes(view, moonSignLord, st)}.`);
+  if (nakLord in view.p && nakLord !== moonSignLord && nakLord !== "Moon") moon.push(`Moon's nakshatra lord ${nakLord} ${whereItGoes(view, nakLord, st)}.`);
   moon.push(mp.voidOfCourse ? "The Moon makes no contact before leaving its sign: the matter may not move." : `Next the Moon ${mp.next[0].aspect === "conjunction" ? "joins" : `makes a ${mp.next[0].aspect} to`} ${mp.next[0].planet} in ${mp.next[0].degrees}°.`);
   out.push({ title: "Moon: the mind and the pulse of the question", points: moon });
 
@@ -105,7 +149,7 @@ export function traceReading(view: SkyView, input: TraceInput): TraceSection[] {
   ];
   if (qLord === lagnaLord) house.push(`Its lord is also the lagna lord (${qLord}), so you and the matter are one: the result depends on you.`);
   else {
-    house.push(`Its lord ${qLord} ${whereItGoes(view, qLord)}.`);
+    house.push(`Its lord ${qLord} ${whereItGoes(view, qLord, st)}.`);
     const q = view.p[qLord];
     const l = view.p[lagnaLord];
     house.push(
@@ -116,7 +160,7 @@ export function traceReading(view: SkyView, input: TraceInput): TraceSection[] {
       : `${lagnaLord} and ${qLord} are not directly linked by sign, so effort is needed to connect them.`,
     );
   }
-  for (const k of input.karakas.slice(0, 1)) if (k in view.p && k !== qLord) house.push(`Natural significator ${k} ${whereItGoes(view, k as BodyName)}.`);
+  for (const k of input.karakas.slice(0, 1)) if (k in view.p && k !== qLord) house.push(`Natural significator ${k} ${whereItGoes(view, k as BodyName, st)}.`);
   out.push({ title: `The ${ordinal(qh)} house of your question and its lord`, points: house });
 
   // 4. 6th, 8th, 12th lords
@@ -131,11 +175,56 @@ export function traceReading(view: SkyView, input: TraceInput): TraceSection[] {
       : [6, 8, 12].includes(lh) ? "it stays inside the difficult houses: the trouble cancels itself (viparita effect), which helps"
       : lh === view.p[qLord].house ? "it sits with the lord of the matter: hurdles reach that lord"
       : "it stays away from you and the matter: little harm";
-    dust.push(`${ordinal(h)} lord ${lord} ${whereItGoes(view, lord)}. ${focus.has(h) ? `The ${ordinal(h)} house is part of this question, so it is not counted as harm. ` : `${note[0].toUpperCase()}${note.slice(1)}.`}`.trim());
+    dust.push(`${ordinal(h)} lord ${lord} ${whereItGoes(view, lord, st)}. ${focus.has(h) ? `The ${ordinal(h)} house is part of this question, so it is not counted as harm. ` : `${note[0].toUpperCase()}${note.slice(1)}.`}`.trim());
   }
   out.push({ title: "6th, 8th and 12th lords (hurdles, delay, loss)", points: dust });
 
-  // 5. Blend
+  // 5. Lords of the running dasha (Vimshottari of the Prashna chart)
+  const dl = dashaLords(view);
+  const focusSet = new Set([qh, ...input.supportHouses]);
+  const dashaPts: string[] = [];
+  for (const d of dl) {
+    const roles = rolesOf(view, d.planet, input, focusSet);
+    const a = assessPlanet(view, d.planet, st);
+    dashaPts.push(
+      `${d.level} lord ${d.planet} (until ${d.end})${roles.length ? ` is ${list(roles)}` : " has no direct role in this matter"}; it ${whereItGoes(view, d.planet, st)}. ${a.strong ? "It is strong, so its period supports results." : a.weak ? "It is weak, so its period gives less or brings delay." : "It is of average strength."}`,
+    );
+  }
+  out.push({ title: "Lords of the running dasha (who is in charge now)", points: dashaPts });
+
+  // 6. Friendship now (natural + temporal)
+  const rel = (a: BodyName, b: BodyName) => {
+    const n = naturalRelation(a, b);
+    const t = temporalRelation(view, a, b);
+    const c = compoundRelation(view, a, b).relation;
+    return `${a} to ${b}: naturally ${n === 1 ? "friend" : n === -1 ? "enemy" : "neutral"}, for now (temporal) ${t === 1 ? "friend" : "enemy"} = ${c}`;
+  };
+  const antar = dl[1].planet as BodyName;
+  const friend: string[] = [];
+  if (lagnaLord !== qLord) friend.push(rel(lagnaLord, qLord) + " (you and the matter)");
+  if (qLord !== "Moon") friend.push(rel("Moon", qLord) + " (mind and the matter)");
+  if (antar !== qLord && antar !== lagnaLord) friend.push(rel(antar, qLord) + " (running period and the matter)");
+  if (antar !== lagnaLord && antar !== qLord) friend.push(rel(antar, lagnaLord) + " (running period and you)");
+  if (friend.length === 0) friend.push(`The lagna lord, the lord of the matter and the running period are the same planet (${qLord}), so there is no friction between them.`);
+  out.push({ title: "How the main planets stand with each other now (friend or enemy)", points: friend });
+
+  // 7. Strength and afflictions
+  const keys = [...new Set<BodyName>([lagnaLord, qLord, "Moon", antar, ...(input.karakas.slice(0, 1) as BodyName[])])];
+  const flags: string[] = [];
+  for (const n of keys) {
+    const s = view.p[n];
+    const bits: string[] = [];
+    if (st && isGraha(n)) bits.push(`shadbala ${st.sb[n].level} (${st.sb[n].ratio})`);
+    if (s.retro && isGraha(n)) bits.push("retrograde (delay, second thoughts)");
+    if (s.combust) bits.push("combust (burnt by the Sun)");
+    if (s.dignity === "debilitated") bits.push("in its sign of fall");
+    if (inMrityuBhaga(view, n)) bits.push("in Mrityu Bhaga degree (a sensitive point)");
+    flags.push(`${n}: ${bits.length ? bits.join(", ") : "no affliction"}.`);
+  }
+  if (st) flags.push(`House strength (bhava bala): lagna ${st.bb[1].level}, the ${ordinal(qh)} house ${st.bb[qh].level}.`);
+  out.push({ title: "Strength and afflictions (shadbala, bhava bala, retrograde, combust, Mrityu Bhaga)", points: flags });
+
+  // 8. Blend
   const qs = view.p[qLord];
   const verdict =
     qs.dignity === "debilitated" || [6, 8, 12].includes(qs.house) ? "weak: the matter faces trouble or delay"
@@ -147,16 +236,18 @@ export function traceReading(view: SkyView, input: TraceInput): TraceSection[] {
       `House: ${ordinal(qh)} = ${SHORT_MEANING(qh)}.`,
       `Sign: ${RASHI_NAMES[qSign]} = ${signTraits(qSign)}.`,
       `Planet: ${qLord} in the ${ordinal(qs.house)} (${qs.signName})${conditionNotes(view, qLord).length ? `, ${conditionNotes(view, qLord).join(", ")}` : ""}.`,
+      `Running period: ${dl[1].planet} ${assessPlanet(view, dl[1].planet, st).strong ? "(strong)" : assessPlanet(view, dl[1].planet, st).weak ? "(weak)" : "(average)"}.`,
       `Together, the matter looks ${verdict}.`,
     ],
   });
   return out;
 }
 
-export type TraceEffect = { family: "house" | "relations"; label: string; effect: number; detail: string };
+export type TraceEffect = { family: "house" | "relations" | "condition"; label: string; effect: number; detail: string };
 
 /** Score effects from the same chain. Magnitudes are modest and the families can be re-weighed by feedback. */
 export function traceFactors(view: SkyView, input: TraceInput): TraceEffect[] {
+  const strength = input.strength;
   const fx: TraceEffect[] = [];
   const { primaryHouse: qh } = input;
   const lagnaLord = lordOf(view, 1);
@@ -178,5 +269,21 @@ export function traceFactors(view: SkyView, input: TraceInput): TraceEffect[] {
     else if ([6, 8, 12].includes(lh)) fx.push({ family: "house", label: `${ordinal(h)} lord`, effect: 2, detail: `${ordinal(h)} lord ${lord} stays inside the difficult houses (its trouble cancels out)` });
     else if (view.p[lord].house === view.p[qLord].house) fx.push({ family: "house", label: `${ordinal(h)} lord`, effect: -3, detail: `${ordinal(h)} lord ${lord} sits with ${qLord}, the lord of the matter` });
   }
+  // Mrityu Bhaga weakens the planets that carry the matter.
+  const carriers: [BodyName, string, number][] = [[lagnaLord, "lagna lord", -4], [qLord, `lord of the ${ordinal(qh)}`, -4], ["Moon", "Moon", -3]];
+  for (const [n, role, pts] of carriers) {
+    if (inMrityuBhaga(view, n)) fx.push({ family: "condition", label: "Mrityu Bhaga", effect: pts, detail: `${n} (${role}) stands in its Mrityu Bhaga degree (a sensitive, weakening point)` });
+  }
+  // The planet of the running period: helps when it stands for the matter and is strong, hurts when weak or a hurdle lord.
+  const dl = dashaLords(view);
+  const weight = [0.6, 1, 0.4];
+  dl.forEach((d, i) => {
+    const roles = rolesOf(view, d.planet, input, focus);
+    if (roles.length === 0) return;
+    const helpful = roles.some((x) => !x.includes("hurdles"));
+    const { strong, weak } = assessPlanet(view, d.planet, strength);
+    const base = helpful ? (strong ? 4 : weak ? -3 : 1) : weak ? -2 : -3;
+    fx.push({ family: "relations", label: `${d.level} lord`, effect: base * weight[i], detail: `${d.level} lord ${d.planet} (${list(roles)}) is ${strong ? "strong" : weak ? "weak" : "of average strength"}${helpful ? "" : " and is a hurdle lord"}: the running period ${helpful ? (strong ? "supports" : weak ? "gives little" : "helps a little") : "brings obstacles"}` });
+  });
   return fx;
 }

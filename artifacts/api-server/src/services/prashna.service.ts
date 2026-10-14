@@ -345,7 +345,7 @@ function evaluate(sky: PrashnaSky, cfg: Config): { factors: PrashnaFactor[]; que
     if (use.chart === "D9" && qLordS.vargottama) c.add("divisional", label, 4, `${qLord} is vargottama (same sign in D1 and D9), which greatly strengthens it`);
   }
   // 9. Where the key lords go and with whom (see prashna-trace.service.ts).
-  for (const t of traceFactors(view, { primaryHouse: cfg.primaryHouse, supportHouses: cfg.supportHouses, topic: cfg.topic, karakas: cfg.karakas })) c.add(t.family, t.label, t.effect, t.detail);
+  for (const t of traceFactors(view, { primaryHouse: cfg.primaryHouse, supportHouses: cfg.supportHouses, topic: cfg.topic, karakas: cfg.karakas, strength: { sb, bb } })) c.add(t.family, t.label, t.effect, t.detail);
   return { factors: c.factors, querent, moon: moonScore };
 }
 
@@ -427,7 +427,7 @@ function dossierFor(sky: PrashnaSky, cfg: Config, d: Derived, qLord: Graha, top:
   lines.push(`Planets: ${(["Sun", "Moon", "Mars", "Mercury", "Jupiter", "Venus", "Saturn", "Rahu", "Ketu"] as BodyName[]).map(pl).join("; ")}.`);
   lines.push(`Nature of the main house's sign: ${SIGN_KARAKATVA[(view.ascSign + cfg.primaryHouse - 1) % 12]}.`);
   lines.push(`Divisional charts read: D1${cfg.vargas.map((v) => `, ${v.chart} (${v.purpose})`).join("")}.`);
-  for (const t of traceReading(view, { primaryHouse: cfg.primaryHouse, supportHouses: cfg.supportHouses, topic: cfg.topic, karakas: cfg.karakas })) lines.push(`${t.title}: ${t.points.join(" ")}`);
+  for (const t of traceReading(view, { primaryHouse: cfg.primaryHouse, supportHouses: cfg.supportHouses, topic: cfg.topic, karakas: cfg.karakas, strength: { sb: d.sb, bb: d.bb } })) lines.push(`${t.title}: ${t.points.join(" ")}`);
   lines.push(`Strongest reasons in the score: ${top.map((f) => `${f.effect > 0 ? "+" : ""}${f.effect} ${f.detail}`).join(" | ")}.`);
   return lines;
 }
@@ -453,7 +453,7 @@ export function readPrashna(intent: IntentType, sky: PrashnaSky, options: ReadOp
 
   const top = factors.filter((f) => f.label !== "Scale centering").sort((a, b) => Math.abs(b.effect) - Math.abs(a.effect)).slice(0, 3);
   const moonNakshatra = nakshatraOf(view.p.Moon.lon);
-  const trace = traceReading(view, { primaryHouse: cfg.primaryHouse, supportHouses: cfg.supportHouses, topic: cfg.topic, karakas: cfg.karakas });
+  const trace = traceReading(view, { primaryHouse: cfg.primaryHouse, supportHouses: cfg.supportHouses, topic: cfg.topic, karakas: cfg.karakas, strength: { sb: d.sb, bb: d.bb } });
 
   const chartsUsed: PrashnaChartUse[] = [
     {
