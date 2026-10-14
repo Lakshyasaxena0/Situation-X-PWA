@@ -4,6 +4,8 @@ export type Language = "auto" | "en" | "hi" | "hinglish";
 export type AnalysisOptions = {
   useAi: boolean;
   useAstrology: boolean;
+  /** Leave the astrology out when the chart is not fit to be read (off by default: the chart is always read). */
+  skipUnfitChart?: boolean;
   language: Language;
 };
 

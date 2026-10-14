@@ -10,6 +10,8 @@ export type Settings = {
   language: Language;
   useAi: boolean;
   useAstrology: boolean;
+  /** Leave the astrology out when the Prashna chart is not fit to be read. Off: the chart is always read. */
+  skipUnfitChart: boolean;
   depth: Depth;
   /** Where the questions are asked; sets the ascendant of the chart. null = New Delhi. */
   location: SavedPlace | null;
@@ -23,6 +25,7 @@ export const DEFAULT_SETTINGS: Settings = {
   language: "auto",
   useAi: true,
   useAstrology: true,
+  skipUnfitChart: false,
   depth: "auto",
   location: null,
   expandAstrology: false,
@@ -45,6 +48,7 @@ export function sanitizeSettings(raw: unknown): Settings {
     language: LANGS.includes(r.language as Language) ? (r.language as Language) : DEFAULT_SETTINGS.language,
     useAi: typeof r.useAi === "boolean" ? r.useAi : DEFAULT_SETTINGS.useAi,
     useAstrology: typeof r.useAstrology === "boolean" ? r.useAstrology : DEFAULT_SETTINGS.useAstrology,
+    skipUnfitChart: typeof r.skipUnfitChart === "boolean" ? r.skipUnfitChart : DEFAULT_SETTINGS.skipUnfitChart,
     depth: DEPTHS.includes(r.depth as Depth) ? (r.depth as Depth) : DEFAULT_SETTINGS.depth,
     location: place(r.location),
     expandAstrology: typeof r.expandAstrology === "boolean" ? r.expandAstrology : DEFAULT_SETTINGS.expandAstrology,
@@ -65,6 +69,7 @@ export function requestOptions(s: Settings) {
     language: s.language,
     useAi: s.useAi,
     useAstrology: s.useAstrology,
+    skipUnfitChart: s.skipUnfitChart,
     latitude: s.location?.latitude,
     longitude: s.location?.longitude,
   };

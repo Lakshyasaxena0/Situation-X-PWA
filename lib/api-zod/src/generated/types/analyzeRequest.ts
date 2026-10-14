@@ -25,6 +25,8 @@ export interface AnalyzeRequest {
   useAi?: boolean;
   /** Use the astrology lens (default true). When false the astrology is not used in the answer and is not charged. */
   useAstrology?: boolean;
+  /** Leave the astrology out when the Prashna chart is not fit to be read (default false, so the chart is always read, with a warning). */
+  skipUnfitChart?: boolean;
   /**
    * Questions the app asked before the analysis and the person's answers; they are added to the situation.
    * @maxItems 4

@@ -69,6 +69,8 @@ export interface AnalyzeRequest {
   useAi?: boolean;
   /** Use the astrology lens (default true). When false the astrology is not used in the answer and is not charged. */
   useAstrology?: boolean;
+  /** Leave the astrology out when the Prashna chart is not fit to be read (default false, so the chart is always read, with a warning). */
+  skipUnfitChart?: boolean;
   /**
    * Questions the app asked before the analysis and the person's answers; they are added to the situation.
    * @maxItems 4
@@ -614,6 +616,14 @@ export type PrashnaReadingFocus = {
   houses?: number[];
 };
 
+/**
+ * First check of the reading. Only a warning unless the person chose to skip unfit charts.
+ */
+export type PrashnaReadingFit = {
+  ok: boolean;
+  problems: string[];
+};
+
 export type PrashnaReadingTraceItem = {
   title: string;
   points: string[];
@@ -644,6 +654,8 @@ export interface PrashnaReading {
   dominantPlanet?: string;
   summary: string;
   focus?: PrashnaReadingFocus;
+  /** First check of the reading. Only a warning unless the person chose to skip unfit charts. */
+  fit?: PrashnaReadingFit;
   /** The chain followed in the chart (lagna and its lord, Moon, the concerned house, 6/8/12 lords, the blend) as short points */
   trace?: PrashnaReadingTraceItem[];
   tuningId?: number | null;
@@ -754,6 +766,8 @@ export interface AstroResult {
   tuning?: AstroResultTuning;
   prashna?: PrashnaReading;
   timing?: TimingResult;
+  /** Set when the Settings said to skip unfit charts and this chart was skipped */
+  skippedReason?: string | null;
   outlook?: AstroOutlook;
   /** The place the chart was cast for */
   location?: AstroResultLocation;

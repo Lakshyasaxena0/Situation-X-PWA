@@ -65,6 +65,12 @@ export const EstimateAnalysisCostBody = zod.object({
     .describe(
       "Use the astrology lens (default true). When false the astrology is not used in the answer and is not charged.",
     ),
+  skipUnfitChart: zod
+    .boolean()
+    .optional()
+    .describe(
+      "Leave the astrology out when the Prashna chart is not fit to be read (default false, so the chart is always read, with a warning).",
+    ),
   clarifications: zod
     .array(
       zod.object({
@@ -209,6 +215,12 @@ export const AnalyzeSituationBody = zod.object({
     .optional()
     .describe(
       "Use the astrology lens (default true). When false the astrology is not used in the answer and is not charged.",
+    ),
+  skipUnfitChart: zod
+    .boolean()
+    .optional()
+    .describe(
+      "Leave the astrology out when the Prashna chart is not fit to be read (default false, so the chart is always read, with a warning).",
     ),
   clarifications: zod
     .array(
@@ -478,6 +490,15 @@ export const AnalyzeSituationResponse = zod.object({
             houses: zod.array(zod.number()).optional(),
           })
           .optional(),
+        fit: zod
+          .object({
+            ok: zod.boolean(),
+            problems: zod.array(zod.string()),
+          })
+          .optional()
+          .describe(
+            "First check of the reading. Only a warning unless the person chose to skip unfit charts.",
+          ),
         trace: zod
           .array(
             zod.object({
@@ -567,6 +588,12 @@ export const AnalyzeSituationResponse = zod.object({
       .optional()
       .describe(
         "Running dashas and whether they touch the house the question is about",
+      ),
+    skippedReason: zod
+      .string()
+      .nullish()
+      .describe(
+        "Set when the Settings said to skip unfit charts and this chart was skipped",
       ),
     outlook: zod
       .object({
@@ -1002,6 +1029,15 @@ export const GetAnalysisHistoryResponse = zod.object({
                     houses: zod.array(zod.number()).optional(),
                   })
                   .optional(),
+                fit: zod
+                  .object({
+                    ok: zod.boolean(),
+                    problems: zod.array(zod.string()),
+                  })
+                  .optional()
+                  .describe(
+                    "First check of the reading. Only a warning unless the person chose to skip unfit charts.",
+                  ),
                 trace: zod
                   .array(
                     zod.object({
@@ -1091,6 +1127,12 @@ export const GetAnalysisHistoryResponse = zod.object({
               .optional()
               .describe(
                 "Running dashas and whether they touch the house the question is about",
+              ),
+            skippedReason: zod
+              .string()
+              .nullish()
+              .describe(
+                "Set when the Settings said to skip unfit charts and this chart was skipped",
               ),
             outlook: zod
               .object({
@@ -1550,6 +1592,15 @@ export const GetAnalysisByIdResponse = zod.object({
                 houses: zod.array(zod.number()).optional(),
               })
               .optional(),
+            fit: zod
+              .object({
+                ok: zod.boolean(),
+                problems: zod.array(zod.string()),
+              })
+              .optional()
+              .describe(
+                "First check of the reading. Only a warning unless the person chose to skip unfit charts.",
+              ),
             trace: zod
               .array(
                 zod.object({
@@ -1639,6 +1690,12 @@ export const GetAnalysisByIdResponse = zod.object({
           .optional()
           .describe(
             "Running dashas and whether they touch the house the question is about",
+          ),
+        skippedReason: zod
+          .string()
+          .nullish()
+          .describe(
+            "Set when the Settings said to skip unfit charts and this chart was skipped",
           ),
         outlook: zod
           .object({

@@ -411,9 +411,10 @@ function AstroCard({ result }: { result: AnalysisResult }) {
   const asc = astro.ascendant ?? (legacy.vedicD1 ? { sign: legacy.vedicD1.ascendant, degree: legacy.vedicD1.ascendantDegree, lord: "" } : null);
 
   if (!astroOn) {
+    const why = astro.skippedReason ? `Skipped, as you chose in Settings. ${astro.skippedReason}` : "Not activated (switched off in Settings).";
     return (
-      <EngineCard code="ASTRO" title="Astrology (Prashna chart)" summary={<span className="text-muted-foreground">Not activated (switched off in Settings).</span>}>
-        <p className="text-sm text-muted-foreground">Not activated (switched off in Settings).</p>
+      <EngineCard code="ASTRO" title="Astrology (Prashna chart)" summary={<span className="text-muted-foreground">{why}</span>}>
+        <p className="text-sm text-muted-foreground">{why}</p>
       </EngineCard>
     );
   }

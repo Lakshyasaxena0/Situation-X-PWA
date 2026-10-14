@@ -57,3 +57,18 @@ test("Prashna SOP: Navamsa (D9) is read for every kind of question, other charts
   const job = analyzeAstro("career", "neutral" as never, { at: new Date("2026-10-14T14:00:00Z"), text: "Will I get the job?" });
   assert.ok(job.prashna.chartsUsed.some((c) => c.chart === "D10"));
 });
+
+test("Chart fitness is a warning by default; the chart is read anyway", () => {
+  let unfit = 0;
+  for (let i = 0; i < 40; i++) {
+    const a = analyzeAstro("career", "neutral" as never, { at: new Date(Date.UTC(2026, 0, 1) + i * 5.7 * 86400000), text: "Will I get the job?" });
+    assert.equal(typeof a.prashna.fit.ok, "boolean");
+    assert.ok(a.prashna.trace.length >= 10 && a.outlook.chance >= 5);
+    if (!a.prashna.fit.ok) {
+      unfit++;
+      assert.ok(a.prashna.fit.problems.length > 0);
+      assert.match(a.prashna.trace[0].points.join(" "), /still read in full/);
+    }
+  }
+  assert.ok(unfit > 0);
+});

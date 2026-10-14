@@ -89,6 +89,9 @@ export default function Settings() {
           )}
           <ToggleRow label="Use astrology" hint="Prashna chart and dashas as a second opinion on timing. Off: the astrology is left out completely." checked={s.useAstrology} onChange={(useAstrology) => update({ useAstrology })} />
           {s.useAstrology && (
+            <ToggleRow label="Skip charts that are not fit to be read" hint="Off (default): the chart is always read in full, with a warning if it looks weak for reading (lagna too early or late, Moon with no contact, empty tithi). On: such a chart is left out and the answer comes without astrology." checked={s.skipUnfitChart} onChange={(skipUnfitChart) => update({ skipUnfitChart })} />
+          )}
+          {s.useAstrology && (
             <ToggleRow label="Show astrology details open" hint="Otherwise the charts and dashas stay folded until you tap the arrow." checked={s.expandAstrology} onChange={(expandAstrology) => update({ expandAstrology })} />
           )}
         </Section>

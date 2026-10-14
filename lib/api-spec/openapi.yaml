@@ -565,6 +565,9 @@ components:
         useAstrology:
           type: boolean
           description: Use the astrology lens (default true). When false the astrology is not used in the answer and is not charged.
+        skipUnfitChart:
+          type: boolean
+          description: Leave the astrology out when the Prashna chart is not fit to be read (default false, so the chart is always read, with a warning).
         clarifications:
           type: array
           maxItems: 4
@@ -1253,6 +1256,17 @@ components:
               type: array
               items:
                 type: integer
+        fit:
+          type: object
+          description: First check of the reading. Only a warning unless the person chose to skip unfit charts.
+          properties:
+            ok:
+              type: boolean
+            problems:
+              type: array
+              items:
+                type: string
+          required: [ok, problems]
         trace:
           type: array
           description: The chain followed in the chart (lagna and its lord, Moon, the concerned house, 6/8/12 lords, the blend) as short points
@@ -1380,6 +1394,10 @@ components:
           $ref: "#/components/schemas/PrashnaReading"
         timing:
           $ref: "#/components/schemas/TimingResult"
+        skippedReason:
+          type: string
+          nullable: true
+          description: Set when the Settings said to skip unfit charts and this chart was skipped
         outlook:
           $ref: "#/components/schemas/AstroOutlook"
         location:

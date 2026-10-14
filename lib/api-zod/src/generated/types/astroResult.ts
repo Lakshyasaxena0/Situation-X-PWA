@@ -21,6 +21,8 @@ export interface AstroResult {
   tuning?: AstroResultTuning;
   prashna?: PrashnaReading;
   timing?: TimingResult;
+  /** Set when the Settings said to skip unfit charts and this chart was skipped */
+  skippedReason?: string | null;
   outlook?: AstroOutlook;
   /** The place the chart was cast for */
   location?: AstroResultLocation;

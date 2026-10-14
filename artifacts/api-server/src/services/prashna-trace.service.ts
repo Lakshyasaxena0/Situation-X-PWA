@@ -115,6 +115,21 @@ function vargaSection(view: SkyView, input: TraceInput, use: { chart: string; ho
   return { title: `${VARGA_NAME[use.chart] ?? use.chart}${use.chart === "D9" ? " (always checked)" : ""}`, points: pts.filter(Boolean) };
 }
 
+/** The first check of a Prashna reading. `problems` empty = fit. Only a warning unless the person chose to skip unfit charts. */
+export function chartFitness(view: SkyView): { ok: boolean; problems: string[]; fine: string[] } {
+  const mp = moonProfile(view);
+  const fine: string[] = [];
+  const problems: string[] = [];
+  if (view.ascDeg < 3) problems.push(`the lagna is only ${view.ascDeg.toFixed(1)}° into its sign (too early: the matter is not ripe)`);
+  else if (view.ascDeg > 27) problems.push(`the lagna is at ${view.ascDeg.toFixed(1)}° (too late: the matter is ending or already decided)`);
+  else fine.push(`Lagna at ${view.ascDeg.toFixed(1)}° is in the safe middle of its sign.`);
+  if (mp.voidOfCourse) problems.push("the Moon makes no contact before leaving its sign (void of course)");
+  else fine.push("The Moon still has a contact to make before it leaves its sign.");
+  if (mp.rikta) problems.push(`the tithi is rikta (${mp.tithi}), an empty tithi`);
+  fine.push(`${mp.waxing ? "Growing" : "Shrinking"} Moon, tithi ${mp.tithi}.`);
+  return { ok: problems.length === 0, problems, fine };
+}
+
 function dashaLords(view: SkyView): { level: string; planet: BodyName; end: string }[] {
   const d = vimshottariAt(view.p.Moon.lon, view.sky.castAt, view.sky.castAt);
   return [
@@ -150,21 +165,17 @@ export function traceReading(view: SkyView, input: TraceInput): TraceSection[] {
   const qLord = lordOf(view, qh);
   const qSign = (view.ascSign + qh - 1) % 12;
 
-  // 1. Is the chart fit to be read? (the first check a Prashna astrologer makes)
+  // 1. Is the chart fit to be read? (the first check a Prashna astrologer makes; a warning only, the reading goes on)
   {
-    const mp0 = moonProfile(view);
-    const fit: string[] = [];
-    const problems: string[] = [];
-    if (view.ascDeg < 3) problems.push(`the lagna is only ${view.ascDeg.toFixed(1)}° into its sign (too early: the matter is not ripe)`);
-    else if (view.ascDeg > 27) problems.push(`the lagna is at ${view.ascDeg.toFixed(1)}° (too late: the matter is ending or already decided)`);
-    else fit.push(`Lagna at ${view.ascDeg.toFixed(1)}° is in the safe middle of its sign.`);
-    if (mp0.voidOfCourse) problems.push("the Moon makes no contact before leaving its sign (void of course)");
-    else fit.push("The Moon still has a contact to make before it leaves its sign.");
-    if (mp0.rikta) problems.push(`the tithi is rikta (${mp0.tithi}), an empty tithi`);
-    fit.push(`${mp0.waxing ? "Growing" : "Shrinking"} Moon, tithi ${mp0.tithi}.`);
+    const fit = chartFitness(view);
     out.push({
       title: "Is the chart fit to be read?",
-      points: [...fit, problems.length ? `Read with care because ${list(problems)}.` : "No warning sign: the chart can be read normally."],
+      points: [
+        ...fit.fine,
+        fit.problems.length
+          ? `Warning: ${list(fit.problems)}. The chart is still read in full; you can choose in Settings to skip charts like this.`
+          : "No warning sign: the chart can be read normally.",
+      ],
     });
   }
 

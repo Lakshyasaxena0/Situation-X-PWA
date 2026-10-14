@@ -77,10 +77,29 @@ function parseSituationRequest(body: unknown): ParseOutcome {
     useAi: parseResult.data.useAi ?? true,
     useAstrology: parseResult.data.useAstrology ?? true,
     language: parseResult.data.language ?? "auto",
+    skipUnfitChart: parseResult.data.skipUnfitChart ?? false,
   };
   const fromPath = parseResult.data.fromPath ? { analysisId: parseResult.data.fromPath.analysisId, pathIndex: parseResult.data.fromPath.pathIndex } : undefined;
   const clarifications = cleanClarifications(parseResult.data.clarifications);
   return { ok: true, data: { situation, latitude, longitude, depth, options, fromPath, clarifications } };
+}
+
+/**
+ * Runs the engine. The chart is always read; only when the person chose in Settings to skip unfit charts
+ * and this chart is unfit, the astrology is left out (and not charged) and the reason is returned.
+ */
+function runWithFit(
+  situation: string,
+  params: { latitude?: number; longitude?: number; language: AnalysisOptions["language"]; tuning: Awaited<ReturnType<typeof getActiveTuning>> },
+  options: AnalysisOptions,
+): { engine: ReturnType<typeof runEngine>; options: AnalysisOptions; skippedReason: string | null } {
+  const engine = runEngine(situation, { ...params, useAstrology: options.useAstrology });
+  const fit = engine.astro.prashna.fit;
+  if (options.useAstrology && options.skipUnfitChart && !fit.ok) {
+    const off = { ...options, useAstrology: false };
+    return { engine: runEngine(situation, { ...params, useAstrology: false }), options: off, skippedReason: `The chart is not fit to be read: ${fit.problems.join("; ")}.` };
+  }
+  return { engine, options, skippedReason: null };
 }
 
 function blockedBody(d: ReturnType<typeof assessSafety>) {
@@ -186,7 +205,8 @@ router.post("/analysis/estimate", async (req, res) => {
       return;
     }
     const tuning = await getActiveTuning();
-    const base = computeCost(situation, runEngine(situation, { latitude, longitude, useAstrology: options.useAstrology, language: options.language, tuning }), depth, options);
+    const fitted = runWithFit(situation, { latitude, longitude, language: options.language, tuning }, options);
+    const base = computeCost(situation, fitted.engine, depth, fitted.options);
     const cost = fromPath ? pathFollowUpPrice(base) : base;
     const billingActive = billingActiveFor(userId);
     const balance = await getBalance(userId);
@@ -203,7 +223,7 @@ router.post("/analysis/analyze", async (req, res) => {
     res.status(parsed.status).json(parsed.body);
     return;
   }
-  const { latitude, longitude, depth, options, fromPath } = parsed.data;
+  const { latitude, longitude, depth, options: parsedOptions, fromPath } = parsed.data;
   const userId = currentUserId(res);
   const billingActive = billingActiveFor(userId);
   let situation = parsed.data.situation;
@@ -219,7 +239,7 @@ router.post("/analysis/analyze", async (req, res) => {
   }
   // The ethical filter runs first: a request that asks for serious harm is refused before anything is
   // analysed or charged.
-  const gate = assessSafety(situation, options.language);
+  const gate = assessSafety(situation, parsedOptions.language);
   if (gate.action === "block") {
     res.status(422).json(blockedBody(gate));
     return;
@@ -229,7 +249,10 @@ router.post("/analysis/analyze", async (req, res) => {
 
   try {
     // Step 1: Run the local engine pipeline (AJIT → MANU → Ethical Filter → ASTRO → SIVI)
-    const engineResult = runEngine(situation, { latitude, longitude, useAstrology: options.useAstrology, language: options.language, tuning });
+    const fitted = runWithFit(situation, { latitude, longitude, language: parsedOptions.language, tuning }, parsedOptions);
+    const engineResult = fitted.engine;
+    const options = fitted.options;
+    const skippedReason = fitted.skippedReason;
 
     // The price is fixed by the modules involved and the reasoning level, so it is charged up front
     // (atomically, never below zero) and the AI part is given back if the AI cannot answer.
@@ -306,7 +329,7 @@ router.post("/analysis/analyze", async (req, res) => {
       emotion: engineResult.emotion,
       simulation,
       finalVerdict,
-      astro: publicAstro(engineResult.astro),
+      astro: { ...publicAstro(engineResult.astro), skippedReason },
       silence: aiSilence ?? engineResult.silence ?? undefined,
       indirectRoute: aiRoute ?? engineResult.route ?? undefined,
       clarifications: fromPath ? undefined : parsed.data.clarifications.length ? parsed.data.clarifications : undefined,

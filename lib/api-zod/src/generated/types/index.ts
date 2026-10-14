@@ -99,6 +99,7 @@ export * from "./planetPositionDignity";
 export * from "./prashnaChartUse";
 export * from "./prashnaFactor";
 export * from "./prashnaReading";
+export * from "./prashnaReadingFit";
 export * from "./prashnaReadingFocus";
 export * from "./prashnaReadingRisk";
 export * from "./prashnaReadingSignal";
