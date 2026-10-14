@@ -1253,6 +1253,19 @@ components:
               type: array
               items:
                 type: integer
+        trace:
+          type: array
+          description: The chain followed in the chart (lagna and its lord, Moon, the concerned house, 6/8/12 lords, the blend) as short points
+          items:
+            type: object
+            properties:
+              title:
+                type: string
+              points:
+                type: array
+                items:
+                  type: string
+            required: [title, points]
         tuningId:
           type: integer
           nullable: true

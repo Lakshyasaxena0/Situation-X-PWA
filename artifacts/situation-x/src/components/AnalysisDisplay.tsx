@@ -480,7 +480,20 @@ function AstroCard({ result }: { result: AnalysisResult }) {
           <Points className="text-foreground" items={toPoints(astro.interpretation)} />
         )}
 
-        <Section title={o ? "3. Chart used" : "Chart used"}>
+        {(astro.prashna?.trace?.length ?? 0) > 0 && (
+          <Section title="3. How the chart reads">
+            <div className="space-y-2">
+              {astro.prashna?.trace?.map((t, i) => (
+                <details key={i} className="rounded-md bg-muted/40 px-3 py-2" open={i === 0}>
+                  <summary className="cursor-pointer text-sm font-medium text-foreground">{t.title}</summary>
+                  <Points items={t.points} className="mt-2 text-foreground" />
+                </details>
+              ))}
+            </div>
+          </Section>
+        )}
+
+        <Section title={o ? "4. Chart used" : "Chart used"}>
           <ul className="list-disc pl-5 space-y-1 text-sm text-foreground">
             {asc && (
               <li>

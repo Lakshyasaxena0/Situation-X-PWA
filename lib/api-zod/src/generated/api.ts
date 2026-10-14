@@ -478,6 +478,17 @@ export const AnalyzeSituationResponse = zod.object({
             houses: zod.array(zod.number()).optional(),
           })
           .optional(),
+        trace: zod
+          .array(
+            zod.object({
+              title: zod.string(),
+              points: zod.array(zod.string()),
+            }),
+          )
+          .optional()
+          .describe(
+            "The chain followed in the chart (lagna and its lord, Moon, the concerned house, 6\/8\/12 lords, the blend) as short points",
+          ),
         tuningId: zod.number().nullish(),
       })
       .optional()
@@ -991,6 +1002,17 @@ export const GetAnalysisHistoryResponse = zod.object({
                     houses: zod.array(zod.number()).optional(),
                   })
                   .optional(),
+                trace: zod
+                  .array(
+                    zod.object({
+                      title: zod.string(),
+                      points: zod.array(zod.string()),
+                    }),
+                  )
+                  .optional()
+                  .describe(
+                    "The chain followed in the chart (lagna and its lord, Moon, the concerned house, 6\/8\/12 lords, the blend) as short points",
+                  ),
                 tuningId: zod.number().nullish(),
               })
               .optional()
@@ -1528,6 +1550,17 @@ export const GetAnalysisByIdResponse = zod.object({
                 houses: zod.array(zod.number()).optional(),
               })
               .optional(),
+            trace: zod
+              .array(
+                zod.object({
+                  title: zod.string(),
+                  points: zod.array(zod.string()),
+                }),
+              )
+              .optional()
+              .describe(
+                "The chain followed in the chart (lagna and its lord, Moon, the concerned house, 6\/8\/12 lords, the blend) as short points",
+              ),
             tuningId: zod.number().nullish(),
           })
           .optional()

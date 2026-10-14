@@ -103,6 +103,7 @@ export * from "./prashnaReadingFocus";
 export * from "./prashnaReadingRisk";
 export * from "./prashnaReadingSignal";
 export * from "./prashnaReadingStability";
+export * from "./prashnaReadingTraceItem";
 export * from "./redeemReferralRequest";
 export * from "./redeemReferralResponse";
 export * from "./referralSummary";

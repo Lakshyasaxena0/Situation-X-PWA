@@ -614,6 +614,11 @@ export type PrashnaReadingFocus = {
   houses?: number[];
 };
 
+export type PrashnaReadingTraceItem = {
+  title: string;
+  points: string[];
+};
+
 /**
  * Prashna (horary) chart cast for the moment of the question, read for the question type
  */
@@ -639,6 +644,8 @@ export interface PrashnaReading {
   dominantPlanet?: string;
   summary: string;
   focus?: PrashnaReadingFocus;
+  /** The chain followed in the chart (lagna and its lord, Moon, the concerned house, 6/8/12 lords, the blend) as short points */
+  trace?: PrashnaReadingTraceItem[];
   tuningId?: number | null;
 }
 

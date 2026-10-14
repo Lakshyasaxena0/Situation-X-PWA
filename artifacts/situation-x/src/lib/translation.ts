@@ -14,7 +14,7 @@ export type Texts = {
     alternatives?: PathTexts[];
   };
   modules?: { key: string; role?: string; verdict?: string; evidence?: string[] }[];
-  astro?: { interpretation?: string; timingSummary?: string; activations?: string[]; outlook?: { headline?: string; favours?: string[]; against?: string[]; timingText?: string; timingBasis?: string; dashaCheck?: string; timingNote?: string }; };
+  astro?: { interpretation?: string; timingSummary?: string; activations?: string[]; trace?: { title?: string; points?: string[] }[]; outlook?: { headline?: string; favours?: string[]; against?: string[]; timingText?: string; timingBasis?: string; dashaCheck?: string; timingNote?: string }; };
   silence?: { trigger?: string; meanings?: { meaning?: string; why?: string }[]; unknowns?: string[]; checks?: string[]; caution?: string };
   indirectRoute?: { blocker?: string; idea?: string; steps?: string[]; fairness?: string };
 };
@@ -110,6 +110,9 @@ export function applyTexts(result: AnalysisResult, t: Texts | undefined): Analys
             activations: pickList(t.astro?.activations, result.astro.timing.activations) ?? result.astro.timing.activations,
           }
         : result.astro.timing,
+      prashna: result.astro.prashna?.trace && t.astro?.trace && t.astro.trace.length === result.astro.prashna.trace.length
+        ? { ...result.astro.prashna, trace: result.astro.prashna.trace.map((x, i) => ({ title: pick(t.astro?.trace?.[i]?.title, x.title), points: pickList(t.astro?.trace?.[i]?.points, x.points) ?? x.points })) }
+        : result.astro.prashna,
       outlook: result.astro.outlook
         ? {
             ...result.astro.outlook,

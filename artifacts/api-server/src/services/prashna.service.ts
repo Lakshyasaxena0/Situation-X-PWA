@@ -44,6 +44,7 @@ import {
 } from "./jyotish.service.js";
 import { HOUSE_SIGNIFICATIONS, PLANET_KARAKATVA, SIGN_KARAKATVA, detectFocus, type DivisionalUse, type Focus } from "./significations.js";
 import type { BodyName } from "./ephemeris.service.js";
+import { traceFactors, traceReading, type TraceSection } from "./prashna-trace.service.js";
 
 export type FactorFamily = "lagna" | "moon" | "house" | "karaka" | "divisional" | "aspects" | "relations" | "strength" | "hora" | "condition";
 export const FACTOR_FAMILIES: FactorFamily[] = ["lagna", "moon", "house", "karaka", "divisional", "aspects", "relations", "strength", "hora", "condition"];
@@ -76,6 +77,8 @@ export type PrashnaReading = {
   focus: { themes: string[]; houses: number[] };
   /** Which learned weighting was applied (null = the built-in weights). */
   tuningId: number | null;
+  /** The chain followed in the chart (lagna and its lord, Moon, the concerned house, 6/8/12 lords, the blend), as short points. */
+  trace: TraceSection[];
   /** Everything the reading looked at, written for the AI. Never sent to the person. */
   dossier: string[];
 };
@@ -341,6 +344,8 @@ function evaluate(sky: PrashnaSky, cfg: Config): { factors: PrashnaFactor[]; que
     }
     if (use.chart === "D9" && qLordS.vargottama) c.add("divisional", label, 4, `${qLord} is vargottama (same sign in D1 and D9), which greatly strengthens it`);
   }
+  // 9. Where the key lords go and with whom (see prashna-trace.service.ts).
+  for (const t of traceFactors(view, { primaryHouse: cfg.primaryHouse, supportHouses: cfg.supportHouses, topic: cfg.topic, karakas: cfg.karakas })) c.add(t.family, t.label, t.effect, t.detail);
   return { factors: c.factors, querent, moon: moonScore };
 }
 
@@ -422,6 +427,7 @@ function dossierFor(sky: PrashnaSky, cfg: Config, d: Derived, qLord: Graha, top:
   lines.push(`Planets: ${(["Sun", "Moon", "Mars", "Mercury", "Jupiter", "Venus", "Saturn", "Rahu", "Ketu"] as BodyName[]).map(pl).join("; ")}.`);
   lines.push(`Nature of the main house's sign: ${SIGN_KARAKATVA[(view.ascSign + cfg.primaryHouse - 1) % 12]}.`);
   lines.push(`Divisional charts read: D1${cfg.vargas.map((v) => `, ${v.chart} (${v.purpose})`).join("")}.`);
+  for (const t of traceReading(view, { primaryHouse: cfg.primaryHouse, supportHouses: cfg.supportHouses, topic: cfg.topic, karakas: cfg.karakas })) lines.push(`${t.title}: ${t.points.join(" ")}`);
   lines.push(`Strongest reasons in the score: ${top.map((f) => `${f.effect > 0 ? "+" : ""}${f.effect} ${f.detail}`).join(" | ")}.`);
   return lines;
 }
@@ -447,6 +453,7 @@ export function readPrashna(intent: IntentType, sky: PrashnaSky, options: ReadOp
 
   const top = factors.filter((f) => f.label !== "Scale centering").sort((a, b) => Math.abs(b.effect) - Math.abs(a.effect)).slice(0, 3);
   const moonNakshatra = nakshatraOf(view.p.Moon.lon);
+  const trace = traceReading(view, { primaryHouse: cfg.primaryHouse, supportHouses: cfg.supportHouses, topic: cfg.topic, karakas: cfg.karakas });
 
   const chartsUsed: PrashnaChartUse[] = [
     {
@@ -488,6 +495,7 @@ export function readPrashna(intent: IntentType, sky: PrashnaSky, options: ReadOp
     summary,
     focus: { themes: cfg.focus.themes.map((t) => t.label), houses: [cfg.primaryHouse, ...cfg.supportHouses] },
     tuningId: tuning.id,
+    trace,
     dossier: dossierFor(sky, cfg, d, qLord, top),
   };
 }

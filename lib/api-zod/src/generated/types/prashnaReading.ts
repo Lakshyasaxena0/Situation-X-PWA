@@ -11,6 +11,7 @@ import type { PrashnaReadingFocus } from "./prashnaReadingFocus";
 import type { PrashnaReadingRisk } from "./prashnaReadingRisk";
 import type { PrashnaReadingSignal } from "./prashnaReadingSignal";
 import type { PrashnaReadingStability } from "./prashnaReadingStability";
+import type { PrashnaReadingTraceItem } from "./prashnaReadingTraceItem";
 
 /**
  * Prashna (horary) chart cast for the moment of the question, read for the question type
@@ -37,5 +38,7 @@ export interface PrashnaReading {
   dominantPlanet?: string;
   summary: string;
   focus?: PrashnaReadingFocus;
+  /** The chain followed in the chart (lagna and its lord, Moon, the concerned house, 6/8/12 lords, the blend) as short points */
+  trace?: PrashnaReadingTraceItem[];
   tuningId?: number | null;
 }
