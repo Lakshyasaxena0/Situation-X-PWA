@@ -43,3 +43,17 @@ test("Prashna trace: lagna, Moon, concerned house, 6/8/12 lords and the blend ar
   assert.match(titles, /Mrityu Bhaga/);
   console.log(a.prashna.trace.map((t) => `## ${t.title}\n- ${t.points.join("\n- ")}`).join("\n"));
 });
+
+test("Prashna SOP: Navamsa (D9) is read for every kind of question, other charts only when the question needs them", () => {
+  for (const [intent, text] of [["career", "Will I get the job?"], ["relationship", "Will we marry?"], ["health", "Will I recover?"], ["conflict", "Will I win the case?"], ["decision", "Should I move?"], ["unclear", "hello"]] as const) {
+    const a = analyzeAstro(intent, "neutral" as never, { at: new Date("2026-10-14T14:00:00Z"), text });
+    assert.ok(a.prashna.chartsUsed.some((c) => c.chart === "D9"), `${intent} lacks D9`);
+    assert.ok(a.prashna.trace.some((t) => /Navamsa \(D9\)/.test(t.title)), `${intent} trace lacks D9`);
+    assert.match(a.prashna.trace[0].title, /^Step 1:/);
+    assert.match(a.prashna.trace[a.prashna.trace.length - 1].title, /Verdict/);
+  }
+  const mother = analyzeAstro("decision", "neutral" as never, { at: new Date("2026-10-14T14:00:00Z"), text: "Will my mother get well?" });
+  assert.ok(mother.prashna.chartsUsed.some((c) => c.chart === "D12"));
+  const job = analyzeAstro("career", "neutral" as never, { at: new Date("2026-10-14T14:00:00Z"), text: "Will I get the job?" });
+  assert.ok(job.prashna.chartsUsed.some((c) => c.chart === "D10"));
+});

@@ -137,6 +137,15 @@ type Config = {
 };
 
 function configFor(intent: IntentType, text: string): Config {
+  const cfg = rawConfig(intent, text);
+  // Navamsa (D9) is read for every question: it shows whether the promise of D1 can bear fruit.
+  if (!cfg.vargas.some((v) => v.chart === "D9")) {
+    cfg.vargas = [...cfg.vargas.slice(0, 3), { chart: "D9", house: cfg.primaryHouse, purpose: "Whether the promise of the main chart bears fruit" }];
+  }
+  return cfg;
+}
+
+function rawConfig(intent: IntentType, text: string): Config {
   const base = PROFILES[intent] ?? PROFILES.unclear;
   const focus = detectFocus(text, intent);
   if (focus.themes.length === 0) {
@@ -344,8 +353,28 @@ function evaluate(sky: PrashnaSky, cfg: Config): { factors: PrashnaFactor[]; que
     }
     if (use.chart === "D9" && qLordS.vargottama) c.add("divisional", label, 4, `${qLord} is vargottama (same sign in D1 and D9), which greatly strengthens it`);
   }
+  // 8b. Navamsa is compulsory: strength of the planets of the matter in D9 and whether D9 confirms D1.
+  const nav = sky.charts.d9;
+  if (nav) {
+    const label = "D9 (always checked)";
+    const pairs: [string, string, number][] = [[lagnaLord, "lagna lord", 4], [qLord, `lord of the ${ordinal(cfg.primaryHouse)}`, 4], ["Moon", "Moon", 2]];
+    const seen = new Set<string>();
+    for (const [n, role, w] of pairs) {
+      if (seen.has(n)) continue;
+      seen.add(n);
+      const p = planetIn(nav, n);
+      c.add("divisional", label, dignityScore(p.dignity, w), `${n} (${role}) is ${p.dignity} in ${p.sign} in D9`);
+    }
+    const q9 = planetIn(nav, qLord);
+    const d1Good = !DUSTHANA.has(qLordS.house) && qLordS.dignity !== "debilitated";
+    const d9Good = q9.dignity === "exalted" || q9.dignity === "own" || (STANDARD_GOOD_HOUSES.includes(q9.house) && q9.dignity !== "debilitated");
+    if (d1Good && d9Good) c.add("divisional", label, 3, `D9 confirms D1: ${qLord} is well placed in both`);
+    else if (d1Good && !d9Good) c.add("divisional", label, -3, `D9 does not confirm D1: ${qLord} is promising in D1 but weak in D9`);
+    else if (!d1Good && d9Good) c.add("divisional", label, 2, `D9 gives hope: ${qLord} is weak in D1 but supported in D9`);
+  }
+
   // 9. Where the key lords go and with whom (see prashna-trace.service.ts).
-  for (const t of traceFactors(view, { primaryHouse: cfg.primaryHouse, supportHouses: cfg.supportHouses, topic: cfg.topic, karakas: cfg.karakas, strength: { sb, bb } })) c.add(t.family, t.label, t.effect, t.detail);
+  for (const t of traceFactors(view, { primaryHouse: cfg.primaryHouse, supportHouses: cfg.supportHouses, topic: cfg.topic, karakas: cfg.karakas, vargas: cfg.vargas, strength: { sb, bb } })) c.add(t.family, t.label, t.effect, t.detail);
   return { factors: c.factors, querent, moon: moonScore };
 }
 
@@ -427,7 +456,7 @@ function dossierFor(sky: PrashnaSky, cfg: Config, d: Derived, qLord: Graha, top:
   lines.push(`Planets: ${(["Sun", "Moon", "Mars", "Mercury", "Jupiter", "Venus", "Saturn", "Rahu", "Ketu"] as BodyName[]).map(pl).join("; ")}.`);
   lines.push(`Nature of the main house's sign: ${SIGN_KARAKATVA[(view.ascSign + cfg.primaryHouse - 1) % 12]}.`);
   lines.push(`Divisional charts read: D1${cfg.vargas.map((v) => `, ${v.chart} (${v.purpose})`).join("")}.`);
-  for (const t of traceReading(view, { primaryHouse: cfg.primaryHouse, supportHouses: cfg.supportHouses, topic: cfg.topic, karakas: cfg.karakas, strength: { sb: d.sb, bb: d.bb } })) lines.push(`${t.title}: ${t.points.join(" ")}`);
+  for (const t of traceReading(view, { primaryHouse: cfg.primaryHouse, supportHouses: cfg.supportHouses, topic: cfg.topic, karakas: cfg.karakas, vargas: cfg.vargas, strength: { sb: d.sb, bb: d.bb } })) lines.push(`${t.title}: ${t.points.join(" ")}`);
   lines.push(`Strongest reasons in the score: ${top.map((f) => `${f.effect > 0 ? "+" : ""}${f.effect} ${f.detail}`).join(" | ")}.`);
   return lines;
 }
@@ -453,7 +482,22 @@ export function readPrashna(intent: IntentType, sky: PrashnaSky, options: ReadOp
 
   const top = factors.filter((f) => f.label !== "Scale centering").sort((a, b) => Math.abs(b.effect) - Math.abs(a.effect)).slice(0, 3);
   const moonNakshatra = nakshatraOf(view.p.Moon.lon);
-  const trace = traceReading(view, { primaryHouse: cfg.primaryHouse, supportHouses: cfg.supportHouses, topic: cfg.topic, karakas: cfg.karakas, strength: { sb: d.sb, bb: d.bb } });
+  const trace = traceReading(view, { primaryHouse: cfg.primaryHouse, supportHouses: cfg.supportHouses, topic: cfg.topic, karakas: cfg.karakas, vargas: cfg.vargas, strength: { sb: d.sb, bb: d.bb } });
+
+  {
+    const real = factors.filter((f) => f.label !== "Scale centering");
+    const up = real.filter((f) => f.effect > 0);
+    const down = real.filter((f) => f.effect < 0);
+    const sum = (xs: PrashnaFactor[]) => Math.round(xs.reduce((a, f) => a + f.effect, 0));
+    trace.push({
+      title: `Step ${trace.length + 1}: Verdict of this reading`,
+      points: [
+        `${up.length} signs help (+${sum(up)}) and ${down.length} signs hold back (${sum(down)}).`,
+        `Divisional charts used: D1, ${cfg.vargas.map((v) => v.chart).join(", ")}.`,
+        `Overall the chart is ${signal} (score ${score}).`,
+      ],
+    });
+  }
 
   const chartsUsed: PrashnaChartUse[] = [
     {

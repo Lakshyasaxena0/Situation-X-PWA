@@ -9,7 +9,7 @@
 // `traceReading` writes it as short plain-language points for the person; `traceFactors` turns the same
 // facts into score effects, so the chain moves the verdict as well as explaining it.
 
-import { RASHI_NAMES, SIGN_RULERS } from "./vedic.service.js";
+import { RASHI_NAMES, SIGN_RULERS, type VedicChart } from "./vedic.service.js";
 import type { BodyName } from "./ephemeris.service.js";
 import {
   aspectsOnHouse,
@@ -38,6 +38,8 @@ export type TraceInput = {
   supportHouses: number[];
   topic: string;
   karakas: string[];
+  /** The divisional charts to read (D9 is always among them) with the house of the matter in each. */
+  vargas?: { chart: string; house: number; purpose: string }[];
   /** Shadbala per planet and bhava bala per house of the same sky (adds the strength to every "goes to" line). */
   strength?: { sb: Record<Graha, ShadbalaRow>; bb: Record<number, BhavaBala> };
 };
@@ -75,6 +77,44 @@ function whereItGoes(view: SkyView, n: BodyName, strength?: TraceInput["strength
 const exchange = (view: SkyView, a: BodyName, b: BodyName) => a !== b && SIGN_RULERS[view.p[a].sign] === b && SIGN_RULERS[view.p[b].sign] === a;
 
 
+const VARGA_NAME: Record<string, string> = { D3: "Drekkana (D3)", D4: "Chaturthamsa (D4)", D7: "Saptamsa (D7)", D9: "Navamsa (D9)", D10: "Dasamsa (D10)", D12: "Dwadasamsa (D12)" };
+const goodDig = (d: string) => d === "exalted" || d === "own";
+const chartLord = (c: VedicChart, house: number) => SIGN_RULERS[(RASHI_NAMES.indexOf(c.ascendant) + house - 1) % 12] as BodyName;
+
+/** One divisional chart read the way a professional does: its own lagna and house, the lords of the D1 chart in it, the significator, and whether it confirms D1. */
+function vargaSection(view: SkyView, input: TraceInput, use: { chart: string; house: number; purpose: string }): TraceSection | null {
+  const chart = (view.sky.charts as unknown as Record<string, VedicChart>)[use.chart.toLowerCase()];
+  if (!chart) return null;
+  const lagnaLord = lordOf(view, 1) as BodyName;
+  const qLord = lordOf(view, input.primaryHouse) as BodyName;
+  const at = (n: string) => chart.planets.find((p) => p.name === n);
+  const describe = (n: BodyName, role: string) => {
+    const p = at(n);
+    return p ? `${role} ${n} is in ${p.sign}, the ${ordinal(p.house)} house of ${use.chart}${p.dignity === "neutral" ? "" : ` (${p.dignity})`}.` : "";
+  };
+  const pts: string[] = [`${VARGA_NAME[use.chart] ?? use.chart} shows ${use.purpose.toLowerCase()}. Its lagna is ${chart.ascendant}.`];
+  const hl = chartLord(chart, use.house);
+  const hp = at(hl);
+  if (hp) pts.push(`The ${ordinal(use.house)} house of ${use.chart} is ruled by ${hl}, which sits in the ${ordinal(hp.house)} house in ${hp.sign}${hp.dignity === "neutral" ? "" : ` (${hp.dignity})`}.`);
+  pts.push(describe(lagnaLord, "Your lagna lord"), qLord !== lagnaLord ? describe(qLord, "The lord of the matter") : "");
+  const k = input.karakas[0];
+  if (k && at(k) && k !== qLord) pts.push(describe(k as BodyName, "The significator"));
+  const q1 = view.p[qLord];
+  const qv = at(qLord);
+  const d1Good = ![6, 8, 12].includes(q1.house) && q1.dignity !== "debilitated";
+  if (qv) {
+    const vGood = goodDig(qv.dignity) || ([1, 4, 5, 7, 9, 10, 11].includes(qv.house) && qv.dignity !== "debilitated");
+    pts.push(
+      d1Good && vGood ? `${use.chart} confirms the main chart: the lord of the matter is well placed in both.`
+      : d1Good && !vGood ? `${use.chart} does not confirm the main chart: the promise is there but the result may fall short.`
+      : !d1Good && vGood ? `${use.chart} gives hope: the main chart is weak but ${use.chart} supports the lord of the matter.`
+      : `${use.chart} also shows the lord of the matter under pressure.`,
+    );
+  }
+  if (use.chart === "D9" && view.p[qLord].vargottama) pts.push(`${qLord} is vargottama (same sign in D1 and D9), which greatly strengthens it.`);
+  return { title: `${VARGA_NAME[use.chart] ?? use.chart}${use.chart === "D9" ? " (always checked)" : ""}`, points: pts.filter(Boolean) };
+}
+
 function dashaLords(view: SkyView): { level: string; planet: BodyName; end: string }[] {
   const d = vimshottariAt(view.p.Moon.lon, view.sky.castAt, view.sky.castAt);
   return [
@@ -110,7 +150,25 @@ export function traceReading(view: SkyView, input: TraceInput): TraceSection[] {
   const qLord = lordOf(view, qh);
   const qSign = (view.ascSign + qh - 1) % 12;
 
-  // 1. Lagna
+  // 1. Is the chart fit to be read? (the first check a Prashna astrologer makes)
+  {
+    const mp0 = moonProfile(view);
+    const fit: string[] = [];
+    const problems: string[] = [];
+    if (view.ascDeg < 3) problems.push(`the lagna is only ${view.ascDeg.toFixed(1)}° into its sign (too early: the matter is not ripe)`);
+    else if (view.ascDeg > 27) problems.push(`the lagna is at ${view.ascDeg.toFixed(1)}° (too late: the matter is ending or already decided)`);
+    else fit.push(`Lagna at ${view.ascDeg.toFixed(1)}° is in the safe middle of its sign.`);
+    if (mp0.voidOfCourse) problems.push("the Moon makes no contact before leaving its sign (void of course)");
+    else fit.push("The Moon still has a contact to make before it leaves its sign.");
+    if (mp0.rikta) problems.push(`the tithi is rikta (${mp0.tithi}), an empty tithi`);
+    fit.push(`${mp0.waxing ? "Growing" : "Shrinking"} Moon, tithi ${mp0.tithi}.`);
+    out.push({
+      title: "Is the chart fit to be read?",
+      points: [...fit, problems.length ? `Read with care because ${list(problems)}.` : "No warning sign: the chart can be read normally."],
+    });
+  }
+
+  // 2. Lagna
   const lagna: string[] = [
     `${RASHI_NAMES[view.ascSign]} is rising at ${view.ascDeg.toFixed(1)}° (${signNature(view.ascSign)}): ${signTraits(view.ascSign)}.`,
     `Its lord ${lagnaLord} ${whereItGoes(view, lagnaLord, st)}.`,
@@ -179,7 +237,13 @@ export function traceReading(view: SkyView, input: TraceInput): TraceSection[] {
   }
   out.push({ title: "6th, 8th and 12th lords (hurdles, delay, loss)", points: dust });
 
-  // 5. Lords of the running dasha (Vimshottari of the Prashna chart)
+  // 6. Divisional charts: D9 always, the others as the question needs
+  for (const use of input.vargas ?? []) {
+    const sec = vargaSection(view, input, use);
+    if (sec) out.push(sec);
+  }
+
+  // 7. Lords of the running dasha (Vimshottari of the Prashna chart)
   const dl = dashaLords(view);
   const focusSet = new Set([qh, ...input.supportHouses]);
   const dashaPts: string[] = [];
@@ -240,7 +304,7 @@ export function traceReading(view: SkyView, input: TraceInput): TraceSection[] {
       `Together, the matter looks ${verdict}.`,
     ],
   });
-  return out;
+  return out.map((t, i) => ({ ...t, title: `Step ${i + 1}: ${t.title}` }));
 }
 
 export type TraceEffect = { family: "house" | "relations" | "condition"; label: string; effect: number; detail: string };
