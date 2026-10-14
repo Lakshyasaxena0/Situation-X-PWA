@@ -72,3 +72,16 @@ test("Chart fitness is a warning by default; the chart is read anyway", () => {
   }
   assert.ok(unfit > 0);
 });
+
+test("Signification blend: themes of the question are read house by house and planet + house + sign are joined", () => {
+  const a = analyzeAstro("career", "neutral" as never, { at: new Date("2026-10-14T14:00:00Z"), text: "Will I get a job abroad?" });
+  const titles = a.prashna.trace.map((t) => t.title).join(" | ");
+  assert.match(titles, /house by house/);
+  assert.match(titles, /Planet \+ house \+ sign blended/);
+  assert.ok(a.prashna.factors.some((f) => f.label.startsWith("Theme:")));
+  const blend = a.prashna.trace.find((t) => /blended/.test(t.title))!;
+  assert.ok(blend.points.every((p) => /→ works through the/.test(p)));
+  // Without a recognised theme the kind of question stands in as the theme.
+  const g = analyzeAstro("decision", "neutral" as never, { at: new Date("2026-10-14T14:00:00Z"), text: "hmm what now" });
+  assert.ok(g.prashna.factors.some((f) => f.label.startsWith("Theme:")));
+});

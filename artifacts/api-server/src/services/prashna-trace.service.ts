@@ -30,6 +30,7 @@ import {
   type SkyView,
 } from "./jyotish.service.js";
 import { vimshottariAt } from "./dasha.service.js";
+import { blendLines, readThemes, type BlendInput, type ThemeData } from "./signification-blend.service.js";
 import { HOUSE_SIGNIFICATIONS, SIGN_KARAKATVA } from "./significations.js";
 
 export type TraceSection = { title: string; points: string[] };
@@ -38,6 +39,9 @@ export type TraceInput = {
   supportHouses: number[];
   topic: string;
   karakas: string[];
+  /** The themes found in the question (or the kind of question) and the houses they share: used to blend house, planet and sign meanings. */
+  themes?: ThemeData[];
+  coreHouses?: number[];
   /** The divisional charts to read (D9 is always among them) with the house of the matter in each. */
   vargas?: { chart: string; house: number; purpose: string }[];
   /** Shadbala per planet and bhava bala per house of the same sky (adds the strength to every "goes to" line). */
@@ -128,6 +132,10 @@ export function chartFitness(view: SkyView): { ok: boolean; problems: string[]; 
   if (mp.rikta) problems.push(`the tithi is rikta (${mp.tithi}), an empty tithi`);
   fine.push(`${mp.waxing ? "Growing" : "Shrinking"} Moon, tithi ${mp.tithi}.`);
   return { ok: problems.length === 0, problems, fine };
+}
+
+function antarOf(view: SkyView): BodyName {
+  return vimshottariAt(view.p.Moon.lon, view.sky.castAt, view.sky.castAt).antardasha.planet as BodyName;
 }
 
 function dashaLords(view: SkyView): { level: string; planet: BodyName; end: string }[] {
@@ -231,6 +239,17 @@ export function traceReading(view: SkyView, input: TraceInput): TraceSection[] {
   }
   for (const k of input.karakas.slice(0, 1)) if (k in view.p && k !== qLord) house.push(`Natural significator ${k} ${whereItGoes(view, k as BodyName, st)}.`);
   out.push({ title: `The ${ordinal(qh)} house of your question and its lord`, points: house });
+
+  // 4b. The themes of the question, house by house, and the planet + house + sign blend
+  if (input.themes && input.themes.length) {
+    const bi: BlendInput = { themes: input.themes, coreHouses: input.coreHouses ?? [], primaryHouse: qh, strength: st };
+    const readings = readThemes(view, bi);
+    out.push({
+      title: "What you asked, house by house (the themes of your question)",
+      points: readings.flatMap((r) => [`${r.label}: the chart looks ${r.level}.`, ...r.points]),
+    });
+    out.push({ title: "Planet + house + sign blended for your question", points: blendLines(view, bi, [antarOf(view)]) });
+  }
 
   // 4. 6th, 8th, 12th lords
   const dust: string[] = [];

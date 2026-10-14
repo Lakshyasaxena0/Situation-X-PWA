@@ -50,7 +50,7 @@ export const SUBTOPICS: Subtopic[] = [
 
 export type Focus = {
   /** The themes found in the text (their ids and labels), strongest first. */
-  themes: { id: string; label: string }[];
+  themes: { id: string; label: string; houses: number[]; karakas: string[] }[];
   primaryHouse: number | null;
   /** Houses shared by two or more themes: the "overlap" of the Venn diagram. */
   coreHouses: number[];
@@ -85,7 +85,7 @@ export function detectFocus(text: string, intent: IntentType): Focus {
   const primaryHouse = coreHouses.length > 0 ? coreHouses.sort((a, b) => (count.get(b) ?? 0) - (count.get(a) ?? 0))[0] : top.houses[0];
   const karakas = [...new Set(hits.flatMap((h) => h.s.karakas))].slice(0, 4);
   const vargas = hits.map((h) => h.s.varga).filter((v): v is DivisionalUse => v !== undefined);
-  return { themes: hits.map((h) => ({ id: h.s.id, label: h.s.label })), primaryHouse, coreHouses, houses, karakas, vargas };
+  return { themes: hits.map((h) => ({ id: h.s.id, label: h.s.label, houses: h.s.houses, karakas: h.s.karakas })), primaryHouse, coreHouses, houses, karakas, vargas };
 }
 
 /** What each house stands for (given to the AI, never shown). */

@@ -44,6 +44,7 @@ import {
 } from "./jyotish.service.js";
 import { HOUSE_SIGNIFICATIONS, PLANET_KARAKATVA, SIGN_KARAKATVA, detectFocus, type DivisionalUse, type Focus } from "./significations.js";
 import type { BodyName } from "./ephemeris.service.js";
+import { readThemes, themeFactors } from "./signification-blend.service.js";
 import { chartFitness, traceFactors, traceReading, type TraceSection } from "./prashna-trace.service.js";
 
 export type FactorFamily = "lagna" | "moon" | "house" | "karaka" | "divisional" | "aspects" | "relations" | "strength" | "hora" | "condition";
@@ -167,6 +168,12 @@ function rawConfig(intent: IntentType, text: string): Config {
     goodLordHouses: intent === "conflict" || focus.themes.some((t) => t.id === "legal") ? CONFLICT_GOOD_HOUSES : STANDARD_GOOD_HOUSES,
     focus,
   };
+}
+
+/** The themes of the question; when no word matched, the kind of question stands in as one theme. */
+function themesOf(cfg: Config): { id: string; label: string; houses: number[]; karakas: string[] }[] {
+  if (cfg.focus.themes.length) return cfg.focus.themes;
+  return [{ id: cfg.intent, label: cfg.topic, houses: [cfg.primaryHouse, ...cfg.supportHouses], karakas: cfg.karakas }];
 }
 
 const DUSTHANA = new Set([6, 8, 12]);
@@ -375,8 +382,11 @@ function evaluate(sky: PrashnaSky, cfg: Config): { factors: PrashnaFactor[]; que
     else if (!d1Good && d9Good) c.add("divisional", label, 2, `D9 gives hope: ${qLord} is weak in D1 but supported in D9`);
   }
 
+  // 8c. The themes of the question read house by house (house + planet + sign meanings blended).
+  for (const t of themeFactors(readThemes(view, { themes: themesOf(cfg), coreHouses: cfg.focus.coreHouses, primaryHouse: cfg.primaryHouse, strength: { sb, bb } }))) c.add(t.family, t.label, t.effect, t.detail);
+
   // 9. Where the key lords go and with whom (see prashna-trace.service.ts).
-  for (const t of traceFactors(view, { primaryHouse: cfg.primaryHouse, supportHouses: cfg.supportHouses, topic: cfg.topic, karakas: cfg.karakas, vargas: cfg.vargas, strength: { sb, bb } })) c.add(t.family, t.label, t.effect, t.detail);
+  for (const t of traceFactors(view, { primaryHouse: cfg.primaryHouse, supportHouses: cfg.supportHouses, topic: cfg.topic, karakas: cfg.karakas, vargas: cfg.vargas, themes: themesOf(cfg), coreHouses: cfg.focus.coreHouses, strength: { sb, bb } })) c.add(t.family, t.label, t.effect, t.detail);
   return { factors: c.factors, querent, moon: moonScore };
 }
 
@@ -458,7 +468,7 @@ function dossierFor(sky: PrashnaSky, cfg: Config, d: Derived, qLord: Graha, top:
   lines.push(`Planets: ${(["Sun", "Moon", "Mars", "Mercury", "Jupiter", "Venus", "Saturn", "Rahu", "Ketu"] as BodyName[]).map(pl).join("; ")}.`);
   lines.push(`Nature of the main house's sign: ${SIGN_KARAKATVA[(view.ascSign + cfg.primaryHouse - 1) % 12]}.`);
   lines.push(`Divisional charts read: D1${cfg.vargas.map((v) => `, ${v.chart} (${v.purpose})`).join("")}.`);
-  for (const t of traceReading(view, { primaryHouse: cfg.primaryHouse, supportHouses: cfg.supportHouses, topic: cfg.topic, karakas: cfg.karakas, vargas: cfg.vargas, strength: { sb: d.sb, bb: d.bb } })) lines.push(`${t.title}: ${t.points.join(" ")}`);
+  for (const t of traceReading(view, { primaryHouse: cfg.primaryHouse, supportHouses: cfg.supportHouses, topic: cfg.topic, karakas: cfg.karakas, vargas: cfg.vargas, themes: themesOf(cfg), coreHouses: cfg.focus.coreHouses, strength: { sb: d.sb, bb: d.bb } })) lines.push(`${t.title}: ${t.points.join(" ")}`);
   lines.push(`Strongest reasons in the score: ${top.map((f) => `${f.effect > 0 ? "+" : ""}${f.effect} ${f.detail}`).join(" | ")}.`);
   return lines;
 }
@@ -484,7 +494,7 @@ export function readPrashna(intent: IntentType, sky: PrashnaSky, options: ReadOp
 
   const top = factors.filter((f) => f.label !== "Scale centering").sort((a, b) => Math.abs(b.effect) - Math.abs(a.effect)).slice(0, 3);
   const moonNakshatra = nakshatraOf(view.p.Moon.lon);
-  const trace = traceReading(view, { primaryHouse: cfg.primaryHouse, supportHouses: cfg.supportHouses, topic: cfg.topic, karakas: cfg.karakas, vargas: cfg.vargas, strength: { sb: d.sb, bb: d.bb } });
+  const trace = traceReading(view, { primaryHouse: cfg.primaryHouse, supportHouses: cfg.supportHouses, topic: cfg.topic, karakas: cfg.karakas, vargas: cfg.vargas, themes: themesOf(cfg), coreHouses: cfg.focus.coreHouses, strength: { sb: d.sb, bb: d.bb } });
 
   {
     const real = factors.filter((f) => f.label !== "Scale centering");
