@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useLocation } from "wouter";
 import type { AnalysisResult } from "@workspace/api-client-react";
 import { AnalysisDisplay } from "@/components/AnalysisDisplay";
-import { analysisSession } from "@/lib/analysisSession";
+import { analysisSession, clearAnalysisSession } from "@/lib/analysisSession";
 import {
   useGetAnalysisHistory,
   useDeleteAnalysis,
@@ -69,6 +69,8 @@ export default function History() {
     e.stopPropagation();
     if (confirm("Delete this analysis?")) {
       deleteM.mutate({ id });
+      // If this analysis is the one open on the Analysis page, it is gone from there too.
+      if (analysisSession.get().result?.id === id) clearAnalysisSession();
     }
   }
 

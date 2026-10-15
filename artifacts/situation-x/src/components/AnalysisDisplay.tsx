@@ -62,12 +62,14 @@ function BulletList({ title, items, tone }: { title: string; items?: string[]; t
   );
 }
 
+const notSaved = (e: unknown) => (e as { status?: number } | null)?.status === 404;
+
 /** A plain reason for a failed price check, taken from the server's own answer when it gave one. */
 function estimateProblem(err: unknown): string {
   const e = err as { status?: number; data?: { message?: string } } | null;
   const msg = e?.data?.message;
   if (e?.status === 401) return "Please sign in again to check the price.";
-  if (e?.status === 404) return "That path was not found in the saved analysis. Open it from History and try again.";
+  if (e?.status === 404) return "This analysis is no longer saved in your history (it was deleted, or it belongs to another account), so its paths cannot be run. Please start a new analysis.";
   if (msg) return msg;
   return "Could not reach the server to check the price (it may be waking up).";
 }
@@ -694,8 +696,8 @@ export function AnalysisDisplay({ result: original }: { result: AnalysisResult }
         { id: original.id, data: { language: settings.language } },
         {
           onSuccess: (data) => setCache({ [settings.language]: data.texts as Texts }),
-          onError: () => {
-            setError("Could not translate right now. Showing the original.");
+          onError: (e) => {
+            setError(notSaved(e) ? "This analysis is no longer saved in your history, so it cannot be translated. Start a new analysis." : "Could not translate right now. Showing the original.");
             setLang("original");
           },
         },
@@ -723,8 +725,8 @@ export function AnalysisDisplay({ result: original }: { result: AnalysisResult }
       { id: original.id, data: { language: next } },
       {
         onSuccess: (data) => setCache((c) => ({ ...c, [next]: data.texts as Texts })),
-        onError: () => {
-          setError("Could not translate right now. Showing the original.");
+        onError: (e) => {
+          setError(notSaved(e) ? "This analysis is no longer saved in your history, so it cannot be translated. Start a new analysis." : "Could not translate right now. Showing the original.");
           setLang("original");
         },
       },
