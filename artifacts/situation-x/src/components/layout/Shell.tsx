@@ -24,6 +24,21 @@ export function Shell({ children }: ShellProps) {
   const { signOut } = useClerk();
   const { user } = useUser();
 
+  /** The name given when the account was made (first name), else the full name, username, or the start of the email. */
+  const displayName = (
+    user?.firstName?.trim() ||
+    user?.fullName?.trim() ||
+    user?.username?.trim() ||
+    user?.primaryEmailAddress?.emailAddress?.split("@")[0] ||
+    ""
+  );
+  const Greeting = () =>
+    displayName ? (
+      <p className="px-3 text-sm font-semibold text-foreground truncate" title={displayName}>
+        Hi, {displayName}
+      </p>
+    ) : null;
+
   const navItems = [
     { href: "/oracle", label: "Analysis", icon: FlaskConical },
     { href: "/history", label: "History", icon: History },
@@ -85,6 +100,7 @@ export function Shell({ children }: ShellProps) {
               <SaturnXLogo size={32} />
               <BrandName />
             </div>
+            <Greeting />
             <nav className="flex flex-col gap-1">
               <NavLinks />
             </nav>
@@ -105,6 +121,7 @@ export function Shell({ children }: ShellProps) {
         </div>
 
         <nav className="flex-1 px-3 py-4 flex flex-col gap-1">
+          <div className="pb-3"><Greeting /></div>
           <NavLinks />
         </nav>
 

@@ -1,6 +1,7 @@
 import { useEffect, useRef } from "react";
 import { ClerkProvider, SignIn, SignUp, Show, useClerk } from "@clerk/react";
-import { Switch, Route, useLocation, Router as WouterRouter, Redirect } from "wouter";
+import { Switch, Route, useLocation, useSearch, Router as WouterRouter, Redirect } from "wouter";
+import { SignInForm, SignUpForm } from "@/components/AuthForms";
 import { QueryClient, QueryClientProvider, useQueryClient } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -36,7 +37,12 @@ if (!clerkPubKey) {
   throw new Error("Missing VITE_CLERK_PUBLISHABLE_KEY");
 }
 
+/** Our own log-in page. Clerk's ready-made one stays available (?classic=1) for Google and for its own redirects. */
 function SignInPage() {
+  const [location] = useLocation();
+  const search = useSearch();
+  const classic = /classic=1/.test(search) || !/^\/sign-in\/?$/.test(location);
+  if (!classic) return <SignInForm />;
   return (
     <div className="min-h-screen bg-background flex items-center justify-center">
       <SignIn routing="path" path={`${basePath}/sign-in`} signUpUrl={`${basePath}/sign-up`} />
@@ -45,6 +51,10 @@ function SignInPage() {
 }
 
 function SignUpPage() {
+  const [location] = useLocation();
+  const search = useSearch();
+  const classic = /classic=1/.test(search) || !/^\/sign-up\/?$/.test(location);
+  if (!classic) return <SignUpForm />;
   return (
     <div className="min-h-screen bg-background flex items-center justify-center">
       <SignUp routing="path" path={`${basePath}/sign-up`} signInUrl={`${basePath}/sign-in`} />
