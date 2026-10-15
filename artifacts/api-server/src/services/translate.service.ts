@@ -112,20 +112,61 @@ export type CompleteJson = (prompt: string, maxTokens: number) => Promise<string
 
 const defaultComplete: CompleteJson = (prompt, maxTokens) => groqJsonCompletion(prompt, { maxTokens, temperature: 0.2 });
 
-const CHUNK_CHARS = 3500;
+const CHUNK_CHARS = 2200;
+/** Stay well under Groq's free-plan tokens-per-minute limit (12k for the main model), leaving room for other calls. */
+const tokensPerMinute = () => Number(process.env.GROQ_TRANSLATE_TPM) || 7000;
+const DEADLINE_MS = 85_000;
 
-async function translateChunk(items: string[], language: Exclude<Language, "auto">, complete: CompleteJson): Promise<string[] | null> {
+const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
+const spent: { at: number; tokens: number }[] = [];
+
+/** Waits until sending `tokens` more keeps the last 60 seconds under the budget. Returns false if that would pass the deadline. */
+async function reserve(tokens: number, deadline: number): Promise<boolean> {
+  for (;;) {
+    const now = Date.now();
+    while (spent.length && now - spent[0].at > 60_000) spent.shift();
+    const used = spent.reduce((n, x) => n + x.tokens, 0);
+    if (used + tokens <= tokensPerMinute() || spent.length === 0) {
+      spent.push({ at: now, tokens });
+      return true;
+    }
+    const wait = 60_000 - (now - spent[0].at) + 200;
+    if (now + wait > deadline) return false;
+    await sleep(wait);
+  }
+}
+
+/** Finished batches are remembered, so a retry after a failure continues instead of starting over. */
+const done = new Map<string, string[]>();
+const keyOf = (language: string, items: string[]) => `${language}\u0000${items.join("\u0001")}`;
+
+async function translateChunk(items: string[], language: Exclude<Language, "auto">, complete: CompleteJson, deadline: number): Promise<string[] | null> {
+  const key = keyOf(language, items);
+  const hit = done.get(key);
+  if (hit) return hit;
   const prompt = `Translate every string in "items" into ${LANGUAGE_NAMES[language]}.
 Rules: keep the meaning and the tone; keep the same order and exactly ${items.length} items; keep numbers, scores, dates, and anything inside double quotes (keywords) unchanged; keep the module names AJIT, MANU, SIVI, ASTRO, AI and astrology terms such as planet, sign and dasha names recognisable (for Hindi use the usual Hindi names where natural). Do not add or remove anything.
 Reply with ONLY a JSON object: {"items": [ ...${items.length} translated strings... ]}
 
 ${JSON.stringify({ items })}`;
+  const maxTokens = Math.min(4000, 600 + Math.ceil(items.join("").length * 1.5));
+  const estimate = Math.ceil(prompt.length / 3) + maxTokens;
   for (let attempt = 0; attempt < 2; attempt++) {
-    const raw = await complete(prompt, Math.min(7000, 1500 + Math.ceil(items.join("").length * 1.6)));
+    if (!(await reserve(estimate, deadline))) return null;
+    let raw: string | null = null;
+    try {
+      raw = await complete(prompt, maxTokens);
+    } catch {
+      raw = null; // rate limited or timed out: the budget wait above spaces the retry
+    }
     if (!raw) continue;
     try {
       const out = (JSON.parse(raw.trim().replace(/^```(?:json)?\s*|\s*```$/g, "")) as { items?: unknown })?.items;
-      if (Array.isArray(out) && out.length === items.length && out.every((x) => typeof x === "string")) return out as string[];
+      if (Array.isArray(out) && out.length === items.length && out.every((x) => typeof x === "string")) {
+        done.set(key, out as string[]);
+        if (done.size > 400) done.delete(done.keys().next().value as string);
+        return out as string[];
+      }
     } catch {
       /* retry */
     }
@@ -133,10 +174,14 @@ ${JSON.stringify({ items })}`;
   return null;
 }
 
-/** Translates the texts in small batches (one big request fails on model limits); null if any batch fails. */
+/**
+ * Translates the texts in small batches, one after another, paced to the model's per-minute token
+ * limit (one big or parallel request is what runs into Groq's limits). null if any batch fails.
+ */
 export async function translateTexts(texts: AnalysisTexts, language: Exclude<Language, "auto">, complete: CompleteJson = defaultComplete): Promise<AnalysisTexts | null> {
   const items = leaves(texts);
   if (items.length === 0) return texts;
+  const deadline = Date.now() + DEADLINE_MS;
   const batches: string[][] = [];
   let cur: string[] = [];
   let size = 0;
@@ -146,12 +191,12 @@ export async function translateTexts(texts: AnalysisTexts, language: Exclude<Lan
     size += it.length;
   }
   if (cur.length) batches.push(cur);
-  const results: (string[] | null)[] = [];
-  for (let i = 0; i < batches.length; i += 3) {
-    results.push(...(await Promise.all(batches.slice(i, i + 3).map((b) => translateChunk(b, language, complete)))));
+  const out: string[] = [];
+  for (const b of batches) {
+    const r = await translateChunk(b, language, complete, deadline);
+    if (!r) return null;
+    out.push(...r);
   }
-  if (results.some((r) => r === null)) return null;
-  const out = (results as string[][]).flat();
   let i = 0;
   return rebuild(texts, () => out[i++] as string);
 }

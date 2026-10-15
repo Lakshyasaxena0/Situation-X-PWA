@@ -6,6 +6,8 @@ import { runEngine } from "../services/engine.service.js";
 const e = runEngine("Should I quit my job? I am worried about money. When will it work out?", {});
 const fa = { summary: "Sum", finalVerdict: e.finalVerdict, simulation: e.simulation, astro: e.astro, modules: e.modules, synthesis: { summary: "S", astroInsight: "A", advice: "Adv", risks: ["r1"], keyUnknowns: [], nextSteps: ["n1", "n2"] } } as unknown as Record<string, unknown>;
 
+process.env.GROQ_TRANSLATE_TPM = "10000000";
+
 test("Translate: only sentences are sent, in order, and come back in the same structure", async () => {
   const texts = extractTexts(fa);
   let sent: string[] = [];
@@ -31,7 +33,7 @@ test("Translate: a wrong answer from the model is rejected", async () => {
 
 test("translateTexts splits long text into batches", async () => {
   const long = "x".repeat(1200);
-  const texts = { summary: long, synthesis: { risks: [long, long, long, long, long, long] } };
+  const texts = { summary: long, synthesis: { risks: ["a","b","c","d","e","f"].map((c) => c.repeat(1200)) } };
   let calls = 0;
   const out = await translateTexts(texts as never, "hi", async (prompt) => {
     calls++;
