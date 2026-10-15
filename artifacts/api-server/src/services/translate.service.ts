@@ -108,6 +108,11 @@ function rebuild<T>(value: T, next: () => string): T {
   return value;
 }
 
+/** True when a stored translation has the same sentences (count) as the analysis now has, so it is complete. */
+export function sameShape(translated: unknown, texts: AnalysisTexts): boolean {
+  return Boolean(translated) && leaves(translated).length === leaves(texts).length;
+}
+
 export type CompleteJson = (prompt: string, maxTokens: number) => Promise<string | null>;
 
 const defaultComplete: CompleteJson = (prompt, maxTokens) => groqJsonCompletion(prompt, { maxTokens, temperature: 0.2 });

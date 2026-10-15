@@ -13,7 +13,7 @@ import { publicAstro } from "../services/astro.service.js";
 import { getActiveTuning } from "../services/astro-tuning.service.js";
 import { currentUserId } from "../middlewares/requireUser.js";
 import { getCalibration } from "../services/calibration.service.js";
-import { extractTexts, translateTexts, translationAvailable } from "../services/translate.service.js";
+import { extractTexts, sameShape, translateTexts, translationAvailable } from "../services/translate.service.js";
 import { assessSafety } from "../services/safety.service.js";
 import { MAX_ANSWER_LENGTH, MAX_QUESTION_LENGTH, MAX_ROUNDS, nextQuestion, withClarifications, type Clarification } from "../services/clarify.service.js";
 import { synthesize } from "../services/synthesis.service.js";
@@ -444,7 +444,9 @@ router.post("/analysis/history/:id/translate", async (req, res) => {
     }
     const fa = (item.fullAnalysis ?? {}) as Record<string, unknown>;
     const cached = (fa.translations as Record<string, unknown> | undefined)?.[lang];
-    if (cached) {
+    const current = extractTexts(fa);
+    // A stored translation made by an older version can miss sentences: use it only when it is complete.
+    if (cached && sameShape(cached, current)) {
       res.json({ language: lang, texts: cached });
       return;
     }
@@ -452,7 +454,7 @@ router.post("/analysis/history/:id/translate", async (req, res) => {
       res.status(503).json({ error: "translation_unavailable", message: "Translation is not available right now." });
       return;
     }
-    const texts = await translateTexts(extractTexts(fa), lang);
+    const texts = await translateTexts(current, lang);
     if (!texts) {
       res.status(503).json({ error: "translation_failed", message: "Could not translate this time. Please try again." });
       return;

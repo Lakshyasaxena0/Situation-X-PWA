@@ -650,7 +650,7 @@ const LANG_CHOICES: { value: LangChoice; label: string }[] = [
 ];
 
 /** Lets the person read the finished analysis in another language (the sentences are translated; numbers stay). */
-function LanguageSwitch({ result, lang, setLang, busy, error }: { result: AnalysisResult; lang: LangChoice; setLang: (l: LangChoice) => void; busy: boolean; error: string }) {
+function LanguageSwitch({ result, lang, setLang, busy, error, retry }: { result: AnalysisResult; lang: LangChoice; setLang: (l: LangChoice) => void; busy: boolean; error: string; retry: LangChoice }) {
   const t = useT();
   if (!result.id) return null;
   return (
@@ -672,7 +672,14 @@ function LanguageSwitch({ result, lang, setLang, busy, error }: { result: Analys
         ))}
       </div>
       {busy && <Loader2 className="w-3.5 h-3.5 animate-spin text-muted-foreground" />}
-      {error && <span className="text-xs text-red-700">{error}</span>}
+      {error && (
+        <span className="text-xs text-red-700">
+          {error}
+          {!error.includes("no longer saved") && lang === "original" && (
+            <button type="button" className="ml-1 underline" onClick={() => setLang(retry)}>Try again</button>
+          )}
+        </span>
+      )}
     </div>
   );
 }
@@ -734,11 +741,13 @@ export function AnalysisDisplay({ result: original }: { result: AnalysisResult }
   }
 
   const result = lang === "original" ? original : applyTexts(original, cache[lang]);
-  const uiLang: UiLang = lang === "original" ? (settings.language === "auto" ? "en" : settings.language) : lang;
+  // Labels follow the language the text is actually in, so headings never run ahead of the content.
+  const writtenIn = (original as { options?: { language?: string } }).options?.language;
+  const uiLang: UiLang = lang === "original" ? (writtenIn === "hi" || writtenIn === "hinglish" ? writtenIn : "en") : lang;
   return (
     <UiLangProvider value={uiLang}>
       <div className="analysis-ink">
-        <AnalysisBody result={result} header={<LanguageSwitch result={original} lang={lang} setLang={choose} busy={translate.isPending} error={error} />} />
+        <AnalysisBody result={result} header={<LanguageSwitch result={original} lang={lang} setLang={choose} busy={translate.isPending} error={error} retry={settings.language === "auto" ? "hi" : settings.language} />} />
       </div>
     </UiLangProvider>
   );

@@ -44,3 +44,11 @@ test("translateTexts splits long text into batches", async () => {
   assert.equal(out?.summary, "T" + long);
   assert.equal(out?.synthesis?.risks?.length, 6);
 });
+
+test("sameShape: an old, incomplete translation is not trusted", async () => {
+  const { sameShape } = await import("../services/translate.service.js");
+  const texts = extractTexts(fa);
+  const full = await translateTexts(texts, "hi", async (prompt) => JSON.stringify({ items: (JSON.parse(prompt.trim().split("\n").pop() as string) as { items: string[] }).items.map((x) => "T" + x) }));
+  assert.ok(full && sameShape(full, texts));
+  assert.equal(sameShape({ summary: "x" }, texts), false);
+});
