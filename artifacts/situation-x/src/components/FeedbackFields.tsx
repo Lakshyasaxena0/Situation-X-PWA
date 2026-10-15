@@ -13,9 +13,43 @@ export type FeedbackAnswers = {
   comment: string;
 };
 
+/** What this particular answer contained, so only the questions that fit it are asked. */
+export type FeedbackProfile = {
+  usedAstro: boolean;
+  /** The timing the chart gave, e.g. "in about 6 weeks"; empty when no timing was given. */
+  timing: string;
+  hasRoute: boolean;
+  hasSilence: boolean;
+  /** The step this answer suggested (short). */
+  step: string;
+};
+
+export const GENERIC_PROFILE: FeedbackProfile = { usedAstro: true, timing: "", hasRoute: false, hasSilence: false, step: "" };
+
+type AnalysisLike = {
+  options?: { useAstrology?: boolean };
+  astro?: { skippedReason?: string | null; outlook?: { timing?: { text?: string } } };
+  synthesis?: { advice?: string };
+  finalVerdict?: { recommendedAction?: string };
+  indirectRoute?: unknown;
+  silence?: unknown;
+};
+
+export function profileOf(a: AnalysisLike | null | undefined): FeedbackProfile {
+  if (!a) return GENERIC_PROFILE;
+  const step = (a.synthesis?.advice || a.finalVerdict?.recommendedAction || "").replace(/\s+/g, " ").trim();
+  return {
+    usedAstro: a.options?.useAstrology !== false && !a.astro?.skippedReason,
+    timing: a.options?.useAstrology === false ? "" : a.astro?.outlook?.timing?.text?.trim() ?? "",
+    hasRoute: Boolean(a.indirectRoute),
+    hasSilence: Boolean(a.silence),
+    step: step.length > 140 ? `${step.slice(0, 137)}...` : step,
+  };
+}
+
 export const EMPTY_ANSWERS: FeedbackAnswers = { rating: 0, actionTaken: null, result: null, reasonTags: [], comment: "" };
 
-const ACTIONS: { value: ActionTaken; label: string }[] = [
+const ACTIONS_BASE: { value: ActionTaken; label: string }[] = [
   { value: "followed", label: "Did the suggested step" },
   { value: "other", label: "Did something else" },
   { value: "nothing", label: "Did nothing" },
@@ -27,7 +61,7 @@ const RESULTS: { value: ResultKind; label: string }[] = [
   { value: "worse", label: "Worse" },
 ];
 
-const TAGS: { value: string; label: string }[] = [
+const ALL_TAGS: { value: string; label: string }[] = [
   { value: "advice_right", label: "The advice was right" },
   { value: "steps_helpful", label: "Steps were helpful" },
   { value: "astrology_helped", label: "Astrology helped" },
@@ -37,7 +71,24 @@ const TAGS: { value: string; label: string }[] = [
   { value: "steps_unrealistic", label: "Steps not realistic" },
   { value: "timing_off", label: "Timing was off" },
   { value: "astrology_off", label: "Astrology felt off" },
+  { value: "timing_right", label: "The timing matched" },
+  { value: "route_helpful", label: "The other route helped" },
+  { value: "route_unrealistic", label: "The other route was not realistic" },
+  { value: "meaning_right", label: "The silence meaning was right" },
+  { value: "meaning_off", label: "The silence meaning was wrong" },
 ];
+
+/** Only the reasons that make sense for this answer. */
+function tagsFor(p: FeedbackProfile) {
+  const hide = new Set<string>();
+  if (!p.usedAstro) ["astrology_helped", "astrology_off"].forEach((t) => hide.add(t));
+  if (!p.timing) ["timing_off", "timing_right"].forEach((t) => hide.add(t));
+  if (!p.hasRoute) ["route_helpful", "route_unrealistic"].forEach((t) => hide.add(t));
+  if (!p.hasSilence) ["meaning_right", "meaning_off"].forEach((t) => hide.add(t));
+  return ALL_TAGS.filter((t) => !hide.has(t.value)).map((t) =>
+    p.timing && t.value === "timing_right" ? { ...t, label: `The timing matched (${p.timing})` } : t,
+  );
+}
 
 function Chips<T extends string>({ items, value, onPick, label }: { items: { value: T; label: string }[]; value: T | null; onPick: (v: T | null) => void; label: string }) {
   return (
@@ -61,7 +112,9 @@ function Chips<T extends string>({ items, value, onPick, label }: { items: { val
  * The four feedback questions: how useful, what you did, what actually happened, and why.
  * One low rating never means the whole advice was wrong: the reasons say what was missing.
  */
-export function FeedbackFields({ value, onChange, disabled }: { value: FeedbackAnswers; onChange: (v: FeedbackAnswers) => void; disabled?: boolean }) {
+export function FeedbackFields({ value, onChange, disabled, profile = GENERIC_PROFILE }: { value: FeedbackAnswers; onChange: (v: FeedbackAnswers) => void; disabled?: boolean; profile?: FeedbackProfile }) {
+  const TAGS = tagsFor(profile);
+  const ACTIONS = profile.step ? ACTIONS_BASE.map((a) => (a.value === "followed" ? { ...a, label: `Did the suggested step: "${profile.step}"` } : a)) : ACTIONS_BASE;
   const set = (patch: Partial<FeedbackAnswers>) => onChange({ ...value, ...patch });
   const toggleTag = (t: string) =>
     set({ reasonTags: value.reasonTags.includes(t) ? value.reasonTags.filter((x) => x !== t) : [...value.reasonTags, t] });

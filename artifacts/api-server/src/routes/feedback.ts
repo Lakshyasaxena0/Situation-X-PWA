@@ -14,6 +14,7 @@ const MAX_PAGE_SIZE = 100;
 export const REASON_TAGS = [
   "advice_right", "missed_perspective", "missed_facts", "too_generic", "timing_off",
   "astrology_helped", "astrology_off", "steps_helpful", "steps_unrealistic",
+  "timing_right", "route_helpful", "route_unrealistic", "meaning_right", "meaning_off",
 ] as const;
 
 /**
@@ -70,7 +71,7 @@ router.post("/feedback", async (req, res) => {
     }
 
     const saved = await db.transaction(async (tx) => {
-      const [row] = await tx.insert(feedbackTable).values({
+      const values = {
         userId,
         analysisId,
         situationSnippet: analysis.situation.slice(0, 100),
@@ -82,7 +83,17 @@ router.post("/feedback", async (req, res) => {
         actionTaken: actionTaken ?? null,
         result: result ?? null,
         reasonTags: tags.length ? tags : null,
-      }).returning();
+      };
+      // One feedback per question: sending it again updates it instead of adding a duplicate.
+      const [existing] = await tx
+        .select({ id: feedbackTable.id })
+        .from(feedbackTable)
+        .where(and(eq(feedbackTable.analysisId, analysisId), eq(feedbackTable.userId, userId)))
+        .orderBy(desc(feedbackTable.createdAt))
+        .limit(1);
+      const [row] = existing
+        ? await tx.update(feedbackTable).set(values).where(eq(feedbackTable.id, existing.id)).returning()
+        : await tx.insert(feedbackTable).values(values).returning();
       // A follow-up answer closes the follow-up so the user is not asked again.
       if (outcome || actionTaken || result) {
         await tx

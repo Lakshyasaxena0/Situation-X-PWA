@@ -2138,7 +2138,7 @@ export const createFeedbackBodyRatingMax = 5;
 
 export const createFeedbackBodyAccuracyMax = 5;
 
-export const createFeedbackBodyReasonTagsMax = 9;
+export const createFeedbackBodyReasonTagsMax = 14;
 
 export const CreateFeedbackBody = zod.object({
   analysisId: zod.number().describe("ID of the analysis being reviewed"),
@@ -2179,10 +2179,15 @@ export const CreateFeedbackBody = zod.object({
         "missed_facts",
         "too_generic",
         "timing_off",
+        "timing_right",
         "astrology_helped",
         "astrology_off",
         "steps_helpful",
         "steps_unrealistic",
+        "route_helpful",
+        "route_unrealistic",
+        "meaning_right",
+        "meaning_off",
       ]),
     )
     .max(createFeedbackBodyReasonTagsMax)

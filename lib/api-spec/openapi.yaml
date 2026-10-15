@@ -2057,10 +2057,10 @@ components:
           description: How things actually turned out
         reasonTags:
           type: array
-          maxItems: 9
+          maxItems: 14
           items:
             type: string
-            enum: [advice_right, missed_perspective, missed_facts, too_generic, timing_off, astrology_helped, astrology_off, steps_helpful, steps_unrealistic]
+            enum: [advice_right, missed_perspective, missed_facts, too_generic, timing_off, timing_right, astrology_helped, astrology_off, steps_helpful, steps_unrealistic, route_helpful, route_unrealistic, meaning_right, meaning_off]
           description: What was right or missed
       required:
         - analysisId

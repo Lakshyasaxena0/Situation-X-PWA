@@ -15,8 +15,13 @@ export const CreateFeedbackRequestReasonTagsItem = {
   missed_facts: "missed_facts",
   too_generic: "too_generic",
   timing_off: "timing_off",
+  timing_right: "timing_right",
   astrology_helped: "astrology_helped",
   astrology_off: "astrology_off",
   steps_helpful: "steps_helpful",
   steps_unrealistic: "steps_unrealistic",
+  route_helpful: "route_helpful",
+  route_unrealistic: "route_unrealistic",
+  meaning_right: "meaning_right",
+  meaning_off: "meaning_off",
 } as const;

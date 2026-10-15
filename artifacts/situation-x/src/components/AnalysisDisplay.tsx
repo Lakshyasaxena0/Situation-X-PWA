@@ -5,6 +5,7 @@ import { useAnalyzeSituation, useEstimateAnalysisCost, getGetCreditsQueryKey, us
 import { InviteCta } from "@/components/InviteCta";
 import { motion } from "framer-motion";
 import { ChevronDown, ChevronUp, CheckCircle2, MinusCircle, Loader2 } from "lucide-react";
+import { QueryFeedback } from "@/components/QueryFeedback";
 import { applyTexts, type Texts } from "@/lib/translation";
 import { requestOptions, useSettings } from "@/lib/settings";
 import { analysisSession } from "@/lib/analysisSession";
@@ -919,6 +920,7 @@ function AnalysisBody({ result, header }: { result: AnalysisResult; header: Reac
         </EngineCard>
       )}
       <CreditsUsedCard result={result} />
+      {result.id ? <QueryFeedback analysisId={result.id} analysis={result} situation={(result as { situation?: string }).situation} /> : null}
     </div>
   );
 }

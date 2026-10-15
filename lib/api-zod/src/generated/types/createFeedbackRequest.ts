@@ -37,7 +37,7 @@ export interface CreateFeedbackRequest {
   result?: CreateFeedbackRequestResult;
   /**
    * What was right or missed
-   * @maxItems 9
+   * @maxItems 14
    */
   reasonTags?: CreateFeedbackRequestReasonTagsItem[];
 }
