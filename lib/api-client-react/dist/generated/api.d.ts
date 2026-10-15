@@ -1,5 +1,5 @@
 import type { QueryKey, UseMutationOptions, UseMutationResult, UseQueryOptions, UseQueryResult } from "@tanstack/react-query";
-import type { AnalysisHistoryResponse, AnalysisRecord, AnalysisResult, AnalyzeRequest, BillingPlansResponse, CostEstimate, CreateFeedbackRequest, CreateOrderRequest, CreateOrderResponse, CreditsResponse, DeleteResponse, DueFollowUpsResponse, ErrorResponse, FeedbackItem, FeedbackListResponse, GetAnalysisHistoryParams, GetFeedbackListParams, HealthStatus, InsufficientCreditsResponse, RedeemReferralRequest, RedeemReferralResponse, ReferralSummary, SubscriptionStatus, TranslateRequest, TranslateResponse, VerifyPaymentRequest } from "./api.schemas";
+import type { AnalysisHistoryResponse, AnalysisRecord, AnalysisResult, AnalyzeRequest, BillingPlansResponse, ClarifyRequest, ClarifyResponse, CostEstimate, CreateFeedbackRequest, CreateOrderRequest, CreateOrderResponse, CreditsResponse, DeleteResponse, DueFollowUpsResponse, ErrorResponse, FeedbackItem, FeedbackListResponse, GetAnalysisHistoryParams, GetFeedbackListParams, HealthStatus, InsufficientCreditsResponse, RedeemReferralRequest, RedeemReferralResponse, ReferralSummary, SubscriptionStatus, TranslateRequest, TranslateResponse, VerifyPaymentRequest } from "./api.schemas";
 import { customFetch } from "../custom-fetch";
 import type { ErrorType, BodyType } from "../custom-fetch";
 type AwaitedInput<T> = PromiseLike<T> | T;
@@ -54,6 +54,33 @@ export declare const useEstimateAnalysisCost: <TError = ErrorType<ErrorResponse>
     request?: SecondParameter<typeof customFetch>;
 }) => UseMutationResult<Awaited<ReturnType<typeof estimateAnalysisCost>>, TError, {
     data: BodyType<AnalyzeRequest>;
+}, TContext>;
+/**
+ * @summary The next short question to ask before analysing (free). One at a time, at most four.
+ */
+export declare const getClarifySituationUrl: () => string;
+export declare const clarifySituation: (clarifyRequest: ClarifyRequest, options?: RequestInit) => Promise<ClarifyResponse>;
+export declare const getClarifySituationMutationOptions: <TError = ErrorType<ErrorResponse>, TContext = unknown>(options?: {
+    mutation?: UseMutationOptions<Awaited<ReturnType<typeof clarifySituation>>, TError, {
+        data: BodyType<ClarifyRequest>;
+    }, TContext>;
+    request?: SecondParameter<typeof customFetch>;
+}) => UseMutationOptions<Awaited<ReturnType<typeof clarifySituation>>, TError, {
+    data: BodyType<ClarifyRequest>;
+}, TContext>;
+export type ClarifySituationMutationResult = NonNullable<Awaited<ReturnType<typeof clarifySituation>>>;
+export type ClarifySituationMutationBody = BodyType<ClarifyRequest>;
+export type ClarifySituationMutationError = ErrorType<ErrorResponse>;
+/**
+ * @summary The next short question to ask before analysing (free). One at a time, at most four.
+ */
+export declare const useClarifySituation: <TError = ErrorType<ErrorResponse>, TContext = unknown>(options?: {
+    mutation?: UseMutationOptions<Awaited<ReturnType<typeof clarifySituation>>, TError, {
+        data: BodyType<ClarifyRequest>;
+    }, TContext>;
+    request?: SecondParameter<typeof customFetch>;
+}) => UseMutationResult<Awaited<ReturnType<typeof clarifySituation>>, TError, {
+    data: BodyType<ClarifyRequest>;
 }, TContext>;
 /**
  * @summary Analyze a situation

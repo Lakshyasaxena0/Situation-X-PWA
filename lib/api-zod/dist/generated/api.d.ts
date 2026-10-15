@@ -19,6 +19,10 @@ export declare const HealthCheckResponse: zod.ZodObject<{
 /**
  * @summary Exact credit cost of analysing this situation (modules involved + reasoning level), before anything is charged
  */
+export declare const estimateAnalysisCostBodyClarificationsItemQuestionMax = 300;
+export declare const estimateAnalysisCostBodyClarificationsItemAnswerMax = 500;
+export declare const estimateAnalysisCostBodyClarificationsMax = 4;
+export declare const estimateAnalysisCostBodyFromPathPathIndexMin = 0;
 export declare const EstimateAnalysisCostBody: zod.ZodObject<{
     situation: zod.ZodString;
     latitude: zod.ZodOptional<zod.ZodNumber>;
@@ -27,6 +31,27 @@ export declare const EstimateAnalysisCostBody: zod.ZodObject<{
     language: zod.ZodOptional<zod.ZodEnum<["auto", "en", "hi", "hinglish"]>>;
     useAi: zod.ZodOptional<zod.ZodBoolean>;
     useAstrology: zod.ZodOptional<zod.ZodBoolean>;
+    skipUnfitChart: zod.ZodOptional<zod.ZodBoolean>;
+    clarifications: zod.ZodOptional<zod.ZodArray<zod.ZodObject<{
+        question: zod.ZodString;
+        answer: zod.ZodString;
+    }, "strip", zod.ZodTypeAny, {
+        question: string;
+        answer: string;
+    }, {
+        question: string;
+        answer: string;
+    }>, "many">>;
+    fromPath: zod.ZodOptional<zod.ZodObject<{
+        analysisId: zod.ZodNumber;
+        pathIndex: zod.ZodNumber;
+    }, "strip", zod.ZodTypeAny, {
+        analysisId: number;
+        pathIndex: number;
+    }, {
+        analysisId: number;
+        pathIndex: number;
+    }>>;
 }, "strip", zod.ZodTypeAny, {
     situation: string;
     latitude?: number | undefined;
@@ -35,6 +60,15 @@ export declare const EstimateAnalysisCostBody: zod.ZodObject<{
     language?: "auto" | "en" | "hi" | "hinglish" | undefined;
     useAi?: boolean | undefined;
     useAstrology?: boolean | undefined;
+    skipUnfitChart?: boolean | undefined;
+    clarifications?: {
+        question: string;
+        answer: string;
+    }[] | undefined;
+    fromPath?: {
+        analysisId: number;
+        pathIndex: number;
+    } | undefined;
 }, {
     situation: string;
     latitude?: number | undefined;
@@ -43,6 +77,15 @@ export declare const EstimateAnalysisCostBody: zod.ZodObject<{
     language?: "auto" | "en" | "hi" | "hinglish" | undefined;
     useAi?: boolean | undefined;
     useAstrology?: boolean | undefined;
+    skipUnfitChart?: boolean | undefined;
+    clarifications?: {
+        question: string;
+        answer: string;
+    }[] | undefined;
+    fromPath?: {
+        analysisId: number;
+        pathIndex: number;
+    } | undefined;
 }>;
 export declare const EstimateAnalysisCostResponse: zod.ZodObject<{
     total: zod.ZodNumber;
@@ -50,17 +93,17 @@ export declare const EstimateAnalysisCostResponse: zod.ZodObject<{
     depth: zod.ZodEnum<["standard", "deep", "expert"]>;
     depthChosen: zod.ZodEnum<["auto", "user"]>;
     lines: zod.ZodArray<zod.ZodObject<{
-        key: zod.ZodEnum<["astro", "ajit", "manu", "sivi", "ai"]>;
+        key: zod.ZodEnum<["astro", "ajit", "manu", "sivi", "rsmi", "ai"]>;
         label: zod.ZodString;
         credits: zod.ZodNumber;
         note: zod.ZodString;
     }, "strip", zod.ZodTypeAny, {
-        key: "astro" | "ajit" | "manu" | "sivi" | "ai";
+        key: "astro" | "ajit" | "manu" | "sivi" | "rsmi" | "ai";
         label: string;
         credits: number;
         note: string;
     }, {
-        key: "astro" | "ajit" | "manu" | "sivi" | "ai";
+        key: "astro" | "ajit" | "manu" | "sivi" | "rsmi" | "ai";
         label: string;
         credits: number;
         note: string;
@@ -74,7 +117,7 @@ export declare const EstimateAnalysisCostResponse: zod.ZodObject<{
     aiCredits: number;
     depthChosen: "auto" | "user";
     lines: {
-        key: "astro" | "ajit" | "manu" | "sivi" | "ai";
+        key: "astro" | "ajit" | "manu" | "sivi" | "rsmi" | "ai";
         label: string;
         credits: number;
         note: string;
@@ -88,7 +131,7 @@ export declare const EstimateAnalysisCostResponse: zod.ZodObject<{
     aiCredits: number;
     depthChosen: "auto" | "user";
     lines: {
-        key: "astro" | "ajit" | "manu" | "sivi" | "ai";
+        key: "astro" | "ajit" | "manu" | "sivi" | "rsmi" | "ai";
         label: string;
         credits: number;
         note: string;
@@ -98,8 +141,88 @@ export declare const EstimateAnalysisCostResponse: zod.ZodObject<{
     enough: boolean;
 }>;
 /**
+ * @summary The next short question to ask before analysing (free). One at a time, at most four.
+ */
+export declare const clarifySituationBodyAnswersItemQuestionMax = 300;
+export declare const clarifySituationBodyAnswersItemAnswerMax = 500;
+export declare const clarifySituationBodyAnswersMax = 4;
+export declare const ClarifySituationBody: zod.ZodObject<{
+    situation: zod.ZodString;
+    answers: zod.ZodOptional<zod.ZodArray<zod.ZodObject<{
+        question: zod.ZodString;
+        answer: zod.ZodString;
+    }, "strip", zod.ZodTypeAny, {
+        question: string;
+        answer: string;
+    }, {
+        question: string;
+        answer: string;
+    }>, "many">>;
+    language: zod.ZodOptional<zod.ZodEnum<["auto", "en", "hi", "hinglish"]>>;
+    useAi: zod.ZodOptional<zod.ZodBoolean>;
+}, "strip", zod.ZodTypeAny, {
+    situation: string;
+    language?: "auto" | "en" | "hi" | "hinglish" | undefined;
+    useAi?: boolean | undefined;
+    answers?: {
+        question: string;
+        answer: string;
+    }[] | undefined;
+}, {
+    situation: string;
+    language?: "auto" | "en" | "hi" | "hinglish" | undefined;
+    useAi?: boolean | undefined;
+    answers?: {
+        question: string;
+        answer: string;
+    }[] | undefined;
+}>;
+export declare const ClarifySituationResponse: zod.ZodObject<{
+    done: zod.ZodBoolean;
+    question: zod.ZodOptional<zod.ZodObject<{
+        question: zod.ZodString;
+        why: zod.ZodOptional<zod.ZodString>;
+        choices: zod.ZodArray<zod.ZodString, "many">;
+    }, "strip", zod.ZodTypeAny, {
+        question: string;
+        choices: string[];
+        why?: string | undefined;
+    }, {
+        question: string;
+        choices: string[];
+        why?: string | undefined;
+    }>>;
+    round: zod.ZodNumber;
+    max: zod.ZodNumber;
+    source: zod.ZodOptional<zod.ZodEnum<["ai", "rules"]>>;
+}, "strip", zod.ZodTypeAny, {
+    done: boolean;
+    round: number;
+    max: number;
+    question?: {
+        question: string;
+        choices: string[];
+        why?: string | undefined;
+    } | undefined;
+    source?: "ai" | "rules" | undefined;
+}, {
+    done: boolean;
+    round: number;
+    max: number;
+    question?: {
+        question: string;
+        choices: string[];
+        why?: string | undefined;
+    } | undefined;
+    source?: "ai" | "rules" | undefined;
+}>;
+/**
  * @summary Analyze a situation
  */
+export declare const analyzeSituationBodyClarificationsItemQuestionMax = 300;
+export declare const analyzeSituationBodyClarificationsItemAnswerMax = 500;
+export declare const analyzeSituationBodyClarificationsMax = 4;
+export declare const analyzeSituationBodyFromPathPathIndexMin = 0;
 export declare const AnalyzeSituationBody: zod.ZodObject<{
     situation: zod.ZodString;
     latitude: zod.ZodOptional<zod.ZodNumber>;
@@ -108,6 +231,27 @@ export declare const AnalyzeSituationBody: zod.ZodObject<{
     language: zod.ZodOptional<zod.ZodEnum<["auto", "en", "hi", "hinglish"]>>;
     useAi: zod.ZodOptional<zod.ZodBoolean>;
     useAstrology: zod.ZodOptional<zod.ZodBoolean>;
+    skipUnfitChart: zod.ZodOptional<zod.ZodBoolean>;
+    clarifications: zod.ZodOptional<zod.ZodArray<zod.ZodObject<{
+        question: zod.ZodString;
+        answer: zod.ZodString;
+    }, "strip", zod.ZodTypeAny, {
+        question: string;
+        answer: string;
+    }, {
+        question: string;
+        answer: string;
+    }>, "many">>;
+    fromPath: zod.ZodOptional<zod.ZodObject<{
+        analysisId: zod.ZodNumber;
+        pathIndex: zod.ZodNumber;
+    }, "strip", zod.ZodTypeAny, {
+        analysisId: number;
+        pathIndex: number;
+    }, {
+        analysisId: number;
+        pathIndex: number;
+    }>>;
 }, "strip", zod.ZodTypeAny, {
     situation: string;
     latitude?: number | undefined;
@@ -116,6 +260,15 @@ export declare const AnalyzeSituationBody: zod.ZodObject<{
     language?: "auto" | "en" | "hi" | "hinglish" | undefined;
     useAi?: boolean | undefined;
     useAstrology?: boolean | undefined;
+    skipUnfitChart?: boolean | undefined;
+    clarifications?: {
+        question: string;
+        answer: string;
+    }[] | undefined;
+    fromPath?: {
+        analysisId: number;
+        pathIndex: number;
+    } | undefined;
 }, {
     situation: string;
     latitude?: number | undefined;
@@ -124,7 +277,18 @@ export declare const AnalyzeSituationBody: zod.ZodObject<{
     language?: "auto" | "en" | "hi" | "hinglish" | undefined;
     useAi?: boolean | undefined;
     useAstrology?: boolean | undefined;
+    skipUnfitChart?: boolean | undefined;
+    clarifications?: {
+        question: string;
+        answer: string;
+    }[] | undefined;
+    fromPath?: {
+        analysisId: number;
+        pathIndex: number;
+    } | undefined;
 }>;
+export declare const analyzeSituationResponseClarificationsItemQuestionMax = 300;
+export declare const analyzeSituationResponseClarificationsItemAnswerMax = 500;
 export declare const AnalyzeSituationResponse: zod.ZodObject<{
     id: zod.ZodNumber;
     situation: zod.ZodString;
@@ -155,65 +319,253 @@ export declare const AnalyzeSituationResponse: zod.ZodObject<{
         intensity: "low" | "medium" | "high";
     }>;
     simulation: zod.ZodObject<{
+        context: zod.ZodObject<{
+            desiredOutcome: zod.ZodString;
+            inferred: zod.ZodBoolean;
+            knownFacts: zod.ZodArray<zod.ZodString, "many">;
+            constraints: zod.ZodArray<zod.ZodString, "many">;
+        }, "strip", zod.ZodTypeAny, {
+            desiredOutcome: string;
+            inferred: boolean;
+            knownFacts: string[];
+            constraints: string[];
+        }, {
+            desiredOutcome: string;
+            inferred: boolean;
+            knownFacts: string[];
+            constraints: string[];
+        }>;
         bestPath: zod.ZodObject<{
             action: zod.ZodString;
             risk: zod.ZodEnum<["low", "medium", "high"]>;
             stability: zod.ZodEnum<["low", "medium", "high"]>;
             outcome: zod.ZodEnum<["positive", "negative", "mixed"]>;
+            benefits: zod.ZodArray<zod.ZodString, "many">;
+            downsides: zod.ZodArray<zod.ZodString, "many">;
+            uncertainties: zod.ZodArray<zod.ZodString, "many">;
+            reversible: zod.ZodBoolean;
         }, "strip", zod.ZodTypeAny, {
             action: string;
             risk: "low" | "medium" | "high";
             stability: "low" | "medium" | "high";
             outcome: "positive" | "negative" | "mixed";
+            benefits: string[];
+            downsides: string[];
+            uncertainties: string[];
+            reversible: boolean;
         }, {
             action: string;
             risk: "low" | "medium" | "high";
             stability: "low" | "medium" | "high";
             outcome: "positive" | "negative" | "mixed";
+            benefits: string[];
+            downsides: string[];
+            uncertainties: string[];
+            reversible: boolean;
         }>;
         alternatives: zod.ZodArray<zod.ZodObject<{
             action: zod.ZodString;
             risk: zod.ZodEnum<["low", "medium", "high"]>;
             stability: zod.ZodEnum<["low", "medium", "high"]>;
             outcome: zod.ZodEnum<["positive", "negative", "mixed"]>;
+            benefits: zod.ZodArray<zod.ZodString, "many">;
+            downsides: zod.ZodArray<zod.ZodString, "many">;
+            uncertainties: zod.ZodArray<zod.ZodString, "many">;
+            reversible: zod.ZodBoolean;
         }, "strip", zod.ZodTypeAny, {
             action: string;
             risk: "low" | "medium" | "high";
             stability: "low" | "medium" | "high";
             outcome: "positive" | "negative" | "mixed";
+            benefits: string[];
+            downsides: string[];
+            uncertainties: string[];
+            reversible: boolean;
         }, {
             action: string;
             risk: "low" | "medium" | "high";
             stability: "low" | "medium" | "high";
             outcome: "positive" | "negative" | "mixed";
+            benefits: string[];
+            downsides: string[];
+            uncertainties: string[];
+            reversible: boolean;
         }>, "many">;
+        comparison: zod.ZodString;
+        source: zod.ZodEnum<["rules", "ai"]>;
     }, "strip", zod.ZodTypeAny, {
+        source: "ai" | "rules";
+        context: {
+            desiredOutcome: string;
+            inferred: boolean;
+            knownFacts: string[];
+            constraints: string[];
+        };
         bestPath: {
             action: string;
             risk: "low" | "medium" | "high";
             stability: "low" | "medium" | "high";
             outcome: "positive" | "negative" | "mixed";
+            benefits: string[];
+            downsides: string[];
+            uncertainties: string[];
+            reversible: boolean;
         };
         alternatives: {
             action: string;
             risk: "low" | "medium" | "high";
             stability: "low" | "medium" | "high";
             outcome: "positive" | "negative" | "mixed";
+            benefits: string[];
+            downsides: string[];
+            uncertainties: string[];
+            reversible: boolean;
         }[];
+        comparison: string;
     }, {
+        source: "ai" | "rules";
+        context: {
+            desiredOutcome: string;
+            inferred: boolean;
+            knownFacts: string[];
+            constraints: string[];
+        };
         bestPath: {
             action: string;
             risk: "low" | "medium" | "high";
             stability: "low" | "medium" | "high";
             outcome: "positive" | "negative" | "mixed";
+            benefits: string[];
+            downsides: string[];
+            uncertainties: string[];
+            reversible: boolean;
         };
         alternatives: {
             action: string;
             risk: "low" | "medium" | "high";
             stability: "low" | "medium" | "high";
             outcome: "positive" | "negative" | "mixed";
+            benefits: string[];
+            downsides: string[];
+            uncertainties: string[];
+            reversible: boolean;
         }[];
+        comparison: string;
     }>;
+    safety: zod.ZodOptional<zod.ZodObject<{
+        action: zod.ZodEnum<["allow", "support", "redirect", "block"]>;
+        category: zod.ZodEnum<["none", "self_harm", "self_harm_method", "harm_others", "weapons", "minor_sexual", "manipulation"]>;
+        message: zod.ZodOptional<zod.ZodString>;
+    }, "strip", zod.ZodTypeAny, {
+        action: "allow" | "support" | "redirect" | "block";
+        category: "none" | "self_harm" | "self_harm_method" | "harm_others" | "weapons" | "minor_sexual" | "manipulation";
+        message?: string | undefined;
+    }, {
+        action: "allow" | "support" | "redirect" | "block";
+        category: "none" | "self_harm" | "self_harm_method" | "harm_others" | "weapons" | "minor_sexual" | "manipulation";
+        message?: string | undefined;
+    }>>;
+    silence: zod.ZodOptional<zod.ZodObject<{
+        subject: zod.ZodEnum<["other", "self"]>;
+        channel: zod.ZodEnum<["in_person", "message", "call", "organisation"]>;
+        who: zod.ZodOptional<zod.ZodNullable<zod.ZodString>>;
+        trigger: zod.ZodString;
+        duration: zod.ZodObject<{
+            bucket: zod.ZodEnum<["moments", "minutes", "hours", "days", "weeks", "unknown"]>;
+            text: zod.ZodOptional<zod.ZodNullable<zod.ZodString>>;
+        }, "strip", zod.ZodTypeAny, {
+            bucket: "unknown" | "moments" | "minutes" | "hours" | "days" | "weeks";
+            text?: string | null | undefined;
+        }, {
+            bucket: "unknown" | "moments" | "minutes" | "hours" | "days" | "weeks";
+            text?: string | null | undefined;
+        }>;
+        meanings: zod.ZodArray<zod.ZodObject<{
+            meaning: zod.ZodString;
+            likelihood: zod.ZodEnum<["more likely", "possible", "less likely"]>;
+            why: zod.ZodString;
+        }, "strip", zod.ZodTypeAny, {
+            why: string;
+            meaning: string;
+            likelihood: "more likely" | "possible" | "less likely";
+        }, {
+            why: string;
+            meaning: string;
+            likelihood: "more likely" | "possible" | "less likely";
+        }>, "many">;
+        unknowns: zod.ZodArray<zod.ZodString, "many">;
+        checks: zod.ZodArray<zod.ZodString, "many">;
+        caution: zod.ZodString;
+        source: zod.ZodEnum<["rules", "ai"]>;
+    }, "strip", zod.ZodTypeAny, {
+        source: "ai" | "rules";
+        subject: "other" | "self";
+        channel: "message" | "in_person" | "call" | "organisation";
+        trigger: string;
+        duration: {
+            bucket: "unknown" | "moments" | "minutes" | "hours" | "days" | "weeks";
+            text?: string | null | undefined;
+        };
+        meanings: {
+            why: string;
+            meaning: string;
+            likelihood: "more likely" | "possible" | "less likely";
+        }[];
+        unknowns: string[];
+        checks: string[];
+        caution: string;
+        who?: string | null | undefined;
+    }, {
+        source: "ai" | "rules";
+        subject: "other" | "self";
+        channel: "message" | "in_person" | "call" | "organisation";
+        trigger: string;
+        duration: {
+            bucket: "unknown" | "moments" | "minutes" | "hours" | "days" | "weeks";
+            text?: string | null | undefined;
+        };
+        meanings: {
+            why: string;
+            meaning: string;
+            likelihood: "more likely" | "possible" | "less likely";
+        }[];
+        unknowns: string[];
+        checks: string[];
+        caution: string;
+        who?: string | null | undefined;
+    }>>;
+    indirectRoute: zod.ZodOptional<zod.ZodObject<{
+        blocker: zod.ZodString;
+        cues: zod.ZodArray<zod.ZodString, "many">;
+        idea: zod.ZodString;
+        steps: zod.ZodArray<zod.ZodString, "many">;
+        fairness: zod.ZodString;
+        source: zod.ZodEnum<["rules", "ai"]>;
+    }, "strip", zod.ZodTypeAny, {
+        source: "ai" | "rules";
+        blocker: string;
+        cues: string[];
+        idea: string;
+        steps: string[];
+        fairness: string;
+    }, {
+        source: "ai" | "rules";
+        blocker: string;
+        cues: string[];
+        idea: string;
+        steps: string[];
+        fairness: string;
+    }>>;
+    clarifications: zod.ZodOptional<zod.ZodArray<zod.ZodObject<{
+        question: zod.ZodString;
+        answer: zod.ZodString;
+    }, "strip", zod.ZodTypeAny, {
+        question: string;
+        answer: string;
+    }, {
+        question: string;
+        answer: string;
+    }>, "many">>;
     finalVerdict: zod.ZodObject<{
         recommendedAction: zod.ZodString;
         reasoning: zod.ZodString;
@@ -245,499 +597,28 @@ export declare const AnalyzeSituationResponse: zod.ZodObject<{
             signal: "favorable" | "challenging" | "neutral";
         }>;
         interpretation: zod.ZodString;
-        vedicD1: zod.ZodOptional<zod.ZodObject<{
-            ascendant: zod.ZodString;
-            ascendantDegree: zod.ZodNumber;
-            planets: zod.ZodArray<zod.ZodObject<{
-                name: zod.ZodString;
-                longitude: zod.ZodNumber;
-                sign: zod.ZodString;
-                signIndex: zod.ZodNumber;
-                degree: zod.ZodNumber;
-                isRetrograde: zod.ZodBoolean;
-                navamsaSign: zod.ZodString;
-                dasamsaSign: zod.ZodString;
-                drekkanaSign: zod.ZodOptional<zod.ZodString>;
-                house: zod.ZodOptional<zod.ZodNumber>;
-                dignity: zod.ZodOptional<zod.ZodEnum<["exalted", "own", "debilitated", "neutral"]>>;
-            }, "strip", zod.ZodTypeAny, {
-                longitude: number;
-                name: string;
-                sign: string;
-                signIndex: number;
-                degree: number;
-                isRetrograde: boolean;
-                navamsaSign: string;
-                dasamsaSign: string;
-                drekkanaSign?: string | undefined;
-                house?: number | undefined;
-                dignity?: "neutral" | "exalted" | "own" | "debilitated" | undefined;
-            }, {
-                longitude: number;
-                name: string;
-                sign: string;
-                signIndex: number;
-                degree: number;
-                isRetrograde: boolean;
-                navamsaSign: string;
-                dasamsaSign: string;
-                drekkanaSign?: string | undefined;
-                house?: number | undefined;
-                dignity?: "neutral" | "exalted" | "own" | "debilitated" | undefined;
-            }>, "many">;
-            currentDasha: zod.ZodOptional<zod.ZodObject<{
-                mahadasha: zod.ZodObject<{
-                    planet: zod.ZodString;
-                    startDate: zod.ZodString;
-                    endDate: zod.ZodString;
-                    years: zod.ZodNumber;
-                }, "strip", zod.ZodTypeAny, {
-                    planet: string;
-                    startDate: string;
-                    endDate: string;
-                    years: number;
-                }, {
-                    planet: string;
-                    startDate: string;
-                    endDate: string;
-                    years: number;
-                }>;
-                antardasha: zod.ZodOptional<zod.ZodObject<{
-                    planet: zod.ZodString;
-                    startDate: zod.ZodString;
-                    endDate: zod.ZodString;
-                    years: zod.ZodNumber;
-                }, "strip", zod.ZodTypeAny, {
-                    planet: string;
-                    startDate: string;
-                    endDate: string;
-                    years: number;
-                }, {
-                    planet: string;
-                    startDate: string;
-                    endDate: string;
-                    years: number;
-                }>>;
-                pratyantardasha: zod.ZodOptional<zod.ZodObject<{
-                    planet: zod.ZodString;
-                    startDate: zod.ZodString;
-                    endDate: zod.ZodString;
-                    years: zod.ZodNumber;
-                }, "strip", zod.ZodTypeAny, {
-                    planet: string;
-                    startDate: string;
-                    endDate: string;
-                    years: number;
-                }, {
-                    planet: string;
-                    startDate: string;
-                    endDate: string;
-                    years: number;
-                }>>;
-                sookshmadasha: zod.ZodOptional<zod.ZodObject<{
-                    planet: zod.ZodString;
-                    startDate: zod.ZodString;
-                    endDate: zod.ZodString;
-                    years: zod.ZodNumber;
-                }, "strip", zod.ZodTypeAny, {
-                    planet: string;
-                    startDate: string;
-                    endDate: string;
-                    years: number;
-                }, {
-                    planet: string;
-                    startDate: string;
-                    endDate: string;
-                    years: number;
-                }>>;
-            }, "strip", zod.ZodTypeAny, {
-                mahadasha: {
-                    planet: string;
-                    startDate: string;
-                    endDate: string;
-                    years: number;
-                };
-                antardasha?: {
-                    planet: string;
-                    startDate: string;
-                    endDate: string;
-                    years: number;
-                } | undefined;
-                pratyantardasha?: {
-                    planet: string;
-                    startDate: string;
-                    endDate: string;
-                    years: number;
-                } | undefined;
-                sookshmadasha?: {
-                    planet: string;
-                    startDate: string;
-                    endDate: string;
-                    years: number;
-                } | undefined;
-            }, {
-                mahadasha: {
-                    planet: string;
-                    startDate: string;
-                    endDate: string;
-                    years: number;
-                };
-                antardasha?: {
-                    planet: string;
-                    startDate: string;
-                    endDate: string;
-                    years: number;
-                } | undefined;
-                pratyantardasha?: {
-                    planet: string;
-                    startDate: string;
-                    endDate: string;
-                    years: number;
-                } | undefined;
-                sookshmadasha?: {
-                    planet: string;
-                    startDate: string;
-                    endDate: string;
-                    years: number;
-                } | undefined;
-            }>>;
-            ayanamsa: zod.ZodNumber;
-            chartType: zod.ZodString;
+        ascendant: zod.ZodOptional<zod.ZodObject<{
+            sign: zod.ZodString;
+            degree: zod.ZodNumber;
+            lord: zod.ZodOptional<zod.ZodString>;
         }, "strip", zod.ZodTypeAny, {
-            ascendant: string;
-            ascendantDegree: number;
-            planets: {
-                longitude: number;
-                name: string;
-                sign: string;
-                signIndex: number;
-                degree: number;
-                isRetrograde: boolean;
-                navamsaSign: string;
-                dasamsaSign: string;
-                drekkanaSign?: string | undefined;
-                house?: number | undefined;
-                dignity?: "neutral" | "exalted" | "own" | "debilitated" | undefined;
-            }[];
-            ayanamsa: number;
-            chartType: string;
-            currentDasha?: {
-                mahadasha: {
-                    planet: string;
-                    startDate: string;
-                    endDate: string;
-                    years: number;
-                };
-                antardasha?: {
-                    planet: string;
-                    startDate: string;
-                    endDate: string;
-                    years: number;
-                } | undefined;
-                pratyantardasha?: {
-                    planet: string;
-                    startDate: string;
-                    endDate: string;
-                    years: number;
-                } | undefined;
-                sookshmadasha?: {
-                    planet: string;
-                    startDate: string;
-                    endDate: string;
-                    years: number;
-                } | undefined;
-            } | undefined;
+            sign: string;
+            degree: number;
+            lord?: string | undefined;
         }, {
-            ascendant: string;
-            ascendantDegree: number;
-            planets: {
-                longitude: number;
-                name: string;
-                sign: string;
-                signIndex: number;
-                degree: number;
-                isRetrograde: boolean;
-                navamsaSign: string;
-                dasamsaSign: string;
-                drekkanaSign?: string | undefined;
-                house?: number | undefined;
-                dignity?: "neutral" | "exalted" | "own" | "debilitated" | undefined;
-            }[];
-            ayanamsa: number;
-            chartType: string;
-            currentDasha?: {
-                mahadasha: {
-                    planet: string;
-                    startDate: string;
-                    endDate: string;
-                    years: number;
-                };
-                antardasha?: {
-                    planet: string;
-                    startDate: string;
-                    endDate: string;
-                    years: number;
-                } | undefined;
-                pratyantardasha?: {
-                    planet: string;
-                    startDate: string;
-                    endDate: string;
-                    years: number;
-                } | undefined;
-                sookshmadasha?: {
-                    planet: string;
-                    startDate: string;
-                    endDate: string;
-                    years: number;
-                } | undefined;
-            } | undefined;
+            sign: string;
+            degree: number;
+            lord?: string | undefined;
         }>>;
-        vedicD3: zod.ZodOptional<zod.ZodObject<{
-            ascendant: zod.ZodString;
-            ascendantDegree: zod.ZodNumber;
-            planets: zod.ZodArray<zod.ZodObject<{
-                name: zod.ZodString;
-                longitude: zod.ZodNumber;
-                sign: zod.ZodString;
-                signIndex: zod.ZodNumber;
-                degree: zod.ZodNumber;
-                isRetrograde: zod.ZodBoolean;
-                navamsaSign: zod.ZodString;
-                dasamsaSign: zod.ZodString;
-                drekkanaSign: zod.ZodOptional<zod.ZodString>;
-                house: zod.ZodOptional<zod.ZodNumber>;
-                dignity: zod.ZodOptional<zod.ZodEnum<["exalted", "own", "debilitated", "neutral"]>>;
-            }, "strip", zod.ZodTypeAny, {
-                longitude: number;
-                name: string;
-                sign: string;
-                signIndex: number;
-                degree: number;
-                isRetrograde: boolean;
-                navamsaSign: string;
-                dasamsaSign: string;
-                drekkanaSign?: string | undefined;
-                house?: number | undefined;
-                dignity?: "neutral" | "exalted" | "own" | "debilitated" | undefined;
-            }, {
-                longitude: number;
-                name: string;
-                sign: string;
-                signIndex: number;
-                degree: number;
-                isRetrograde: boolean;
-                navamsaSign: string;
-                dasamsaSign: string;
-                drekkanaSign?: string | undefined;
-                house?: number | undefined;
-                dignity?: "neutral" | "exalted" | "own" | "debilitated" | undefined;
-            }>, "many">;
-            currentDasha: zod.ZodOptional<zod.ZodObject<{
-                mahadasha: zod.ZodObject<{
-                    planet: zod.ZodString;
-                    startDate: zod.ZodString;
-                    endDate: zod.ZodString;
-                    years: zod.ZodNumber;
-                }, "strip", zod.ZodTypeAny, {
-                    planet: string;
-                    startDate: string;
-                    endDate: string;
-                    years: number;
-                }, {
-                    planet: string;
-                    startDate: string;
-                    endDate: string;
-                    years: number;
-                }>;
-                antardasha: zod.ZodOptional<zod.ZodObject<{
-                    planet: zod.ZodString;
-                    startDate: zod.ZodString;
-                    endDate: zod.ZodString;
-                    years: zod.ZodNumber;
-                }, "strip", zod.ZodTypeAny, {
-                    planet: string;
-                    startDate: string;
-                    endDate: string;
-                    years: number;
-                }, {
-                    planet: string;
-                    startDate: string;
-                    endDate: string;
-                    years: number;
-                }>>;
-                pratyantardasha: zod.ZodOptional<zod.ZodObject<{
-                    planet: zod.ZodString;
-                    startDate: zod.ZodString;
-                    endDate: zod.ZodString;
-                    years: zod.ZodNumber;
-                }, "strip", zod.ZodTypeAny, {
-                    planet: string;
-                    startDate: string;
-                    endDate: string;
-                    years: number;
-                }, {
-                    planet: string;
-                    startDate: string;
-                    endDate: string;
-                    years: number;
-                }>>;
-                sookshmadasha: zod.ZodOptional<zod.ZodObject<{
-                    planet: zod.ZodString;
-                    startDate: zod.ZodString;
-                    endDate: zod.ZodString;
-                    years: zod.ZodNumber;
-                }, "strip", zod.ZodTypeAny, {
-                    planet: string;
-                    startDate: string;
-                    endDate: string;
-                    years: number;
-                }, {
-                    planet: string;
-                    startDate: string;
-                    endDate: string;
-                    years: number;
-                }>>;
-            }, "strip", zod.ZodTypeAny, {
-                mahadasha: {
-                    planet: string;
-                    startDate: string;
-                    endDate: string;
-                    years: number;
-                };
-                antardasha?: {
-                    planet: string;
-                    startDate: string;
-                    endDate: string;
-                    years: number;
-                } | undefined;
-                pratyantardasha?: {
-                    planet: string;
-                    startDate: string;
-                    endDate: string;
-                    years: number;
-                } | undefined;
-                sookshmadasha?: {
-                    planet: string;
-                    startDate: string;
-                    endDate: string;
-                    years: number;
-                } | undefined;
-            }, {
-                mahadasha: {
-                    planet: string;
-                    startDate: string;
-                    endDate: string;
-                    years: number;
-                };
-                antardasha?: {
-                    planet: string;
-                    startDate: string;
-                    endDate: string;
-                    years: number;
-                } | undefined;
-                pratyantardasha?: {
-                    planet: string;
-                    startDate: string;
-                    endDate: string;
-                    years: number;
-                } | undefined;
-                sookshmadasha?: {
-                    planet: string;
-                    startDate: string;
-                    endDate: string;
-                    years: number;
-                } | undefined;
-            }>>;
-            ayanamsa: zod.ZodNumber;
-            chartType: zod.ZodString;
+        tuning: zod.ZodOptional<zod.ZodObject<{
+            id: zod.ZodOptional<zod.ZodNullable<zod.ZodNumber>>;
+            astroShare: zod.ZodOptional<zod.ZodNullable<zod.ZodNumber>>;
         }, "strip", zod.ZodTypeAny, {
-            ascendant: string;
-            ascendantDegree: number;
-            planets: {
-                longitude: number;
-                name: string;
-                sign: string;
-                signIndex: number;
-                degree: number;
-                isRetrograde: boolean;
-                navamsaSign: string;
-                dasamsaSign: string;
-                drekkanaSign?: string | undefined;
-                house?: number | undefined;
-                dignity?: "neutral" | "exalted" | "own" | "debilitated" | undefined;
-            }[];
-            ayanamsa: number;
-            chartType: string;
-            currentDasha?: {
-                mahadasha: {
-                    planet: string;
-                    startDate: string;
-                    endDate: string;
-                    years: number;
-                };
-                antardasha?: {
-                    planet: string;
-                    startDate: string;
-                    endDate: string;
-                    years: number;
-                } | undefined;
-                pratyantardasha?: {
-                    planet: string;
-                    startDate: string;
-                    endDate: string;
-                    years: number;
-                } | undefined;
-                sookshmadasha?: {
-                    planet: string;
-                    startDate: string;
-                    endDate: string;
-                    years: number;
-                } | undefined;
-            } | undefined;
+            id?: number | null | undefined;
+            astroShare?: number | null | undefined;
         }, {
-            ascendant: string;
-            ascendantDegree: number;
-            planets: {
-                longitude: number;
-                name: string;
-                sign: string;
-                signIndex: number;
-                degree: number;
-                isRetrograde: boolean;
-                navamsaSign: string;
-                dasamsaSign: string;
-                drekkanaSign?: string | undefined;
-                house?: number | undefined;
-                dignity?: "neutral" | "exalted" | "own" | "debilitated" | undefined;
-            }[];
-            ayanamsa: number;
-            chartType: string;
-            currentDasha?: {
-                mahadasha: {
-                    planet: string;
-                    startDate: string;
-                    endDate: string;
-                    years: number;
-                };
-                antardasha?: {
-                    planet: string;
-                    startDate: string;
-                    endDate: string;
-                    years: number;
-                } | undefined;
-                pratyantardasha?: {
-                    planet: string;
-                    startDate: string;
-                    endDate: string;
-                    years: number;
-                } | undefined;
-                sookshmadasha?: {
-                    planet: string;
-                    startDate: string;
-                    endDate: string;
-                    years: number;
-                } | undefined;
-            } | undefined;
+            id?: number | null | undefined;
+            astroShare?: number | null | undefined;
         }>>;
         prashna: zod.ZodOptional<zod.ZodObject<{
             castAt: zod.ZodString;
@@ -745,6 +626,7 @@ export declare const AnalyzeSituationResponse: zod.ZodObject<{
             longitude: zod.ZodOptional<zod.ZodNumber>;
             lagna: zod.ZodString;
             lagnaLord: zod.ZodString;
+            lagnaDegree: zod.ZodOptional<zod.ZodNumber>;
             moonSign: zod.ZodString;
             moonNakshatra: zod.ZodString;
             moonWaxing: zod.ZodBoolean;
@@ -767,14 +649,17 @@ export declare const AnalyzeSituationResponse: zod.ZodObject<{
                 label: zod.ZodString;
                 effect: zod.ZodNumber;
                 detail: zod.ZodString;
+                family: zod.ZodOptional<zod.ZodString>;
             }, "strip", zod.ZodTypeAny, {
                 label: string;
                 effect: number;
                 detail: string;
+                family?: string | undefined;
             }, {
                 label: string;
                 effect: number;
                 detail: string;
+                family?: string | undefined;
             }>, "many">;
             score: zod.ZodNumber;
             signal: zod.ZodEnum<["favorable", "challenging", "neutral"]>;
@@ -782,6 +667,37 @@ export declare const AnalyzeSituationResponse: zod.ZodObject<{
             risk: zod.ZodOptional<zod.ZodEnum<["low", "medium", "high"]>>;
             dominantPlanet: zod.ZodOptional<zod.ZodString>;
             summary: zod.ZodString;
+            focus: zod.ZodOptional<zod.ZodObject<{
+                themes: zod.ZodOptional<zod.ZodArray<zod.ZodString, "many">>;
+                houses: zod.ZodOptional<zod.ZodArray<zod.ZodNumber, "many">>;
+            }, "strip", zod.ZodTypeAny, {
+                themes?: string[] | undefined;
+                houses?: number[] | undefined;
+            }, {
+                themes?: string[] | undefined;
+                houses?: number[] | undefined;
+            }>>;
+            fit: zod.ZodOptional<zod.ZodObject<{
+                ok: zod.ZodBoolean;
+                problems: zod.ZodArray<zod.ZodString, "many">;
+            }, "strip", zod.ZodTypeAny, {
+                ok: boolean;
+                problems: string[];
+            }, {
+                ok: boolean;
+                problems: string[];
+            }>>;
+            trace: zod.ZodOptional<zod.ZodArray<zod.ZodObject<{
+                title: zod.ZodString;
+                points: zod.ZodArray<zod.ZodString, "many">;
+            }, "strip", zod.ZodTypeAny, {
+                title: string;
+                points: string[];
+            }, {
+                title: string;
+                points: string[];
+            }>, "many">>;
+            tuningId: zod.ZodOptional<zod.ZodNullable<zod.ZodNumber>>;
         }, "strip", zod.ZodTypeAny, {
             score: number;
             signal: "favorable" | "challenging" | "neutral";
@@ -802,6 +718,7 @@ export declare const AnalyzeSituationResponse: zod.ZodObject<{
                 label: string;
                 effect: number;
                 detail: string;
+                family?: string | undefined;
             }[];
             summary: string;
             latitude?: number | undefined;
@@ -809,6 +726,20 @@ export declare const AnalyzeSituationResponse: zod.ZodObject<{
             risk?: "low" | "medium" | "high" | undefined;
             stability?: "low" | "medium" | "high" | undefined;
             dominantPlanet?: string | undefined;
+            lagnaDegree?: number | undefined;
+            focus?: {
+                themes?: string[] | undefined;
+                houses?: number[] | undefined;
+            } | undefined;
+            fit?: {
+                ok: boolean;
+                problems: string[];
+            } | undefined;
+            trace?: {
+                title: string;
+                points: string[];
+            }[] | undefined;
+            tuningId?: number | null | undefined;
         }, {
             score: number;
             signal: "favorable" | "challenging" | "neutral";
@@ -829,6 +760,7 @@ export declare const AnalyzeSituationResponse: zod.ZodObject<{
                 label: string;
                 effect: number;
                 detail: string;
+                family?: string | undefined;
             }[];
             summary: string;
             latitude?: number | undefined;
@@ -836,500 +768,20 @@ export declare const AnalyzeSituationResponse: zod.ZodObject<{
             risk?: "low" | "medium" | "high" | undefined;
             stability?: "low" | "medium" | "high" | undefined;
             dominantPlanet?: string | undefined;
-        }>>;
-        vedicD9: zod.ZodOptional<zod.ZodObject<{
-            ascendant: zod.ZodString;
-            ascendantDegree: zod.ZodNumber;
-            planets: zod.ZodArray<zod.ZodObject<{
-                name: zod.ZodString;
-                longitude: zod.ZodNumber;
-                sign: zod.ZodString;
-                signIndex: zod.ZodNumber;
-                degree: zod.ZodNumber;
-                isRetrograde: zod.ZodBoolean;
-                navamsaSign: zod.ZodString;
-                dasamsaSign: zod.ZodString;
-                drekkanaSign: zod.ZodOptional<zod.ZodString>;
-                house: zod.ZodOptional<zod.ZodNumber>;
-                dignity: zod.ZodOptional<zod.ZodEnum<["exalted", "own", "debilitated", "neutral"]>>;
-            }, "strip", zod.ZodTypeAny, {
-                longitude: number;
-                name: string;
-                sign: string;
-                signIndex: number;
-                degree: number;
-                isRetrograde: boolean;
-                navamsaSign: string;
-                dasamsaSign: string;
-                drekkanaSign?: string | undefined;
-                house?: number | undefined;
-                dignity?: "neutral" | "exalted" | "own" | "debilitated" | undefined;
-            }, {
-                longitude: number;
-                name: string;
-                sign: string;
-                signIndex: number;
-                degree: number;
-                isRetrograde: boolean;
-                navamsaSign: string;
-                dasamsaSign: string;
-                drekkanaSign?: string | undefined;
-                house?: number | undefined;
-                dignity?: "neutral" | "exalted" | "own" | "debilitated" | undefined;
-            }>, "many">;
-            currentDasha: zod.ZodOptional<zod.ZodObject<{
-                mahadasha: zod.ZodObject<{
-                    planet: zod.ZodString;
-                    startDate: zod.ZodString;
-                    endDate: zod.ZodString;
-                    years: zod.ZodNumber;
-                }, "strip", zod.ZodTypeAny, {
-                    planet: string;
-                    startDate: string;
-                    endDate: string;
-                    years: number;
-                }, {
-                    planet: string;
-                    startDate: string;
-                    endDate: string;
-                    years: number;
-                }>;
-                antardasha: zod.ZodOptional<zod.ZodObject<{
-                    planet: zod.ZodString;
-                    startDate: zod.ZodString;
-                    endDate: zod.ZodString;
-                    years: zod.ZodNumber;
-                }, "strip", zod.ZodTypeAny, {
-                    planet: string;
-                    startDate: string;
-                    endDate: string;
-                    years: number;
-                }, {
-                    planet: string;
-                    startDate: string;
-                    endDate: string;
-                    years: number;
-                }>>;
-                pratyantardasha: zod.ZodOptional<zod.ZodObject<{
-                    planet: zod.ZodString;
-                    startDate: zod.ZodString;
-                    endDate: zod.ZodString;
-                    years: zod.ZodNumber;
-                }, "strip", zod.ZodTypeAny, {
-                    planet: string;
-                    startDate: string;
-                    endDate: string;
-                    years: number;
-                }, {
-                    planet: string;
-                    startDate: string;
-                    endDate: string;
-                    years: number;
-                }>>;
-                sookshmadasha: zod.ZodOptional<zod.ZodObject<{
-                    planet: zod.ZodString;
-                    startDate: zod.ZodString;
-                    endDate: zod.ZodString;
-                    years: zod.ZodNumber;
-                }, "strip", zod.ZodTypeAny, {
-                    planet: string;
-                    startDate: string;
-                    endDate: string;
-                    years: number;
-                }, {
-                    planet: string;
-                    startDate: string;
-                    endDate: string;
-                    years: number;
-                }>>;
-            }, "strip", zod.ZodTypeAny, {
-                mahadasha: {
-                    planet: string;
-                    startDate: string;
-                    endDate: string;
-                    years: number;
-                };
-                antardasha?: {
-                    planet: string;
-                    startDate: string;
-                    endDate: string;
-                    years: number;
-                } | undefined;
-                pratyantardasha?: {
-                    planet: string;
-                    startDate: string;
-                    endDate: string;
-                    years: number;
-                } | undefined;
-                sookshmadasha?: {
-                    planet: string;
-                    startDate: string;
-                    endDate: string;
-                    years: number;
-                } | undefined;
-            }, {
-                mahadasha: {
-                    planet: string;
-                    startDate: string;
-                    endDate: string;
-                    years: number;
-                };
-                antardasha?: {
-                    planet: string;
-                    startDate: string;
-                    endDate: string;
-                    years: number;
-                } | undefined;
-                pratyantardasha?: {
-                    planet: string;
-                    startDate: string;
-                    endDate: string;
-                    years: number;
-                } | undefined;
-                sookshmadasha?: {
-                    planet: string;
-                    startDate: string;
-                    endDate: string;
-                    years: number;
-                } | undefined;
-            }>>;
-            ayanamsa: zod.ZodNumber;
-            chartType: zod.ZodString;
-        }, "strip", zod.ZodTypeAny, {
-            ascendant: string;
-            ascendantDegree: number;
-            planets: {
-                longitude: number;
-                name: string;
-                sign: string;
-                signIndex: number;
-                degree: number;
-                isRetrograde: boolean;
-                navamsaSign: string;
-                dasamsaSign: string;
-                drekkanaSign?: string | undefined;
-                house?: number | undefined;
-                dignity?: "neutral" | "exalted" | "own" | "debilitated" | undefined;
-            }[];
-            ayanamsa: number;
-            chartType: string;
-            currentDasha?: {
-                mahadasha: {
-                    planet: string;
-                    startDate: string;
-                    endDate: string;
-                    years: number;
-                };
-                antardasha?: {
-                    planet: string;
-                    startDate: string;
-                    endDate: string;
-                    years: number;
-                } | undefined;
-                pratyantardasha?: {
-                    planet: string;
-                    startDate: string;
-                    endDate: string;
-                    years: number;
-                } | undefined;
-                sookshmadasha?: {
-                    planet: string;
-                    startDate: string;
-                    endDate: string;
-                    years: number;
-                } | undefined;
+            lagnaDegree?: number | undefined;
+            focus?: {
+                themes?: string[] | undefined;
+                houses?: number[] | undefined;
             } | undefined;
-        }, {
-            ascendant: string;
-            ascendantDegree: number;
-            planets: {
-                longitude: number;
-                name: string;
-                sign: string;
-                signIndex: number;
-                degree: number;
-                isRetrograde: boolean;
-                navamsaSign: string;
-                dasamsaSign: string;
-                drekkanaSign?: string | undefined;
-                house?: number | undefined;
-                dignity?: "neutral" | "exalted" | "own" | "debilitated" | undefined;
-            }[];
-            ayanamsa: number;
-            chartType: string;
-            currentDasha?: {
-                mahadasha: {
-                    planet: string;
-                    startDate: string;
-                    endDate: string;
-                    years: number;
-                };
-                antardasha?: {
-                    planet: string;
-                    startDate: string;
-                    endDate: string;
-                    years: number;
-                } | undefined;
-                pratyantardasha?: {
-                    planet: string;
-                    startDate: string;
-                    endDate: string;
-                    years: number;
-                } | undefined;
-                sookshmadasha?: {
-                    planet: string;
-                    startDate: string;
-                    endDate: string;
-                    years: number;
-                } | undefined;
+            fit?: {
+                ok: boolean;
+                problems: string[];
             } | undefined;
-        }>>;
-        vedicD10: zod.ZodOptional<zod.ZodObject<{
-            ascendant: zod.ZodString;
-            ascendantDegree: zod.ZodNumber;
-            planets: zod.ZodArray<zod.ZodObject<{
-                name: zod.ZodString;
-                longitude: zod.ZodNumber;
-                sign: zod.ZodString;
-                signIndex: zod.ZodNumber;
-                degree: zod.ZodNumber;
-                isRetrograde: zod.ZodBoolean;
-                navamsaSign: zod.ZodString;
-                dasamsaSign: zod.ZodString;
-                drekkanaSign: zod.ZodOptional<zod.ZodString>;
-                house: zod.ZodOptional<zod.ZodNumber>;
-                dignity: zod.ZodOptional<zod.ZodEnum<["exalted", "own", "debilitated", "neutral"]>>;
-            }, "strip", zod.ZodTypeAny, {
-                longitude: number;
-                name: string;
-                sign: string;
-                signIndex: number;
-                degree: number;
-                isRetrograde: boolean;
-                navamsaSign: string;
-                dasamsaSign: string;
-                drekkanaSign?: string | undefined;
-                house?: number | undefined;
-                dignity?: "neutral" | "exalted" | "own" | "debilitated" | undefined;
-            }, {
-                longitude: number;
-                name: string;
-                sign: string;
-                signIndex: number;
-                degree: number;
-                isRetrograde: boolean;
-                navamsaSign: string;
-                dasamsaSign: string;
-                drekkanaSign?: string | undefined;
-                house?: number | undefined;
-                dignity?: "neutral" | "exalted" | "own" | "debilitated" | undefined;
-            }>, "many">;
-            currentDasha: zod.ZodOptional<zod.ZodObject<{
-                mahadasha: zod.ZodObject<{
-                    planet: zod.ZodString;
-                    startDate: zod.ZodString;
-                    endDate: zod.ZodString;
-                    years: zod.ZodNumber;
-                }, "strip", zod.ZodTypeAny, {
-                    planet: string;
-                    startDate: string;
-                    endDate: string;
-                    years: number;
-                }, {
-                    planet: string;
-                    startDate: string;
-                    endDate: string;
-                    years: number;
-                }>;
-                antardasha: zod.ZodOptional<zod.ZodObject<{
-                    planet: zod.ZodString;
-                    startDate: zod.ZodString;
-                    endDate: zod.ZodString;
-                    years: zod.ZodNumber;
-                }, "strip", zod.ZodTypeAny, {
-                    planet: string;
-                    startDate: string;
-                    endDate: string;
-                    years: number;
-                }, {
-                    planet: string;
-                    startDate: string;
-                    endDate: string;
-                    years: number;
-                }>>;
-                pratyantardasha: zod.ZodOptional<zod.ZodObject<{
-                    planet: zod.ZodString;
-                    startDate: zod.ZodString;
-                    endDate: zod.ZodString;
-                    years: zod.ZodNumber;
-                }, "strip", zod.ZodTypeAny, {
-                    planet: string;
-                    startDate: string;
-                    endDate: string;
-                    years: number;
-                }, {
-                    planet: string;
-                    startDate: string;
-                    endDate: string;
-                    years: number;
-                }>>;
-                sookshmadasha: zod.ZodOptional<zod.ZodObject<{
-                    planet: zod.ZodString;
-                    startDate: zod.ZodString;
-                    endDate: zod.ZodString;
-                    years: zod.ZodNumber;
-                }, "strip", zod.ZodTypeAny, {
-                    planet: string;
-                    startDate: string;
-                    endDate: string;
-                    years: number;
-                }, {
-                    planet: string;
-                    startDate: string;
-                    endDate: string;
-                    years: number;
-                }>>;
-            }, "strip", zod.ZodTypeAny, {
-                mahadasha: {
-                    planet: string;
-                    startDate: string;
-                    endDate: string;
-                    years: number;
-                };
-                antardasha?: {
-                    planet: string;
-                    startDate: string;
-                    endDate: string;
-                    years: number;
-                } | undefined;
-                pratyantardasha?: {
-                    planet: string;
-                    startDate: string;
-                    endDate: string;
-                    years: number;
-                } | undefined;
-                sookshmadasha?: {
-                    planet: string;
-                    startDate: string;
-                    endDate: string;
-                    years: number;
-                } | undefined;
-            }, {
-                mahadasha: {
-                    planet: string;
-                    startDate: string;
-                    endDate: string;
-                    years: number;
-                };
-                antardasha?: {
-                    planet: string;
-                    startDate: string;
-                    endDate: string;
-                    years: number;
-                } | undefined;
-                pratyantardasha?: {
-                    planet: string;
-                    startDate: string;
-                    endDate: string;
-                    years: number;
-                } | undefined;
-                sookshmadasha?: {
-                    planet: string;
-                    startDate: string;
-                    endDate: string;
-                    years: number;
-                } | undefined;
-            }>>;
-            ayanamsa: zod.ZodNumber;
-            chartType: zod.ZodString;
-        }, "strip", zod.ZodTypeAny, {
-            ascendant: string;
-            ascendantDegree: number;
-            planets: {
-                longitude: number;
-                name: string;
-                sign: string;
-                signIndex: number;
-                degree: number;
-                isRetrograde: boolean;
-                navamsaSign: string;
-                dasamsaSign: string;
-                drekkanaSign?: string | undefined;
-                house?: number | undefined;
-                dignity?: "neutral" | "exalted" | "own" | "debilitated" | undefined;
-            }[];
-            ayanamsa: number;
-            chartType: string;
-            currentDasha?: {
-                mahadasha: {
-                    planet: string;
-                    startDate: string;
-                    endDate: string;
-                    years: number;
-                };
-                antardasha?: {
-                    planet: string;
-                    startDate: string;
-                    endDate: string;
-                    years: number;
-                } | undefined;
-                pratyantardasha?: {
-                    planet: string;
-                    startDate: string;
-                    endDate: string;
-                    years: number;
-                } | undefined;
-                sookshmadasha?: {
-                    planet: string;
-                    startDate: string;
-                    endDate: string;
-                    years: number;
-                } | undefined;
-            } | undefined;
-        }, {
-            ascendant: string;
-            ascendantDegree: number;
-            planets: {
-                longitude: number;
-                name: string;
-                sign: string;
-                signIndex: number;
-                degree: number;
-                isRetrograde: boolean;
-                navamsaSign: string;
-                dasamsaSign: string;
-                drekkanaSign?: string | undefined;
-                house?: number | undefined;
-                dignity?: "neutral" | "exalted" | "own" | "debilitated" | undefined;
-            }[];
-            ayanamsa: number;
-            chartType: string;
-            currentDasha?: {
-                mahadasha: {
-                    planet: string;
-                    startDate: string;
-                    endDate: string;
-                    years: number;
-                };
-                antardasha?: {
-                    planet: string;
-                    startDate: string;
-                    endDate: string;
-                    years: number;
-                } | undefined;
-                pratyantardasha?: {
-                    planet: string;
-                    startDate: string;
-                    endDate: string;
-                    years: number;
-                } | undefined;
-                sookshmadasha?: {
-                    planet: string;
-                    startDate: string;
-                    endDate: string;
-                    years: number;
-                } | undefined;
-            } | undefined;
+            trace?: {
+                title: string;
+                points: string[];
+            }[] | undefined;
+            tuningId?: number | null | undefined;
         }>>;
         timing: zod.ZodOptional<zod.ZodObject<{
             timeBased: zod.ZodBoolean;
@@ -1568,7 +1020,6 @@ export declare const AnalyzeSituationResponse: zod.ZodObject<{
             activations: zod.ZodArray<zod.ZodString, "many">;
             summary: zod.ZodString;
         }, "strip", zod.ZodTypeAny, {
-            house: number;
             summary: string;
             timeBased: boolean;
             basis: "question";
@@ -1598,6 +1049,7 @@ export declare const AnalyzeSituationResponse: zod.ZodObject<{
                     durationYears?: number | undefined;
                 };
             };
+            house: number;
             houseSign: string;
             houseLord: string;
             activations: string[];
@@ -1628,7 +1080,6 @@ export declare const AnalyzeSituationResponse: zod.ZodObject<{
                 notes: string[];
             } | null | undefined;
         }, {
-            house: number;
             summary: string;
             timeBased: boolean;
             basis: "question";
@@ -1658,6 +1109,7 @@ export declare const AnalyzeSituationResponse: zod.ZodObject<{
                     durationYears?: number | undefined;
                 };
             };
+            house: number;
             houseSign: string;
             houseLord: string;
             activations: string[];
@@ -1687,6 +1139,67 @@ export declare const AnalyzeSituationResponse: zod.ZodObject<{
                 }[];
                 notes: string[];
             } | null | undefined;
+        }>>;
+        skippedReason: zod.ZodOptional<zod.ZodNullable<zod.ZodString>>;
+        outlook: zod.ZodOptional<zod.ZodObject<{
+            chance: zod.ZodNumber;
+            level: zod.ZodEnum<["high", "fair", "low"]>;
+            headline: zod.ZodString;
+            favours: zod.ZodArray<zod.ZodString, "many">;
+            against: zod.ZodArray<zod.ZodString, "many">;
+            timing: zod.ZodOptional<zod.ZodNullable<zod.ZodObject<{
+                text: zod.ZodString;
+                from: zod.ZodString;
+                to: zod.ZodString;
+                confidence: zod.ZodEnum<["low", "medium", "high"]>;
+                basis: zod.ZodString;
+                dashaCheck: zod.ZodOptional<zod.ZodString>;
+            }, "strip", zod.ZodTypeAny, {
+                confidence: "low" | "medium" | "high";
+                text: string;
+                basis: string;
+                from: string;
+                to: string;
+                dashaCheck?: string | undefined;
+            }, {
+                confidence: "low" | "medium" | "high";
+                text: string;
+                basis: string;
+                from: string;
+                to: string;
+                dashaCheck?: string | undefined;
+            }>>>;
+            timingNote: zod.ZodOptional<zod.ZodNullable<zod.ZodString>>;
+        }, "strip", zod.ZodTypeAny, {
+            chance: number;
+            level: "low" | "high" | "fair";
+            headline: string;
+            favours: string[];
+            against: string[];
+            timing?: {
+                confidence: "low" | "medium" | "high";
+                text: string;
+                basis: string;
+                from: string;
+                to: string;
+                dashaCheck?: string | undefined;
+            } | null | undefined;
+            timingNote?: string | null | undefined;
+        }, {
+            chance: number;
+            level: "low" | "high" | "fair";
+            headline: string;
+            favours: string[];
+            against: string[];
+            timing?: {
+                confidence: "low" | "medium" | "high";
+                text: string;
+                basis: string;
+                from: string;
+                to: string;
+                dashaCheck?: string | undefined;
+            } | null | undefined;
+            timingNote?: string | null | undefined;
         }>>;
         location: zod.ZodOptional<zod.ZodObject<{
             latitude: zod.ZodNumber;
@@ -1706,95 +1219,14 @@ export declare const AnalyzeSituationResponse: zod.ZodObject<{
             signal: "favorable" | "challenging" | "neutral";
         };
         interpretation: string;
-        vedicD1?: {
-            ascendant: string;
-            ascendantDegree: number;
-            planets: {
-                longitude: number;
-                name: string;
-                sign: string;
-                signIndex: number;
-                degree: number;
-                isRetrograde: boolean;
-                navamsaSign: string;
-                dasamsaSign: string;
-                drekkanaSign?: string | undefined;
-                house?: number | undefined;
-                dignity?: "neutral" | "exalted" | "own" | "debilitated" | undefined;
-            }[];
-            ayanamsa: number;
-            chartType: string;
-            currentDasha?: {
-                mahadasha: {
-                    planet: string;
-                    startDate: string;
-                    endDate: string;
-                    years: number;
-                };
-                antardasha?: {
-                    planet: string;
-                    startDate: string;
-                    endDate: string;
-                    years: number;
-                } | undefined;
-                pratyantardasha?: {
-                    planet: string;
-                    startDate: string;
-                    endDate: string;
-                    years: number;
-                } | undefined;
-                sookshmadasha?: {
-                    planet: string;
-                    startDate: string;
-                    endDate: string;
-                    years: number;
-                } | undefined;
-            } | undefined;
+        ascendant?: {
+            sign: string;
+            degree: number;
+            lord?: string | undefined;
         } | undefined;
-        vedicD3?: {
-            ascendant: string;
-            ascendantDegree: number;
-            planets: {
-                longitude: number;
-                name: string;
-                sign: string;
-                signIndex: number;
-                degree: number;
-                isRetrograde: boolean;
-                navamsaSign: string;
-                dasamsaSign: string;
-                drekkanaSign?: string | undefined;
-                house?: number | undefined;
-                dignity?: "neutral" | "exalted" | "own" | "debilitated" | undefined;
-            }[];
-            ayanamsa: number;
-            chartType: string;
-            currentDasha?: {
-                mahadasha: {
-                    planet: string;
-                    startDate: string;
-                    endDate: string;
-                    years: number;
-                };
-                antardasha?: {
-                    planet: string;
-                    startDate: string;
-                    endDate: string;
-                    years: number;
-                } | undefined;
-                pratyantardasha?: {
-                    planet: string;
-                    startDate: string;
-                    endDate: string;
-                    years: number;
-                } | undefined;
-                sookshmadasha?: {
-                    planet: string;
-                    startDate: string;
-                    endDate: string;
-                    years: number;
-                } | undefined;
-            } | undefined;
+        tuning?: {
+            id?: number | null | undefined;
+            astroShare?: number | null | undefined;
         } | undefined;
         prashna?: {
             score: number;
@@ -1816,6 +1248,7 @@ export declare const AnalyzeSituationResponse: zod.ZodObject<{
                 label: string;
                 effect: number;
                 detail: string;
+                family?: string | undefined;
             }[];
             summary: string;
             latitude?: number | undefined;
@@ -1823,99 +1256,22 @@ export declare const AnalyzeSituationResponse: zod.ZodObject<{
             risk?: "low" | "medium" | "high" | undefined;
             stability?: "low" | "medium" | "high" | undefined;
             dominantPlanet?: string | undefined;
-        } | undefined;
-        vedicD9?: {
-            ascendant: string;
-            ascendantDegree: number;
-            planets: {
-                longitude: number;
-                name: string;
-                sign: string;
-                signIndex: number;
-                degree: number;
-                isRetrograde: boolean;
-                navamsaSign: string;
-                dasamsaSign: string;
-                drekkanaSign?: string | undefined;
-                house?: number | undefined;
-                dignity?: "neutral" | "exalted" | "own" | "debilitated" | undefined;
-            }[];
-            ayanamsa: number;
-            chartType: string;
-            currentDasha?: {
-                mahadasha: {
-                    planet: string;
-                    startDate: string;
-                    endDate: string;
-                    years: number;
-                };
-                antardasha?: {
-                    planet: string;
-                    startDate: string;
-                    endDate: string;
-                    years: number;
-                } | undefined;
-                pratyantardasha?: {
-                    planet: string;
-                    startDate: string;
-                    endDate: string;
-                    years: number;
-                } | undefined;
-                sookshmadasha?: {
-                    planet: string;
-                    startDate: string;
-                    endDate: string;
-                    years: number;
-                } | undefined;
+            lagnaDegree?: number | undefined;
+            focus?: {
+                themes?: string[] | undefined;
+                houses?: number[] | undefined;
             } | undefined;
-        } | undefined;
-        vedicD10?: {
-            ascendant: string;
-            ascendantDegree: number;
-            planets: {
-                longitude: number;
-                name: string;
-                sign: string;
-                signIndex: number;
-                degree: number;
-                isRetrograde: boolean;
-                navamsaSign: string;
-                dasamsaSign: string;
-                drekkanaSign?: string | undefined;
-                house?: number | undefined;
-                dignity?: "neutral" | "exalted" | "own" | "debilitated" | undefined;
-            }[];
-            ayanamsa: number;
-            chartType: string;
-            currentDasha?: {
-                mahadasha: {
-                    planet: string;
-                    startDate: string;
-                    endDate: string;
-                    years: number;
-                };
-                antardasha?: {
-                    planet: string;
-                    startDate: string;
-                    endDate: string;
-                    years: number;
-                } | undefined;
-                pratyantardasha?: {
-                    planet: string;
-                    startDate: string;
-                    endDate: string;
-                    years: number;
-                } | undefined;
-                sookshmadasha?: {
-                    planet: string;
-                    startDate: string;
-                    endDate: string;
-                    years: number;
-                } | undefined;
+            fit?: {
+                ok: boolean;
+                problems: string[];
             } | undefined;
+            trace?: {
+                title: string;
+                points: string[];
+            }[] | undefined;
+            tuningId?: number | null | undefined;
         } | undefined;
         timing?: {
-            house: number;
             summary: string;
             timeBased: boolean;
             basis: "question";
@@ -1945,6 +1301,7 @@ export declare const AnalyzeSituationResponse: zod.ZodObject<{
                     durationYears?: number | undefined;
                 };
             };
+            house: number;
             houseSign: string;
             houseLord: string;
             activations: string[];
@@ -1974,6 +1331,23 @@ export declare const AnalyzeSituationResponse: zod.ZodObject<{
                 }[];
                 notes: string[];
             } | null | undefined;
+        } | undefined;
+        skippedReason?: string | null | undefined;
+        outlook?: {
+            chance: number;
+            level: "low" | "high" | "fair";
+            headline: string;
+            favours: string[];
+            against: string[];
+            timing?: {
+                confidence: "low" | "medium" | "high";
+                text: string;
+                basis: string;
+                from: string;
+                to: string;
+                dashaCheck?: string | undefined;
+            } | null | undefined;
+            timingNote?: string | null | undefined;
         } | undefined;
         location?: {
             latitude: number;
@@ -1987,95 +1361,14 @@ export declare const AnalyzeSituationResponse: zod.ZodObject<{
             signal: "favorable" | "challenging" | "neutral";
         };
         interpretation: string;
-        vedicD1?: {
-            ascendant: string;
-            ascendantDegree: number;
-            planets: {
-                longitude: number;
-                name: string;
-                sign: string;
-                signIndex: number;
-                degree: number;
-                isRetrograde: boolean;
-                navamsaSign: string;
-                dasamsaSign: string;
-                drekkanaSign?: string | undefined;
-                house?: number | undefined;
-                dignity?: "neutral" | "exalted" | "own" | "debilitated" | undefined;
-            }[];
-            ayanamsa: number;
-            chartType: string;
-            currentDasha?: {
-                mahadasha: {
-                    planet: string;
-                    startDate: string;
-                    endDate: string;
-                    years: number;
-                };
-                antardasha?: {
-                    planet: string;
-                    startDate: string;
-                    endDate: string;
-                    years: number;
-                } | undefined;
-                pratyantardasha?: {
-                    planet: string;
-                    startDate: string;
-                    endDate: string;
-                    years: number;
-                } | undefined;
-                sookshmadasha?: {
-                    planet: string;
-                    startDate: string;
-                    endDate: string;
-                    years: number;
-                } | undefined;
-            } | undefined;
+        ascendant?: {
+            sign: string;
+            degree: number;
+            lord?: string | undefined;
         } | undefined;
-        vedicD3?: {
-            ascendant: string;
-            ascendantDegree: number;
-            planets: {
-                longitude: number;
-                name: string;
-                sign: string;
-                signIndex: number;
-                degree: number;
-                isRetrograde: boolean;
-                navamsaSign: string;
-                dasamsaSign: string;
-                drekkanaSign?: string | undefined;
-                house?: number | undefined;
-                dignity?: "neutral" | "exalted" | "own" | "debilitated" | undefined;
-            }[];
-            ayanamsa: number;
-            chartType: string;
-            currentDasha?: {
-                mahadasha: {
-                    planet: string;
-                    startDate: string;
-                    endDate: string;
-                    years: number;
-                };
-                antardasha?: {
-                    planet: string;
-                    startDate: string;
-                    endDate: string;
-                    years: number;
-                } | undefined;
-                pratyantardasha?: {
-                    planet: string;
-                    startDate: string;
-                    endDate: string;
-                    years: number;
-                } | undefined;
-                sookshmadasha?: {
-                    planet: string;
-                    startDate: string;
-                    endDate: string;
-                    years: number;
-                } | undefined;
-            } | undefined;
+        tuning?: {
+            id?: number | null | undefined;
+            astroShare?: number | null | undefined;
         } | undefined;
         prashna?: {
             score: number;
@@ -2097,6 +1390,7 @@ export declare const AnalyzeSituationResponse: zod.ZodObject<{
                 label: string;
                 effect: number;
                 detail: string;
+                family?: string | undefined;
             }[];
             summary: string;
             latitude?: number | undefined;
@@ -2104,99 +1398,22 @@ export declare const AnalyzeSituationResponse: zod.ZodObject<{
             risk?: "low" | "medium" | "high" | undefined;
             stability?: "low" | "medium" | "high" | undefined;
             dominantPlanet?: string | undefined;
-        } | undefined;
-        vedicD9?: {
-            ascendant: string;
-            ascendantDegree: number;
-            planets: {
-                longitude: number;
-                name: string;
-                sign: string;
-                signIndex: number;
-                degree: number;
-                isRetrograde: boolean;
-                navamsaSign: string;
-                dasamsaSign: string;
-                drekkanaSign?: string | undefined;
-                house?: number | undefined;
-                dignity?: "neutral" | "exalted" | "own" | "debilitated" | undefined;
-            }[];
-            ayanamsa: number;
-            chartType: string;
-            currentDasha?: {
-                mahadasha: {
-                    planet: string;
-                    startDate: string;
-                    endDate: string;
-                    years: number;
-                };
-                antardasha?: {
-                    planet: string;
-                    startDate: string;
-                    endDate: string;
-                    years: number;
-                } | undefined;
-                pratyantardasha?: {
-                    planet: string;
-                    startDate: string;
-                    endDate: string;
-                    years: number;
-                } | undefined;
-                sookshmadasha?: {
-                    planet: string;
-                    startDate: string;
-                    endDate: string;
-                    years: number;
-                } | undefined;
+            lagnaDegree?: number | undefined;
+            focus?: {
+                themes?: string[] | undefined;
+                houses?: number[] | undefined;
             } | undefined;
-        } | undefined;
-        vedicD10?: {
-            ascendant: string;
-            ascendantDegree: number;
-            planets: {
-                longitude: number;
-                name: string;
-                sign: string;
-                signIndex: number;
-                degree: number;
-                isRetrograde: boolean;
-                navamsaSign: string;
-                dasamsaSign: string;
-                drekkanaSign?: string | undefined;
-                house?: number | undefined;
-                dignity?: "neutral" | "exalted" | "own" | "debilitated" | undefined;
-            }[];
-            ayanamsa: number;
-            chartType: string;
-            currentDasha?: {
-                mahadasha: {
-                    planet: string;
-                    startDate: string;
-                    endDate: string;
-                    years: number;
-                };
-                antardasha?: {
-                    planet: string;
-                    startDate: string;
-                    endDate: string;
-                    years: number;
-                } | undefined;
-                pratyantardasha?: {
-                    planet: string;
-                    startDate: string;
-                    endDate: string;
-                    years: number;
-                } | undefined;
-                sookshmadasha?: {
-                    planet: string;
-                    startDate: string;
-                    endDate: string;
-                    years: number;
-                } | undefined;
+            fit?: {
+                ok: boolean;
+                problems: string[];
             } | undefined;
+            trace?: {
+                title: string;
+                points: string[];
+            }[] | undefined;
+            tuningId?: number | null | undefined;
         } | undefined;
         timing?: {
-            house: number;
             summary: string;
             timeBased: boolean;
             basis: "question";
@@ -2226,6 +1443,7 @@ export declare const AnalyzeSituationResponse: zod.ZodObject<{
                     durationYears?: number | undefined;
                 };
             };
+            house: number;
             houseSign: string;
             houseLord: string;
             activations: string[];
@@ -2255,6 +1473,23 @@ export declare const AnalyzeSituationResponse: zod.ZodObject<{
                 }[];
                 notes: string[];
             } | null | undefined;
+        } | undefined;
+        skippedReason?: string | null | undefined;
+        outlook?: {
+            chance: number;
+            level: "low" | "high" | "fair";
+            headline: string;
+            favours: string[];
+            against: string[];
+            timing?: {
+                confidence: "low" | "medium" | "high";
+                text: string;
+                basis: string;
+                from: string;
+                to: string;
+                dashaCheck?: string | undefined;
+            } | null | undefined;
+            timingNote?: string | null | undefined;
         } | undefined;
         location?: {
             latitude: number;
@@ -2271,7 +1506,7 @@ export declare const AnalyzeSituationResponse: zod.ZodObject<{
         astroInsight: zod.ZodString;
         advice: zod.ZodString;
         timeframeDays: zod.ZodNumber;
-        source: zod.ZodEnum<["ai+astro", "ai", "engine"]>;
+        source: zod.ZodEnum<["ai+astro", "ai", "inbuilt", "engine"]>;
         usedAi: zod.ZodOptional<zod.ZodBoolean>;
         usedAstrology: zod.ZodOptional<zod.ZodBoolean>;
         calibration: zod.ZodOptional<zod.ZodObject<{
@@ -2305,6 +1540,7 @@ export declare const AnalyzeSituationResponse: zod.ZodObject<{
             logic: number;
         }>>;
     }, "strip", zod.ZodTypeAny, {
+        source: "ai" | "ai+astro" | "inbuilt" | "engine";
         confidence: "low" | "medium" | "high";
         score: number;
         summary: string;
@@ -2312,7 +1548,6 @@ export declare const AnalyzeSituationResponse: zod.ZodObject<{
         astroInsight: string;
         advice: string;
         timeframeDays: number;
-        source: "ai" | "ai+astro" | "engine";
         reasoning?: string | undefined;
         usedAi?: boolean | undefined;
         usedAstrology?: boolean | undefined;
@@ -2332,6 +1567,7 @@ export declare const AnalyzeSituationResponse: zod.ZodObject<{
             logic: number;
         } | undefined;
     }, {
+        source: "ai" | "ai+astro" | "inbuilt" | "engine";
         confidence: "low" | "medium" | "high";
         score: number;
         summary: string;
@@ -2339,7 +1575,6 @@ export declare const AnalyzeSituationResponse: zod.ZodObject<{
         astroInsight: string;
         advice: string;
         timeframeDays: number;
-        source: "ai" | "ai+astro" | "engine";
         reasoning?: string | undefined;
         usedAi?: boolean | undefined;
         usedAstrology?: boolean | undefined;
@@ -2360,26 +1595,26 @@ export declare const AnalyzeSituationResponse: zod.ZodObject<{
         } | undefined;
     }>>;
     modules: zod.ZodOptional<zod.ZodArray<zod.ZodObject<{
-        key: zod.ZodEnum<["AJIT", "MANU", "FILTER", "SIVI", "ASTRO", "AI"]>;
+        key: zod.ZodEnum<["AJIT", "MANU", "FILTER", "SIVI", "ASTRO", "RSMI", "AI"]>;
         name: zod.ZodString;
-        area: zod.ZodEnum<["intent", "emotion", "paths", "astrology", "synthesis"]>;
+        area: zod.ZodEnum<["intent", "emotion", "paths", "astrology", "silence", "synthesis"]>;
         role: zod.ZodOptional<zod.ZodString>;
         active: zod.ZodBoolean;
         verdict: zod.ZodString;
         evidence: zod.ZodArray<zod.ZodString, "many">;
     }, "strip", zod.ZodTypeAny, {
-        key: "AJIT" | "MANU" | "FILTER" | "SIVI" | "ASTRO" | "AI";
-        name: string;
+        key: "AJIT" | "MANU" | "FILTER" | "SIVI" | "ASTRO" | "RSMI" | "AI";
         verdict: string;
-        area: "intent" | "emotion" | "synthesis" | "paths" | "astrology";
+        name: string;
+        area: "intent" | "emotion" | "silence" | "synthesis" | "paths" | "astrology";
         active: boolean;
         evidence: string[];
         role?: string | undefined;
     }, {
-        key: "AJIT" | "MANU" | "FILTER" | "SIVI" | "ASTRO" | "AI";
-        name: string;
+        key: "AJIT" | "MANU" | "FILTER" | "SIVI" | "ASTRO" | "RSMI" | "AI";
         verdict: string;
-        area: "intent" | "emotion" | "synthesis" | "paths" | "astrology";
+        name: string;
+        area: "intent" | "emotion" | "silence" | "synthesis" | "paths" | "astrology";
         active: boolean;
         evidence: string[];
         role?: string | undefined;
@@ -2404,17 +1639,17 @@ export declare const AnalyzeSituationResponse: zod.ZodObject<{
         depth: zod.ZodEnum<["standard", "deep", "expert"]>;
         depthChosen: zod.ZodEnum<["auto", "user"]>;
         lines: zod.ZodArray<zod.ZodObject<{
-            key: zod.ZodEnum<["astro", "ajit", "manu", "sivi", "ai"]>;
+            key: zod.ZodEnum<["astro", "ajit", "manu", "sivi", "rsmi", "ai"]>;
             label: zod.ZodString;
             credits: zod.ZodNumber;
             note: zod.ZodString;
         }, "strip", zod.ZodTypeAny, {
-            key: "astro" | "ajit" | "manu" | "sivi" | "ai";
+            key: "astro" | "ajit" | "manu" | "sivi" | "rsmi" | "ai";
             label: string;
             credits: number;
             note: string;
         }, {
-            key: "astro" | "ajit" | "manu" | "sivi" | "ai";
+            key: "astro" | "ajit" | "manu" | "sivi" | "rsmi" | "ai";
             label: string;
             credits: number;
             note: string;
@@ -2423,7 +1658,7 @@ export declare const AnalyzeSituationResponse: zod.ZodObject<{
         depth: "standard" | "deep" | "expert";
         depthChosen: "auto" | "user";
         lines: {
-            key: "astro" | "ajit" | "manu" | "sivi" | "ai";
+            key: "astro" | "ajit" | "manu" | "sivi" | "rsmi" | "ai";
             label: string;
             credits: number;
             note: string;
@@ -2435,7 +1670,7 @@ export declare const AnalyzeSituationResponse: zod.ZodObject<{
         depth: "standard" | "deep" | "expert";
         depthChosen: "auto" | "user";
         lines: {
-            key: "astro" | "ajit" | "manu" | "sivi" | "ai";
+            key: "astro" | "ajit" | "manu" | "sivi" | "rsmi" | "ai";
             label: string;
             credits: number;
             note: string;
@@ -2456,95 +1691,14 @@ export declare const AnalyzeSituationResponse: zod.ZodObject<{
             signal: "favorable" | "challenging" | "neutral";
         };
         interpretation: string;
-        vedicD1?: {
-            ascendant: string;
-            ascendantDegree: number;
-            planets: {
-                longitude: number;
-                name: string;
-                sign: string;
-                signIndex: number;
-                degree: number;
-                isRetrograde: boolean;
-                navamsaSign: string;
-                dasamsaSign: string;
-                drekkanaSign?: string | undefined;
-                house?: number | undefined;
-                dignity?: "neutral" | "exalted" | "own" | "debilitated" | undefined;
-            }[];
-            ayanamsa: number;
-            chartType: string;
-            currentDasha?: {
-                mahadasha: {
-                    planet: string;
-                    startDate: string;
-                    endDate: string;
-                    years: number;
-                };
-                antardasha?: {
-                    planet: string;
-                    startDate: string;
-                    endDate: string;
-                    years: number;
-                } | undefined;
-                pratyantardasha?: {
-                    planet: string;
-                    startDate: string;
-                    endDate: string;
-                    years: number;
-                } | undefined;
-                sookshmadasha?: {
-                    planet: string;
-                    startDate: string;
-                    endDate: string;
-                    years: number;
-                } | undefined;
-            } | undefined;
+        ascendant?: {
+            sign: string;
+            degree: number;
+            lord?: string | undefined;
         } | undefined;
-        vedicD3?: {
-            ascendant: string;
-            ascendantDegree: number;
-            planets: {
-                longitude: number;
-                name: string;
-                sign: string;
-                signIndex: number;
-                degree: number;
-                isRetrograde: boolean;
-                navamsaSign: string;
-                dasamsaSign: string;
-                drekkanaSign?: string | undefined;
-                house?: number | undefined;
-                dignity?: "neutral" | "exalted" | "own" | "debilitated" | undefined;
-            }[];
-            ayanamsa: number;
-            chartType: string;
-            currentDasha?: {
-                mahadasha: {
-                    planet: string;
-                    startDate: string;
-                    endDate: string;
-                    years: number;
-                };
-                antardasha?: {
-                    planet: string;
-                    startDate: string;
-                    endDate: string;
-                    years: number;
-                } | undefined;
-                pratyantardasha?: {
-                    planet: string;
-                    startDate: string;
-                    endDate: string;
-                    years: number;
-                } | undefined;
-                sookshmadasha?: {
-                    planet: string;
-                    startDate: string;
-                    endDate: string;
-                    years: number;
-                } | undefined;
-            } | undefined;
+        tuning?: {
+            id?: number | null | undefined;
+            astroShare?: number | null | undefined;
         } | undefined;
         prashna?: {
             score: number;
@@ -2566,6 +1720,7 @@ export declare const AnalyzeSituationResponse: zod.ZodObject<{
                 label: string;
                 effect: number;
                 detail: string;
+                family?: string | undefined;
             }[];
             summary: string;
             latitude?: number | undefined;
@@ -2573,99 +1728,22 @@ export declare const AnalyzeSituationResponse: zod.ZodObject<{
             risk?: "low" | "medium" | "high" | undefined;
             stability?: "low" | "medium" | "high" | undefined;
             dominantPlanet?: string | undefined;
-        } | undefined;
-        vedicD9?: {
-            ascendant: string;
-            ascendantDegree: number;
-            planets: {
-                longitude: number;
-                name: string;
-                sign: string;
-                signIndex: number;
-                degree: number;
-                isRetrograde: boolean;
-                navamsaSign: string;
-                dasamsaSign: string;
-                drekkanaSign?: string | undefined;
-                house?: number | undefined;
-                dignity?: "neutral" | "exalted" | "own" | "debilitated" | undefined;
-            }[];
-            ayanamsa: number;
-            chartType: string;
-            currentDasha?: {
-                mahadasha: {
-                    planet: string;
-                    startDate: string;
-                    endDate: string;
-                    years: number;
-                };
-                antardasha?: {
-                    planet: string;
-                    startDate: string;
-                    endDate: string;
-                    years: number;
-                } | undefined;
-                pratyantardasha?: {
-                    planet: string;
-                    startDate: string;
-                    endDate: string;
-                    years: number;
-                } | undefined;
-                sookshmadasha?: {
-                    planet: string;
-                    startDate: string;
-                    endDate: string;
-                    years: number;
-                } | undefined;
+            lagnaDegree?: number | undefined;
+            focus?: {
+                themes?: string[] | undefined;
+                houses?: number[] | undefined;
             } | undefined;
-        } | undefined;
-        vedicD10?: {
-            ascendant: string;
-            ascendantDegree: number;
-            planets: {
-                longitude: number;
-                name: string;
-                sign: string;
-                signIndex: number;
-                degree: number;
-                isRetrograde: boolean;
-                navamsaSign: string;
-                dasamsaSign: string;
-                drekkanaSign?: string | undefined;
-                house?: number | undefined;
-                dignity?: "neutral" | "exalted" | "own" | "debilitated" | undefined;
-            }[];
-            ayanamsa: number;
-            chartType: string;
-            currentDasha?: {
-                mahadasha: {
-                    planet: string;
-                    startDate: string;
-                    endDate: string;
-                    years: number;
-                };
-                antardasha?: {
-                    planet: string;
-                    startDate: string;
-                    endDate: string;
-                    years: number;
-                } | undefined;
-                pratyantardasha?: {
-                    planet: string;
-                    startDate: string;
-                    endDate: string;
-                    years: number;
-                } | undefined;
-                sookshmadasha?: {
-                    planet: string;
-                    startDate: string;
-                    endDate: string;
-                    years: number;
-                } | undefined;
+            fit?: {
+                ok: boolean;
+                problems: string[];
             } | undefined;
+            trace?: {
+                title: string;
+                points: string[];
+            }[] | undefined;
+            tuningId?: number | null | undefined;
         } | undefined;
         timing?: {
-            house: number;
             summary: string;
             timeBased: boolean;
             basis: "question";
@@ -2695,6 +1773,7 @@ export declare const AnalyzeSituationResponse: zod.ZodObject<{
                     durationYears?: number | undefined;
                 };
             };
+            house: number;
             houseSign: string;
             houseLord: string;
             activations: string[];
@@ -2725,6 +1804,23 @@ export declare const AnalyzeSituationResponse: zod.ZodObject<{
                 notes: string[];
             } | null | undefined;
         } | undefined;
+        skippedReason?: string | null | undefined;
+        outlook?: {
+            chance: number;
+            level: "low" | "high" | "fair";
+            headline: string;
+            favours: string[];
+            against: string[];
+            timing?: {
+                confidence: "low" | "medium" | "high";
+                text: string;
+                basis: string;
+                from: string;
+                to: string;
+                dashaCheck?: string | undefined;
+            } | null | undefined;
+            timingNote?: string | null | undefined;
+        } | undefined;
         location?: {
             latitude: number;
             longitude: number;
@@ -2742,18 +1838,34 @@ export declare const AnalyzeSituationResponse: zod.ZodObject<{
         intensity: "low" | "medium" | "high";
     };
     simulation: {
+        source: "ai" | "rules";
+        context: {
+            desiredOutcome: string;
+            inferred: boolean;
+            knownFacts: string[];
+            constraints: string[];
+        };
         bestPath: {
             action: string;
             risk: "low" | "medium" | "high";
             stability: "low" | "medium" | "high";
             outcome: "positive" | "negative" | "mixed";
+            benefits: string[];
+            downsides: string[];
+            uncertainties: string[];
+            reversible: boolean;
         };
         alternatives: {
             action: string;
             risk: "low" | "medium" | "high";
             stability: "low" | "medium" | "high";
             outcome: "positive" | "negative" | "mixed";
+            benefits: string[];
+            downsides: string[];
+            uncertainties: string[];
+            reversible: boolean;
         }[];
+        comparison: string;
     };
     finalVerdict: {
         recommendedAction: string;
@@ -2768,11 +1880,15 @@ export declare const AnalyzeSituationResponse: zod.ZodObject<{
         useAi?: boolean | undefined;
         useAstrology?: boolean | undefined;
     } | undefined;
+    clarifications?: {
+        question: string;
+        answer: string;
+    }[] | undefined;
     credits?: {
         depth: "standard" | "deep" | "expert";
         depthChosen: "auto" | "user";
         lines: {
-            key: "astro" | "ajit" | "manu" | "sivi" | "ai";
+            key: "astro" | "ajit" | "manu" | "sivi" | "rsmi" | "ai";
             label: string;
             credits: number;
             note: string;
@@ -2781,7 +1897,40 @@ export declare const AnalyzeSituationResponse: zod.ZodObject<{
         balance: number | null;
         charged: number;
     } | undefined;
+    safety?: {
+        action: "allow" | "support" | "redirect" | "block";
+        category: "none" | "self_harm" | "self_harm_method" | "harm_others" | "weapons" | "minor_sexual" | "manipulation";
+        message?: string | undefined;
+    } | undefined;
+    silence?: {
+        source: "ai" | "rules";
+        subject: "other" | "self";
+        channel: "message" | "in_person" | "call" | "organisation";
+        trigger: string;
+        duration: {
+            bucket: "unknown" | "moments" | "minutes" | "hours" | "days" | "weeks";
+            text?: string | null | undefined;
+        };
+        meanings: {
+            why: string;
+            meaning: string;
+            likelihood: "more likely" | "possible" | "less likely";
+        }[];
+        unknowns: string[];
+        checks: string[];
+        caution: string;
+        who?: string | null | undefined;
+    } | undefined;
+    indirectRoute?: {
+        source: "ai" | "rules";
+        blocker: string;
+        cues: string[];
+        idea: string;
+        steps: string[];
+        fairness: string;
+    } | undefined;
     synthesis?: {
+        source: "ai" | "ai+astro" | "inbuilt" | "engine";
         confidence: "low" | "medium" | "high";
         score: number;
         summary: string;
@@ -2789,7 +1938,6 @@ export declare const AnalyzeSituationResponse: zod.ZodObject<{
         astroInsight: string;
         advice: string;
         timeframeDays: number;
-        source: "ai" | "ai+astro" | "engine";
         reasoning?: string | undefined;
         usedAi?: boolean | undefined;
         usedAstrology?: boolean | undefined;
@@ -2810,10 +1958,10 @@ export declare const AnalyzeSituationResponse: zod.ZodObject<{
         } | undefined;
     } | undefined;
     modules?: {
-        key: "AJIT" | "MANU" | "FILTER" | "SIVI" | "ASTRO" | "AI";
-        name: string;
+        key: "AJIT" | "MANU" | "FILTER" | "SIVI" | "ASTRO" | "RSMI" | "AI";
         verdict: string;
-        area: "intent" | "emotion" | "synthesis" | "paths" | "astrology";
+        name: string;
+        area: "intent" | "emotion" | "silence" | "synthesis" | "paths" | "astrology";
         active: boolean;
         evidence: string[];
         role?: string | undefined;
@@ -2829,95 +1977,14 @@ export declare const AnalyzeSituationResponse: zod.ZodObject<{
             signal: "favorable" | "challenging" | "neutral";
         };
         interpretation: string;
-        vedicD1?: {
-            ascendant: string;
-            ascendantDegree: number;
-            planets: {
-                longitude: number;
-                name: string;
-                sign: string;
-                signIndex: number;
-                degree: number;
-                isRetrograde: boolean;
-                navamsaSign: string;
-                dasamsaSign: string;
-                drekkanaSign?: string | undefined;
-                house?: number | undefined;
-                dignity?: "neutral" | "exalted" | "own" | "debilitated" | undefined;
-            }[];
-            ayanamsa: number;
-            chartType: string;
-            currentDasha?: {
-                mahadasha: {
-                    planet: string;
-                    startDate: string;
-                    endDate: string;
-                    years: number;
-                };
-                antardasha?: {
-                    planet: string;
-                    startDate: string;
-                    endDate: string;
-                    years: number;
-                } | undefined;
-                pratyantardasha?: {
-                    planet: string;
-                    startDate: string;
-                    endDate: string;
-                    years: number;
-                } | undefined;
-                sookshmadasha?: {
-                    planet: string;
-                    startDate: string;
-                    endDate: string;
-                    years: number;
-                } | undefined;
-            } | undefined;
+        ascendant?: {
+            sign: string;
+            degree: number;
+            lord?: string | undefined;
         } | undefined;
-        vedicD3?: {
-            ascendant: string;
-            ascendantDegree: number;
-            planets: {
-                longitude: number;
-                name: string;
-                sign: string;
-                signIndex: number;
-                degree: number;
-                isRetrograde: boolean;
-                navamsaSign: string;
-                dasamsaSign: string;
-                drekkanaSign?: string | undefined;
-                house?: number | undefined;
-                dignity?: "neutral" | "exalted" | "own" | "debilitated" | undefined;
-            }[];
-            ayanamsa: number;
-            chartType: string;
-            currentDasha?: {
-                mahadasha: {
-                    planet: string;
-                    startDate: string;
-                    endDate: string;
-                    years: number;
-                };
-                antardasha?: {
-                    planet: string;
-                    startDate: string;
-                    endDate: string;
-                    years: number;
-                } | undefined;
-                pratyantardasha?: {
-                    planet: string;
-                    startDate: string;
-                    endDate: string;
-                    years: number;
-                } | undefined;
-                sookshmadasha?: {
-                    planet: string;
-                    startDate: string;
-                    endDate: string;
-                    years: number;
-                } | undefined;
-            } | undefined;
+        tuning?: {
+            id?: number | null | undefined;
+            astroShare?: number | null | undefined;
         } | undefined;
         prashna?: {
             score: number;
@@ -2939,6 +2006,7 @@ export declare const AnalyzeSituationResponse: zod.ZodObject<{
                 label: string;
                 effect: number;
                 detail: string;
+                family?: string | undefined;
             }[];
             summary: string;
             latitude?: number | undefined;
@@ -2946,99 +2014,22 @@ export declare const AnalyzeSituationResponse: zod.ZodObject<{
             risk?: "low" | "medium" | "high" | undefined;
             stability?: "low" | "medium" | "high" | undefined;
             dominantPlanet?: string | undefined;
-        } | undefined;
-        vedicD9?: {
-            ascendant: string;
-            ascendantDegree: number;
-            planets: {
-                longitude: number;
-                name: string;
-                sign: string;
-                signIndex: number;
-                degree: number;
-                isRetrograde: boolean;
-                navamsaSign: string;
-                dasamsaSign: string;
-                drekkanaSign?: string | undefined;
-                house?: number | undefined;
-                dignity?: "neutral" | "exalted" | "own" | "debilitated" | undefined;
-            }[];
-            ayanamsa: number;
-            chartType: string;
-            currentDasha?: {
-                mahadasha: {
-                    planet: string;
-                    startDate: string;
-                    endDate: string;
-                    years: number;
-                };
-                antardasha?: {
-                    planet: string;
-                    startDate: string;
-                    endDate: string;
-                    years: number;
-                } | undefined;
-                pratyantardasha?: {
-                    planet: string;
-                    startDate: string;
-                    endDate: string;
-                    years: number;
-                } | undefined;
-                sookshmadasha?: {
-                    planet: string;
-                    startDate: string;
-                    endDate: string;
-                    years: number;
-                } | undefined;
+            lagnaDegree?: number | undefined;
+            focus?: {
+                themes?: string[] | undefined;
+                houses?: number[] | undefined;
             } | undefined;
-        } | undefined;
-        vedicD10?: {
-            ascendant: string;
-            ascendantDegree: number;
-            planets: {
-                longitude: number;
-                name: string;
-                sign: string;
-                signIndex: number;
-                degree: number;
-                isRetrograde: boolean;
-                navamsaSign: string;
-                dasamsaSign: string;
-                drekkanaSign?: string | undefined;
-                house?: number | undefined;
-                dignity?: "neutral" | "exalted" | "own" | "debilitated" | undefined;
-            }[];
-            ayanamsa: number;
-            chartType: string;
-            currentDasha?: {
-                mahadasha: {
-                    planet: string;
-                    startDate: string;
-                    endDate: string;
-                    years: number;
-                };
-                antardasha?: {
-                    planet: string;
-                    startDate: string;
-                    endDate: string;
-                    years: number;
-                } | undefined;
-                pratyantardasha?: {
-                    planet: string;
-                    startDate: string;
-                    endDate: string;
-                    years: number;
-                } | undefined;
-                sookshmadasha?: {
-                    planet: string;
-                    startDate: string;
-                    endDate: string;
-                    years: number;
-                } | undefined;
+            fit?: {
+                ok: boolean;
+                problems: string[];
             } | undefined;
+            trace?: {
+                title: string;
+                points: string[];
+            }[] | undefined;
+            tuningId?: number | null | undefined;
         } | undefined;
         timing?: {
-            house: number;
             summary: string;
             timeBased: boolean;
             basis: "question";
@@ -3068,6 +2059,7 @@ export declare const AnalyzeSituationResponse: zod.ZodObject<{
                     durationYears?: number | undefined;
                 };
             };
+            house: number;
             houseSign: string;
             houseLord: string;
             activations: string[];
@@ -3098,6 +2090,23 @@ export declare const AnalyzeSituationResponse: zod.ZodObject<{
                 notes: string[];
             } | null | undefined;
         } | undefined;
+        skippedReason?: string | null | undefined;
+        outlook?: {
+            chance: number;
+            level: "low" | "high" | "fair";
+            headline: string;
+            favours: string[];
+            against: string[];
+            timing?: {
+                confidence: "low" | "medium" | "high";
+                text: string;
+                basis: string;
+                from: string;
+                to: string;
+                dashaCheck?: string | undefined;
+            } | null | undefined;
+            timingNote?: string | null | undefined;
+        } | undefined;
         location?: {
             latitude: number;
             longitude: number;
@@ -3115,18 +2124,34 @@ export declare const AnalyzeSituationResponse: zod.ZodObject<{
         intensity: "low" | "medium" | "high";
     };
     simulation: {
+        source: "ai" | "rules";
+        context: {
+            desiredOutcome: string;
+            inferred: boolean;
+            knownFacts: string[];
+            constraints: string[];
+        };
         bestPath: {
             action: string;
             risk: "low" | "medium" | "high";
             stability: "low" | "medium" | "high";
             outcome: "positive" | "negative" | "mixed";
+            benefits: string[];
+            downsides: string[];
+            uncertainties: string[];
+            reversible: boolean;
         };
         alternatives: {
             action: string;
             risk: "low" | "medium" | "high";
             stability: "low" | "medium" | "high";
             outcome: "positive" | "negative" | "mixed";
+            benefits: string[];
+            downsides: string[];
+            uncertainties: string[];
+            reversible: boolean;
         }[];
+        comparison: string;
     };
     finalVerdict: {
         recommendedAction: string;
@@ -3141,11 +2166,15 @@ export declare const AnalyzeSituationResponse: zod.ZodObject<{
         useAi?: boolean | undefined;
         useAstrology?: boolean | undefined;
     } | undefined;
+    clarifications?: {
+        question: string;
+        answer: string;
+    }[] | undefined;
     credits?: {
         depth: "standard" | "deep" | "expert";
         depthChosen: "auto" | "user";
         lines: {
-            key: "astro" | "ajit" | "manu" | "sivi" | "ai";
+            key: "astro" | "ajit" | "manu" | "sivi" | "rsmi" | "ai";
             label: string;
             credits: number;
             note: string;
@@ -3154,7 +2183,40 @@ export declare const AnalyzeSituationResponse: zod.ZodObject<{
         balance: number | null;
         charged: number;
     } | undefined;
+    safety?: {
+        action: "allow" | "support" | "redirect" | "block";
+        category: "none" | "self_harm" | "self_harm_method" | "harm_others" | "weapons" | "minor_sexual" | "manipulation";
+        message?: string | undefined;
+    } | undefined;
+    silence?: {
+        source: "ai" | "rules";
+        subject: "other" | "self";
+        channel: "message" | "in_person" | "call" | "organisation";
+        trigger: string;
+        duration: {
+            bucket: "unknown" | "moments" | "minutes" | "hours" | "days" | "weeks";
+            text?: string | null | undefined;
+        };
+        meanings: {
+            why: string;
+            meaning: string;
+            likelihood: "more likely" | "possible" | "less likely";
+        }[];
+        unknowns: string[];
+        checks: string[];
+        caution: string;
+        who?: string | null | undefined;
+    } | undefined;
+    indirectRoute?: {
+        source: "ai" | "rules";
+        blocker: string;
+        cues: string[];
+        idea: string;
+        steps: string[];
+        fairness: string;
+    } | undefined;
     synthesis?: {
+        source: "ai" | "ai+astro" | "inbuilt" | "engine";
         confidence: "low" | "medium" | "high";
         score: number;
         summary: string;
@@ -3162,7 +2224,6 @@ export declare const AnalyzeSituationResponse: zod.ZodObject<{
         astroInsight: string;
         advice: string;
         timeframeDays: number;
-        source: "ai" | "ai+astro" | "engine";
         reasoning?: string | undefined;
         usedAi?: boolean | undefined;
         usedAstrology?: boolean | undefined;
@@ -3183,10 +2244,10 @@ export declare const AnalyzeSituationResponse: zod.ZodObject<{
         } | undefined;
     } | undefined;
     modules?: {
-        key: "AJIT" | "MANU" | "FILTER" | "SIVI" | "ASTRO" | "AI";
-        name: string;
+        key: "AJIT" | "MANU" | "FILTER" | "SIVI" | "ASTRO" | "RSMI" | "AI";
         verdict: string;
-        area: "intent" | "emotion" | "synthesis" | "paths" | "astrology";
+        name: string;
+        area: "intent" | "emotion" | "silence" | "synthesis" | "paths" | "astrology";
         active: boolean;
         evidence: string[];
         role?: string | undefined;
@@ -3208,6 +2269,8 @@ export declare const GetAnalysisHistoryQueryParams: zod.ZodObject<{
     limit?: number | undefined;
     offset?: number | undefined;
 }>;
+export declare const getAnalysisHistoryResponseItemsItemFullAnalysisClarificationsItemQuestionMax = 300;
+export declare const getAnalysisHistoryResponseItemsItemFullAnalysisClarificationsItemAnswerMax = 500;
 export declare const GetAnalysisHistoryResponse: zod.ZodObject<{
     items: zod.ZodArray<zod.ZodObject<{
         id: zod.ZodNumber;
@@ -3247,65 +2310,253 @@ export declare const GetAnalysisHistoryResponse: zod.ZodObject<{
                 intensity: "low" | "medium" | "high";
             }>;
             simulation: zod.ZodObject<{
+                context: zod.ZodObject<{
+                    desiredOutcome: zod.ZodString;
+                    inferred: zod.ZodBoolean;
+                    knownFacts: zod.ZodArray<zod.ZodString, "many">;
+                    constraints: zod.ZodArray<zod.ZodString, "many">;
+                }, "strip", zod.ZodTypeAny, {
+                    desiredOutcome: string;
+                    inferred: boolean;
+                    knownFacts: string[];
+                    constraints: string[];
+                }, {
+                    desiredOutcome: string;
+                    inferred: boolean;
+                    knownFacts: string[];
+                    constraints: string[];
+                }>;
                 bestPath: zod.ZodObject<{
                     action: zod.ZodString;
                     risk: zod.ZodEnum<["low", "medium", "high"]>;
                     stability: zod.ZodEnum<["low", "medium", "high"]>;
                     outcome: zod.ZodEnum<["positive", "negative", "mixed"]>;
+                    benefits: zod.ZodArray<zod.ZodString, "many">;
+                    downsides: zod.ZodArray<zod.ZodString, "many">;
+                    uncertainties: zod.ZodArray<zod.ZodString, "many">;
+                    reversible: zod.ZodBoolean;
                 }, "strip", zod.ZodTypeAny, {
                     action: string;
                     risk: "low" | "medium" | "high";
                     stability: "low" | "medium" | "high";
                     outcome: "positive" | "negative" | "mixed";
+                    benefits: string[];
+                    downsides: string[];
+                    uncertainties: string[];
+                    reversible: boolean;
                 }, {
                     action: string;
                     risk: "low" | "medium" | "high";
                     stability: "low" | "medium" | "high";
                     outcome: "positive" | "negative" | "mixed";
+                    benefits: string[];
+                    downsides: string[];
+                    uncertainties: string[];
+                    reversible: boolean;
                 }>;
                 alternatives: zod.ZodArray<zod.ZodObject<{
                     action: zod.ZodString;
                     risk: zod.ZodEnum<["low", "medium", "high"]>;
                     stability: zod.ZodEnum<["low", "medium", "high"]>;
                     outcome: zod.ZodEnum<["positive", "negative", "mixed"]>;
+                    benefits: zod.ZodArray<zod.ZodString, "many">;
+                    downsides: zod.ZodArray<zod.ZodString, "many">;
+                    uncertainties: zod.ZodArray<zod.ZodString, "many">;
+                    reversible: zod.ZodBoolean;
                 }, "strip", zod.ZodTypeAny, {
                     action: string;
                     risk: "low" | "medium" | "high";
                     stability: "low" | "medium" | "high";
                     outcome: "positive" | "negative" | "mixed";
+                    benefits: string[];
+                    downsides: string[];
+                    uncertainties: string[];
+                    reversible: boolean;
                 }, {
                     action: string;
                     risk: "low" | "medium" | "high";
                     stability: "low" | "medium" | "high";
                     outcome: "positive" | "negative" | "mixed";
+                    benefits: string[];
+                    downsides: string[];
+                    uncertainties: string[];
+                    reversible: boolean;
                 }>, "many">;
+                comparison: zod.ZodString;
+                source: zod.ZodEnum<["rules", "ai"]>;
             }, "strip", zod.ZodTypeAny, {
+                source: "ai" | "rules";
+                context: {
+                    desiredOutcome: string;
+                    inferred: boolean;
+                    knownFacts: string[];
+                    constraints: string[];
+                };
                 bestPath: {
                     action: string;
                     risk: "low" | "medium" | "high";
                     stability: "low" | "medium" | "high";
                     outcome: "positive" | "negative" | "mixed";
+                    benefits: string[];
+                    downsides: string[];
+                    uncertainties: string[];
+                    reversible: boolean;
                 };
                 alternatives: {
                     action: string;
                     risk: "low" | "medium" | "high";
                     stability: "low" | "medium" | "high";
                     outcome: "positive" | "negative" | "mixed";
+                    benefits: string[];
+                    downsides: string[];
+                    uncertainties: string[];
+                    reversible: boolean;
                 }[];
+                comparison: string;
             }, {
+                source: "ai" | "rules";
+                context: {
+                    desiredOutcome: string;
+                    inferred: boolean;
+                    knownFacts: string[];
+                    constraints: string[];
+                };
                 bestPath: {
                     action: string;
                     risk: "low" | "medium" | "high";
                     stability: "low" | "medium" | "high";
                     outcome: "positive" | "negative" | "mixed";
+                    benefits: string[];
+                    downsides: string[];
+                    uncertainties: string[];
+                    reversible: boolean;
                 };
                 alternatives: {
                     action: string;
                     risk: "low" | "medium" | "high";
                     stability: "low" | "medium" | "high";
                     outcome: "positive" | "negative" | "mixed";
+                    benefits: string[];
+                    downsides: string[];
+                    uncertainties: string[];
+                    reversible: boolean;
                 }[];
+                comparison: string;
             }>;
+            safety: zod.ZodOptional<zod.ZodObject<{
+                action: zod.ZodEnum<["allow", "support", "redirect", "block"]>;
+                category: zod.ZodEnum<["none", "self_harm", "self_harm_method", "harm_others", "weapons", "minor_sexual", "manipulation"]>;
+                message: zod.ZodOptional<zod.ZodString>;
+            }, "strip", zod.ZodTypeAny, {
+                action: "allow" | "support" | "redirect" | "block";
+                category: "none" | "self_harm" | "self_harm_method" | "harm_others" | "weapons" | "minor_sexual" | "manipulation";
+                message?: string | undefined;
+            }, {
+                action: "allow" | "support" | "redirect" | "block";
+                category: "none" | "self_harm" | "self_harm_method" | "harm_others" | "weapons" | "minor_sexual" | "manipulation";
+                message?: string | undefined;
+            }>>;
+            silence: zod.ZodOptional<zod.ZodObject<{
+                subject: zod.ZodEnum<["other", "self"]>;
+                channel: zod.ZodEnum<["in_person", "message", "call", "organisation"]>;
+                who: zod.ZodOptional<zod.ZodNullable<zod.ZodString>>;
+                trigger: zod.ZodString;
+                duration: zod.ZodObject<{
+                    bucket: zod.ZodEnum<["moments", "minutes", "hours", "days", "weeks", "unknown"]>;
+                    text: zod.ZodOptional<zod.ZodNullable<zod.ZodString>>;
+                }, "strip", zod.ZodTypeAny, {
+                    bucket: "unknown" | "moments" | "minutes" | "hours" | "days" | "weeks";
+                    text?: string | null | undefined;
+                }, {
+                    bucket: "unknown" | "moments" | "minutes" | "hours" | "days" | "weeks";
+                    text?: string | null | undefined;
+                }>;
+                meanings: zod.ZodArray<zod.ZodObject<{
+                    meaning: zod.ZodString;
+                    likelihood: zod.ZodEnum<["more likely", "possible", "less likely"]>;
+                    why: zod.ZodString;
+                }, "strip", zod.ZodTypeAny, {
+                    why: string;
+                    meaning: string;
+                    likelihood: "more likely" | "possible" | "less likely";
+                }, {
+                    why: string;
+                    meaning: string;
+                    likelihood: "more likely" | "possible" | "less likely";
+                }>, "many">;
+                unknowns: zod.ZodArray<zod.ZodString, "many">;
+                checks: zod.ZodArray<zod.ZodString, "many">;
+                caution: zod.ZodString;
+                source: zod.ZodEnum<["rules", "ai"]>;
+            }, "strip", zod.ZodTypeAny, {
+                source: "ai" | "rules";
+                subject: "other" | "self";
+                channel: "message" | "in_person" | "call" | "organisation";
+                trigger: string;
+                duration: {
+                    bucket: "unknown" | "moments" | "minutes" | "hours" | "days" | "weeks";
+                    text?: string | null | undefined;
+                };
+                meanings: {
+                    why: string;
+                    meaning: string;
+                    likelihood: "more likely" | "possible" | "less likely";
+                }[];
+                unknowns: string[];
+                checks: string[];
+                caution: string;
+                who?: string | null | undefined;
+            }, {
+                source: "ai" | "rules";
+                subject: "other" | "self";
+                channel: "message" | "in_person" | "call" | "organisation";
+                trigger: string;
+                duration: {
+                    bucket: "unknown" | "moments" | "minutes" | "hours" | "days" | "weeks";
+                    text?: string | null | undefined;
+                };
+                meanings: {
+                    why: string;
+                    meaning: string;
+                    likelihood: "more likely" | "possible" | "less likely";
+                }[];
+                unknowns: string[];
+                checks: string[];
+                caution: string;
+                who?: string | null | undefined;
+            }>>;
+            indirectRoute: zod.ZodOptional<zod.ZodObject<{
+                blocker: zod.ZodString;
+                cues: zod.ZodArray<zod.ZodString, "many">;
+                idea: zod.ZodString;
+                steps: zod.ZodArray<zod.ZodString, "many">;
+                fairness: zod.ZodString;
+                source: zod.ZodEnum<["rules", "ai"]>;
+            }, "strip", zod.ZodTypeAny, {
+                source: "ai" | "rules";
+                blocker: string;
+                cues: string[];
+                idea: string;
+                steps: string[];
+                fairness: string;
+            }, {
+                source: "ai" | "rules";
+                blocker: string;
+                cues: string[];
+                idea: string;
+                steps: string[];
+                fairness: string;
+            }>>;
+            clarifications: zod.ZodOptional<zod.ZodArray<zod.ZodObject<{
+                question: zod.ZodString;
+                answer: zod.ZodString;
+            }, "strip", zod.ZodTypeAny, {
+                question: string;
+                answer: string;
+            }, {
+                question: string;
+                answer: string;
+            }>, "many">>;
             finalVerdict: zod.ZodObject<{
                 recommendedAction: zod.ZodString;
                 reasoning: zod.ZodString;
@@ -3337,499 +2588,28 @@ export declare const GetAnalysisHistoryResponse: zod.ZodObject<{
                     signal: "favorable" | "challenging" | "neutral";
                 }>;
                 interpretation: zod.ZodString;
-                vedicD1: zod.ZodOptional<zod.ZodObject<{
-                    ascendant: zod.ZodString;
-                    ascendantDegree: zod.ZodNumber;
-                    planets: zod.ZodArray<zod.ZodObject<{
-                        name: zod.ZodString;
-                        longitude: zod.ZodNumber;
-                        sign: zod.ZodString;
-                        signIndex: zod.ZodNumber;
-                        degree: zod.ZodNumber;
-                        isRetrograde: zod.ZodBoolean;
-                        navamsaSign: zod.ZodString;
-                        dasamsaSign: zod.ZodString;
-                        drekkanaSign: zod.ZodOptional<zod.ZodString>;
-                        house: zod.ZodOptional<zod.ZodNumber>;
-                        dignity: zod.ZodOptional<zod.ZodEnum<["exalted", "own", "debilitated", "neutral"]>>;
-                    }, "strip", zod.ZodTypeAny, {
-                        longitude: number;
-                        name: string;
-                        sign: string;
-                        signIndex: number;
-                        degree: number;
-                        isRetrograde: boolean;
-                        navamsaSign: string;
-                        dasamsaSign: string;
-                        drekkanaSign?: string | undefined;
-                        house?: number | undefined;
-                        dignity?: "neutral" | "exalted" | "own" | "debilitated" | undefined;
-                    }, {
-                        longitude: number;
-                        name: string;
-                        sign: string;
-                        signIndex: number;
-                        degree: number;
-                        isRetrograde: boolean;
-                        navamsaSign: string;
-                        dasamsaSign: string;
-                        drekkanaSign?: string | undefined;
-                        house?: number | undefined;
-                        dignity?: "neutral" | "exalted" | "own" | "debilitated" | undefined;
-                    }>, "many">;
-                    currentDasha: zod.ZodOptional<zod.ZodObject<{
-                        mahadasha: zod.ZodObject<{
-                            planet: zod.ZodString;
-                            startDate: zod.ZodString;
-                            endDate: zod.ZodString;
-                            years: zod.ZodNumber;
-                        }, "strip", zod.ZodTypeAny, {
-                            planet: string;
-                            startDate: string;
-                            endDate: string;
-                            years: number;
-                        }, {
-                            planet: string;
-                            startDate: string;
-                            endDate: string;
-                            years: number;
-                        }>;
-                        antardasha: zod.ZodOptional<zod.ZodObject<{
-                            planet: zod.ZodString;
-                            startDate: zod.ZodString;
-                            endDate: zod.ZodString;
-                            years: zod.ZodNumber;
-                        }, "strip", zod.ZodTypeAny, {
-                            planet: string;
-                            startDate: string;
-                            endDate: string;
-                            years: number;
-                        }, {
-                            planet: string;
-                            startDate: string;
-                            endDate: string;
-                            years: number;
-                        }>>;
-                        pratyantardasha: zod.ZodOptional<zod.ZodObject<{
-                            planet: zod.ZodString;
-                            startDate: zod.ZodString;
-                            endDate: zod.ZodString;
-                            years: zod.ZodNumber;
-                        }, "strip", zod.ZodTypeAny, {
-                            planet: string;
-                            startDate: string;
-                            endDate: string;
-                            years: number;
-                        }, {
-                            planet: string;
-                            startDate: string;
-                            endDate: string;
-                            years: number;
-                        }>>;
-                        sookshmadasha: zod.ZodOptional<zod.ZodObject<{
-                            planet: zod.ZodString;
-                            startDate: zod.ZodString;
-                            endDate: zod.ZodString;
-                            years: zod.ZodNumber;
-                        }, "strip", zod.ZodTypeAny, {
-                            planet: string;
-                            startDate: string;
-                            endDate: string;
-                            years: number;
-                        }, {
-                            planet: string;
-                            startDate: string;
-                            endDate: string;
-                            years: number;
-                        }>>;
-                    }, "strip", zod.ZodTypeAny, {
-                        mahadasha: {
-                            planet: string;
-                            startDate: string;
-                            endDate: string;
-                            years: number;
-                        };
-                        antardasha?: {
-                            planet: string;
-                            startDate: string;
-                            endDate: string;
-                            years: number;
-                        } | undefined;
-                        pratyantardasha?: {
-                            planet: string;
-                            startDate: string;
-                            endDate: string;
-                            years: number;
-                        } | undefined;
-                        sookshmadasha?: {
-                            planet: string;
-                            startDate: string;
-                            endDate: string;
-                            years: number;
-                        } | undefined;
-                    }, {
-                        mahadasha: {
-                            planet: string;
-                            startDate: string;
-                            endDate: string;
-                            years: number;
-                        };
-                        antardasha?: {
-                            planet: string;
-                            startDate: string;
-                            endDate: string;
-                            years: number;
-                        } | undefined;
-                        pratyantardasha?: {
-                            planet: string;
-                            startDate: string;
-                            endDate: string;
-                            years: number;
-                        } | undefined;
-                        sookshmadasha?: {
-                            planet: string;
-                            startDate: string;
-                            endDate: string;
-                            years: number;
-                        } | undefined;
-                    }>>;
-                    ayanamsa: zod.ZodNumber;
-                    chartType: zod.ZodString;
+                ascendant: zod.ZodOptional<zod.ZodObject<{
+                    sign: zod.ZodString;
+                    degree: zod.ZodNumber;
+                    lord: zod.ZodOptional<zod.ZodString>;
                 }, "strip", zod.ZodTypeAny, {
-                    ascendant: string;
-                    ascendantDegree: number;
-                    planets: {
-                        longitude: number;
-                        name: string;
-                        sign: string;
-                        signIndex: number;
-                        degree: number;
-                        isRetrograde: boolean;
-                        navamsaSign: string;
-                        dasamsaSign: string;
-                        drekkanaSign?: string | undefined;
-                        house?: number | undefined;
-                        dignity?: "neutral" | "exalted" | "own" | "debilitated" | undefined;
-                    }[];
-                    ayanamsa: number;
-                    chartType: string;
-                    currentDasha?: {
-                        mahadasha: {
-                            planet: string;
-                            startDate: string;
-                            endDate: string;
-                            years: number;
-                        };
-                        antardasha?: {
-                            planet: string;
-                            startDate: string;
-                            endDate: string;
-                            years: number;
-                        } | undefined;
-                        pratyantardasha?: {
-                            planet: string;
-                            startDate: string;
-                            endDate: string;
-                            years: number;
-                        } | undefined;
-                        sookshmadasha?: {
-                            planet: string;
-                            startDate: string;
-                            endDate: string;
-                            years: number;
-                        } | undefined;
-                    } | undefined;
+                    sign: string;
+                    degree: number;
+                    lord?: string | undefined;
                 }, {
-                    ascendant: string;
-                    ascendantDegree: number;
-                    planets: {
-                        longitude: number;
-                        name: string;
-                        sign: string;
-                        signIndex: number;
-                        degree: number;
-                        isRetrograde: boolean;
-                        navamsaSign: string;
-                        dasamsaSign: string;
-                        drekkanaSign?: string | undefined;
-                        house?: number | undefined;
-                        dignity?: "neutral" | "exalted" | "own" | "debilitated" | undefined;
-                    }[];
-                    ayanamsa: number;
-                    chartType: string;
-                    currentDasha?: {
-                        mahadasha: {
-                            planet: string;
-                            startDate: string;
-                            endDate: string;
-                            years: number;
-                        };
-                        antardasha?: {
-                            planet: string;
-                            startDate: string;
-                            endDate: string;
-                            years: number;
-                        } | undefined;
-                        pratyantardasha?: {
-                            planet: string;
-                            startDate: string;
-                            endDate: string;
-                            years: number;
-                        } | undefined;
-                        sookshmadasha?: {
-                            planet: string;
-                            startDate: string;
-                            endDate: string;
-                            years: number;
-                        } | undefined;
-                    } | undefined;
+                    sign: string;
+                    degree: number;
+                    lord?: string | undefined;
                 }>>;
-                vedicD3: zod.ZodOptional<zod.ZodObject<{
-                    ascendant: zod.ZodString;
-                    ascendantDegree: zod.ZodNumber;
-                    planets: zod.ZodArray<zod.ZodObject<{
-                        name: zod.ZodString;
-                        longitude: zod.ZodNumber;
-                        sign: zod.ZodString;
-                        signIndex: zod.ZodNumber;
-                        degree: zod.ZodNumber;
-                        isRetrograde: zod.ZodBoolean;
-                        navamsaSign: zod.ZodString;
-                        dasamsaSign: zod.ZodString;
-                        drekkanaSign: zod.ZodOptional<zod.ZodString>;
-                        house: zod.ZodOptional<zod.ZodNumber>;
-                        dignity: zod.ZodOptional<zod.ZodEnum<["exalted", "own", "debilitated", "neutral"]>>;
-                    }, "strip", zod.ZodTypeAny, {
-                        longitude: number;
-                        name: string;
-                        sign: string;
-                        signIndex: number;
-                        degree: number;
-                        isRetrograde: boolean;
-                        navamsaSign: string;
-                        dasamsaSign: string;
-                        drekkanaSign?: string | undefined;
-                        house?: number | undefined;
-                        dignity?: "neutral" | "exalted" | "own" | "debilitated" | undefined;
-                    }, {
-                        longitude: number;
-                        name: string;
-                        sign: string;
-                        signIndex: number;
-                        degree: number;
-                        isRetrograde: boolean;
-                        navamsaSign: string;
-                        dasamsaSign: string;
-                        drekkanaSign?: string | undefined;
-                        house?: number | undefined;
-                        dignity?: "neutral" | "exalted" | "own" | "debilitated" | undefined;
-                    }>, "many">;
-                    currentDasha: zod.ZodOptional<zod.ZodObject<{
-                        mahadasha: zod.ZodObject<{
-                            planet: zod.ZodString;
-                            startDate: zod.ZodString;
-                            endDate: zod.ZodString;
-                            years: zod.ZodNumber;
-                        }, "strip", zod.ZodTypeAny, {
-                            planet: string;
-                            startDate: string;
-                            endDate: string;
-                            years: number;
-                        }, {
-                            planet: string;
-                            startDate: string;
-                            endDate: string;
-                            years: number;
-                        }>;
-                        antardasha: zod.ZodOptional<zod.ZodObject<{
-                            planet: zod.ZodString;
-                            startDate: zod.ZodString;
-                            endDate: zod.ZodString;
-                            years: zod.ZodNumber;
-                        }, "strip", zod.ZodTypeAny, {
-                            planet: string;
-                            startDate: string;
-                            endDate: string;
-                            years: number;
-                        }, {
-                            planet: string;
-                            startDate: string;
-                            endDate: string;
-                            years: number;
-                        }>>;
-                        pratyantardasha: zod.ZodOptional<zod.ZodObject<{
-                            planet: zod.ZodString;
-                            startDate: zod.ZodString;
-                            endDate: zod.ZodString;
-                            years: zod.ZodNumber;
-                        }, "strip", zod.ZodTypeAny, {
-                            planet: string;
-                            startDate: string;
-                            endDate: string;
-                            years: number;
-                        }, {
-                            planet: string;
-                            startDate: string;
-                            endDate: string;
-                            years: number;
-                        }>>;
-                        sookshmadasha: zod.ZodOptional<zod.ZodObject<{
-                            planet: zod.ZodString;
-                            startDate: zod.ZodString;
-                            endDate: zod.ZodString;
-                            years: zod.ZodNumber;
-                        }, "strip", zod.ZodTypeAny, {
-                            planet: string;
-                            startDate: string;
-                            endDate: string;
-                            years: number;
-                        }, {
-                            planet: string;
-                            startDate: string;
-                            endDate: string;
-                            years: number;
-                        }>>;
-                    }, "strip", zod.ZodTypeAny, {
-                        mahadasha: {
-                            planet: string;
-                            startDate: string;
-                            endDate: string;
-                            years: number;
-                        };
-                        antardasha?: {
-                            planet: string;
-                            startDate: string;
-                            endDate: string;
-                            years: number;
-                        } | undefined;
-                        pratyantardasha?: {
-                            planet: string;
-                            startDate: string;
-                            endDate: string;
-                            years: number;
-                        } | undefined;
-                        sookshmadasha?: {
-                            planet: string;
-                            startDate: string;
-                            endDate: string;
-                            years: number;
-                        } | undefined;
-                    }, {
-                        mahadasha: {
-                            planet: string;
-                            startDate: string;
-                            endDate: string;
-                            years: number;
-                        };
-                        antardasha?: {
-                            planet: string;
-                            startDate: string;
-                            endDate: string;
-                            years: number;
-                        } | undefined;
-                        pratyantardasha?: {
-                            planet: string;
-                            startDate: string;
-                            endDate: string;
-                            years: number;
-                        } | undefined;
-                        sookshmadasha?: {
-                            planet: string;
-                            startDate: string;
-                            endDate: string;
-                            years: number;
-                        } | undefined;
-                    }>>;
-                    ayanamsa: zod.ZodNumber;
-                    chartType: zod.ZodString;
+                tuning: zod.ZodOptional<zod.ZodObject<{
+                    id: zod.ZodOptional<zod.ZodNullable<zod.ZodNumber>>;
+                    astroShare: zod.ZodOptional<zod.ZodNullable<zod.ZodNumber>>;
                 }, "strip", zod.ZodTypeAny, {
-                    ascendant: string;
-                    ascendantDegree: number;
-                    planets: {
-                        longitude: number;
-                        name: string;
-                        sign: string;
-                        signIndex: number;
-                        degree: number;
-                        isRetrograde: boolean;
-                        navamsaSign: string;
-                        dasamsaSign: string;
-                        drekkanaSign?: string | undefined;
-                        house?: number | undefined;
-                        dignity?: "neutral" | "exalted" | "own" | "debilitated" | undefined;
-                    }[];
-                    ayanamsa: number;
-                    chartType: string;
-                    currentDasha?: {
-                        mahadasha: {
-                            planet: string;
-                            startDate: string;
-                            endDate: string;
-                            years: number;
-                        };
-                        antardasha?: {
-                            planet: string;
-                            startDate: string;
-                            endDate: string;
-                            years: number;
-                        } | undefined;
-                        pratyantardasha?: {
-                            planet: string;
-                            startDate: string;
-                            endDate: string;
-                            years: number;
-                        } | undefined;
-                        sookshmadasha?: {
-                            planet: string;
-                            startDate: string;
-                            endDate: string;
-                            years: number;
-                        } | undefined;
-                    } | undefined;
+                    id?: number | null | undefined;
+                    astroShare?: number | null | undefined;
                 }, {
-                    ascendant: string;
-                    ascendantDegree: number;
-                    planets: {
-                        longitude: number;
-                        name: string;
-                        sign: string;
-                        signIndex: number;
-                        degree: number;
-                        isRetrograde: boolean;
-                        navamsaSign: string;
-                        dasamsaSign: string;
-                        drekkanaSign?: string | undefined;
-                        house?: number | undefined;
-                        dignity?: "neutral" | "exalted" | "own" | "debilitated" | undefined;
-                    }[];
-                    ayanamsa: number;
-                    chartType: string;
-                    currentDasha?: {
-                        mahadasha: {
-                            planet: string;
-                            startDate: string;
-                            endDate: string;
-                            years: number;
-                        };
-                        antardasha?: {
-                            planet: string;
-                            startDate: string;
-                            endDate: string;
-                            years: number;
-                        } | undefined;
-                        pratyantardasha?: {
-                            planet: string;
-                            startDate: string;
-                            endDate: string;
-                            years: number;
-                        } | undefined;
-                        sookshmadasha?: {
-                            planet: string;
-                            startDate: string;
-                            endDate: string;
-                            years: number;
-                        } | undefined;
-                    } | undefined;
+                    id?: number | null | undefined;
+                    astroShare?: number | null | undefined;
                 }>>;
                 prashna: zod.ZodOptional<zod.ZodObject<{
                     castAt: zod.ZodString;
@@ -3837,6 +2617,7 @@ export declare const GetAnalysisHistoryResponse: zod.ZodObject<{
                     longitude: zod.ZodOptional<zod.ZodNumber>;
                     lagna: zod.ZodString;
                     lagnaLord: zod.ZodString;
+                    lagnaDegree: zod.ZodOptional<zod.ZodNumber>;
                     moonSign: zod.ZodString;
                     moonNakshatra: zod.ZodString;
                     moonWaxing: zod.ZodBoolean;
@@ -3859,14 +2640,17 @@ export declare const GetAnalysisHistoryResponse: zod.ZodObject<{
                         label: zod.ZodString;
                         effect: zod.ZodNumber;
                         detail: zod.ZodString;
+                        family: zod.ZodOptional<zod.ZodString>;
                     }, "strip", zod.ZodTypeAny, {
                         label: string;
                         effect: number;
                         detail: string;
+                        family?: string | undefined;
                     }, {
                         label: string;
                         effect: number;
                         detail: string;
+                        family?: string | undefined;
                     }>, "many">;
                     score: zod.ZodNumber;
                     signal: zod.ZodEnum<["favorable", "challenging", "neutral"]>;
@@ -3874,6 +2658,37 @@ export declare const GetAnalysisHistoryResponse: zod.ZodObject<{
                     risk: zod.ZodOptional<zod.ZodEnum<["low", "medium", "high"]>>;
                     dominantPlanet: zod.ZodOptional<zod.ZodString>;
                     summary: zod.ZodString;
+                    focus: zod.ZodOptional<zod.ZodObject<{
+                        themes: zod.ZodOptional<zod.ZodArray<zod.ZodString, "many">>;
+                        houses: zod.ZodOptional<zod.ZodArray<zod.ZodNumber, "many">>;
+                    }, "strip", zod.ZodTypeAny, {
+                        themes?: string[] | undefined;
+                        houses?: number[] | undefined;
+                    }, {
+                        themes?: string[] | undefined;
+                        houses?: number[] | undefined;
+                    }>>;
+                    fit: zod.ZodOptional<zod.ZodObject<{
+                        ok: zod.ZodBoolean;
+                        problems: zod.ZodArray<zod.ZodString, "many">;
+                    }, "strip", zod.ZodTypeAny, {
+                        ok: boolean;
+                        problems: string[];
+                    }, {
+                        ok: boolean;
+                        problems: string[];
+                    }>>;
+                    trace: zod.ZodOptional<zod.ZodArray<zod.ZodObject<{
+                        title: zod.ZodString;
+                        points: zod.ZodArray<zod.ZodString, "many">;
+                    }, "strip", zod.ZodTypeAny, {
+                        title: string;
+                        points: string[];
+                    }, {
+                        title: string;
+                        points: string[];
+                    }>, "many">>;
+                    tuningId: zod.ZodOptional<zod.ZodNullable<zod.ZodNumber>>;
                 }, "strip", zod.ZodTypeAny, {
                     score: number;
                     signal: "favorable" | "challenging" | "neutral";
@@ -3894,6 +2709,7 @@ export declare const GetAnalysisHistoryResponse: zod.ZodObject<{
                         label: string;
                         effect: number;
                         detail: string;
+                        family?: string | undefined;
                     }[];
                     summary: string;
                     latitude?: number | undefined;
@@ -3901,6 +2717,20 @@ export declare const GetAnalysisHistoryResponse: zod.ZodObject<{
                     risk?: "low" | "medium" | "high" | undefined;
                     stability?: "low" | "medium" | "high" | undefined;
                     dominantPlanet?: string | undefined;
+                    lagnaDegree?: number | undefined;
+                    focus?: {
+                        themes?: string[] | undefined;
+                        houses?: number[] | undefined;
+                    } | undefined;
+                    fit?: {
+                        ok: boolean;
+                        problems: string[];
+                    } | undefined;
+                    trace?: {
+                        title: string;
+                        points: string[];
+                    }[] | undefined;
+                    tuningId?: number | null | undefined;
                 }, {
                     score: number;
                     signal: "favorable" | "challenging" | "neutral";
@@ -3921,6 +2751,7 @@ export declare const GetAnalysisHistoryResponse: zod.ZodObject<{
                         label: string;
                         effect: number;
                         detail: string;
+                        family?: string | undefined;
                     }[];
                     summary: string;
                     latitude?: number | undefined;
@@ -3928,500 +2759,20 @@ export declare const GetAnalysisHistoryResponse: zod.ZodObject<{
                     risk?: "low" | "medium" | "high" | undefined;
                     stability?: "low" | "medium" | "high" | undefined;
                     dominantPlanet?: string | undefined;
-                }>>;
-                vedicD9: zod.ZodOptional<zod.ZodObject<{
-                    ascendant: zod.ZodString;
-                    ascendantDegree: zod.ZodNumber;
-                    planets: zod.ZodArray<zod.ZodObject<{
-                        name: zod.ZodString;
-                        longitude: zod.ZodNumber;
-                        sign: zod.ZodString;
-                        signIndex: zod.ZodNumber;
-                        degree: zod.ZodNumber;
-                        isRetrograde: zod.ZodBoolean;
-                        navamsaSign: zod.ZodString;
-                        dasamsaSign: zod.ZodString;
-                        drekkanaSign: zod.ZodOptional<zod.ZodString>;
-                        house: zod.ZodOptional<zod.ZodNumber>;
-                        dignity: zod.ZodOptional<zod.ZodEnum<["exalted", "own", "debilitated", "neutral"]>>;
-                    }, "strip", zod.ZodTypeAny, {
-                        longitude: number;
-                        name: string;
-                        sign: string;
-                        signIndex: number;
-                        degree: number;
-                        isRetrograde: boolean;
-                        navamsaSign: string;
-                        dasamsaSign: string;
-                        drekkanaSign?: string | undefined;
-                        house?: number | undefined;
-                        dignity?: "neutral" | "exalted" | "own" | "debilitated" | undefined;
-                    }, {
-                        longitude: number;
-                        name: string;
-                        sign: string;
-                        signIndex: number;
-                        degree: number;
-                        isRetrograde: boolean;
-                        navamsaSign: string;
-                        dasamsaSign: string;
-                        drekkanaSign?: string | undefined;
-                        house?: number | undefined;
-                        dignity?: "neutral" | "exalted" | "own" | "debilitated" | undefined;
-                    }>, "many">;
-                    currentDasha: zod.ZodOptional<zod.ZodObject<{
-                        mahadasha: zod.ZodObject<{
-                            planet: zod.ZodString;
-                            startDate: zod.ZodString;
-                            endDate: zod.ZodString;
-                            years: zod.ZodNumber;
-                        }, "strip", zod.ZodTypeAny, {
-                            planet: string;
-                            startDate: string;
-                            endDate: string;
-                            years: number;
-                        }, {
-                            planet: string;
-                            startDate: string;
-                            endDate: string;
-                            years: number;
-                        }>;
-                        antardasha: zod.ZodOptional<zod.ZodObject<{
-                            planet: zod.ZodString;
-                            startDate: zod.ZodString;
-                            endDate: zod.ZodString;
-                            years: zod.ZodNumber;
-                        }, "strip", zod.ZodTypeAny, {
-                            planet: string;
-                            startDate: string;
-                            endDate: string;
-                            years: number;
-                        }, {
-                            planet: string;
-                            startDate: string;
-                            endDate: string;
-                            years: number;
-                        }>>;
-                        pratyantardasha: zod.ZodOptional<zod.ZodObject<{
-                            planet: zod.ZodString;
-                            startDate: zod.ZodString;
-                            endDate: zod.ZodString;
-                            years: zod.ZodNumber;
-                        }, "strip", zod.ZodTypeAny, {
-                            planet: string;
-                            startDate: string;
-                            endDate: string;
-                            years: number;
-                        }, {
-                            planet: string;
-                            startDate: string;
-                            endDate: string;
-                            years: number;
-                        }>>;
-                        sookshmadasha: zod.ZodOptional<zod.ZodObject<{
-                            planet: zod.ZodString;
-                            startDate: zod.ZodString;
-                            endDate: zod.ZodString;
-                            years: zod.ZodNumber;
-                        }, "strip", zod.ZodTypeAny, {
-                            planet: string;
-                            startDate: string;
-                            endDate: string;
-                            years: number;
-                        }, {
-                            planet: string;
-                            startDate: string;
-                            endDate: string;
-                            years: number;
-                        }>>;
-                    }, "strip", zod.ZodTypeAny, {
-                        mahadasha: {
-                            planet: string;
-                            startDate: string;
-                            endDate: string;
-                            years: number;
-                        };
-                        antardasha?: {
-                            planet: string;
-                            startDate: string;
-                            endDate: string;
-                            years: number;
-                        } | undefined;
-                        pratyantardasha?: {
-                            planet: string;
-                            startDate: string;
-                            endDate: string;
-                            years: number;
-                        } | undefined;
-                        sookshmadasha?: {
-                            planet: string;
-                            startDate: string;
-                            endDate: string;
-                            years: number;
-                        } | undefined;
-                    }, {
-                        mahadasha: {
-                            planet: string;
-                            startDate: string;
-                            endDate: string;
-                            years: number;
-                        };
-                        antardasha?: {
-                            planet: string;
-                            startDate: string;
-                            endDate: string;
-                            years: number;
-                        } | undefined;
-                        pratyantardasha?: {
-                            planet: string;
-                            startDate: string;
-                            endDate: string;
-                            years: number;
-                        } | undefined;
-                        sookshmadasha?: {
-                            planet: string;
-                            startDate: string;
-                            endDate: string;
-                            years: number;
-                        } | undefined;
-                    }>>;
-                    ayanamsa: zod.ZodNumber;
-                    chartType: zod.ZodString;
-                }, "strip", zod.ZodTypeAny, {
-                    ascendant: string;
-                    ascendantDegree: number;
-                    planets: {
-                        longitude: number;
-                        name: string;
-                        sign: string;
-                        signIndex: number;
-                        degree: number;
-                        isRetrograde: boolean;
-                        navamsaSign: string;
-                        dasamsaSign: string;
-                        drekkanaSign?: string | undefined;
-                        house?: number | undefined;
-                        dignity?: "neutral" | "exalted" | "own" | "debilitated" | undefined;
-                    }[];
-                    ayanamsa: number;
-                    chartType: string;
-                    currentDasha?: {
-                        mahadasha: {
-                            planet: string;
-                            startDate: string;
-                            endDate: string;
-                            years: number;
-                        };
-                        antardasha?: {
-                            planet: string;
-                            startDate: string;
-                            endDate: string;
-                            years: number;
-                        } | undefined;
-                        pratyantardasha?: {
-                            planet: string;
-                            startDate: string;
-                            endDate: string;
-                            years: number;
-                        } | undefined;
-                        sookshmadasha?: {
-                            planet: string;
-                            startDate: string;
-                            endDate: string;
-                            years: number;
-                        } | undefined;
+                    lagnaDegree?: number | undefined;
+                    focus?: {
+                        themes?: string[] | undefined;
+                        houses?: number[] | undefined;
                     } | undefined;
-                }, {
-                    ascendant: string;
-                    ascendantDegree: number;
-                    planets: {
-                        longitude: number;
-                        name: string;
-                        sign: string;
-                        signIndex: number;
-                        degree: number;
-                        isRetrograde: boolean;
-                        navamsaSign: string;
-                        dasamsaSign: string;
-                        drekkanaSign?: string | undefined;
-                        house?: number | undefined;
-                        dignity?: "neutral" | "exalted" | "own" | "debilitated" | undefined;
-                    }[];
-                    ayanamsa: number;
-                    chartType: string;
-                    currentDasha?: {
-                        mahadasha: {
-                            planet: string;
-                            startDate: string;
-                            endDate: string;
-                            years: number;
-                        };
-                        antardasha?: {
-                            planet: string;
-                            startDate: string;
-                            endDate: string;
-                            years: number;
-                        } | undefined;
-                        pratyantardasha?: {
-                            planet: string;
-                            startDate: string;
-                            endDate: string;
-                            years: number;
-                        } | undefined;
-                        sookshmadasha?: {
-                            planet: string;
-                            startDate: string;
-                            endDate: string;
-                            years: number;
-                        } | undefined;
+                    fit?: {
+                        ok: boolean;
+                        problems: string[];
                     } | undefined;
-                }>>;
-                vedicD10: zod.ZodOptional<zod.ZodObject<{
-                    ascendant: zod.ZodString;
-                    ascendantDegree: zod.ZodNumber;
-                    planets: zod.ZodArray<zod.ZodObject<{
-                        name: zod.ZodString;
-                        longitude: zod.ZodNumber;
-                        sign: zod.ZodString;
-                        signIndex: zod.ZodNumber;
-                        degree: zod.ZodNumber;
-                        isRetrograde: zod.ZodBoolean;
-                        navamsaSign: zod.ZodString;
-                        dasamsaSign: zod.ZodString;
-                        drekkanaSign: zod.ZodOptional<zod.ZodString>;
-                        house: zod.ZodOptional<zod.ZodNumber>;
-                        dignity: zod.ZodOptional<zod.ZodEnum<["exalted", "own", "debilitated", "neutral"]>>;
-                    }, "strip", zod.ZodTypeAny, {
-                        longitude: number;
-                        name: string;
-                        sign: string;
-                        signIndex: number;
-                        degree: number;
-                        isRetrograde: boolean;
-                        navamsaSign: string;
-                        dasamsaSign: string;
-                        drekkanaSign?: string | undefined;
-                        house?: number | undefined;
-                        dignity?: "neutral" | "exalted" | "own" | "debilitated" | undefined;
-                    }, {
-                        longitude: number;
-                        name: string;
-                        sign: string;
-                        signIndex: number;
-                        degree: number;
-                        isRetrograde: boolean;
-                        navamsaSign: string;
-                        dasamsaSign: string;
-                        drekkanaSign?: string | undefined;
-                        house?: number | undefined;
-                        dignity?: "neutral" | "exalted" | "own" | "debilitated" | undefined;
-                    }>, "many">;
-                    currentDasha: zod.ZodOptional<zod.ZodObject<{
-                        mahadasha: zod.ZodObject<{
-                            planet: zod.ZodString;
-                            startDate: zod.ZodString;
-                            endDate: zod.ZodString;
-                            years: zod.ZodNumber;
-                        }, "strip", zod.ZodTypeAny, {
-                            planet: string;
-                            startDate: string;
-                            endDate: string;
-                            years: number;
-                        }, {
-                            planet: string;
-                            startDate: string;
-                            endDate: string;
-                            years: number;
-                        }>;
-                        antardasha: zod.ZodOptional<zod.ZodObject<{
-                            planet: zod.ZodString;
-                            startDate: zod.ZodString;
-                            endDate: zod.ZodString;
-                            years: zod.ZodNumber;
-                        }, "strip", zod.ZodTypeAny, {
-                            planet: string;
-                            startDate: string;
-                            endDate: string;
-                            years: number;
-                        }, {
-                            planet: string;
-                            startDate: string;
-                            endDate: string;
-                            years: number;
-                        }>>;
-                        pratyantardasha: zod.ZodOptional<zod.ZodObject<{
-                            planet: zod.ZodString;
-                            startDate: zod.ZodString;
-                            endDate: zod.ZodString;
-                            years: zod.ZodNumber;
-                        }, "strip", zod.ZodTypeAny, {
-                            planet: string;
-                            startDate: string;
-                            endDate: string;
-                            years: number;
-                        }, {
-                            planet: string;
-                            startDate: string;
-                            endDate: string;
-                            years: number;
-                        }>>;
-                        sookshmadasha: zod.ZodOptional<zod.ZodObject<{
-                            planet: zod.ZodString;
-                            startDate: zod.ZodString;
-                            endDate: zod.ZodString;
-                            years: zod.ZodNumber;
-                        }, "strip", zod.ZodTypeAny, {
-                            planet: string;
-                            startDate: string;
-                            endDate: string;
-                            years: number;
-                        }, {
-                            planet: string;
-                            startDate: string;
-                            endDate: string;
-                            years: number;
-                        }>>;
-                    }, "strip", zod.ZodTypeAny, {
-                        mahadasha: {
-                            planet: string;
-                            startDate: string;
-                            endDate: string;
-                            years: number;
-                        };
-                        antardasha?: {
-                            planet: string;
-                            startDate: string;
-                            endDate: string;
-                            years: number;
-                        } | undefined;
-                        pratyantardasha?: {
-                            planet: string;
-                            startDate: string;
-                            endDate: string;
-                            years: number;
-                        } | undefined;
-                        sookshmadasha?: {
-                            planet: string;
-                            startDate: string;
-                            endDate: string;
-                            years: number;
-                        } | undefined;
-                    }, {
-                        mahadasha: {
-                            planet: string;
-                            startDate: string;
-                            endDate: string;
-                            years: number;
-                        };
-                        antardasha?: {
-                            planet: string;
-                            startDate: string;
-                            endDate: string;
-                            years: number;
-                        } | undefined;
-                        pratyantardasha?: {
-                            planet: string;
-                            startDate: string;
-                            endDate: string;
-                            years: number;
-                        } | undefined;
-                        sookshmadasha?: {
-                            planet: string;
-                            startDate: string;
-                            endDate: string;
-                            years: number;
-                        } | undefined;
-                    }>>;
-                    ayanamsa: zod.ZodNumber;
-                    chartType: zod.ZodString;
-                }, "strip", zod.ZodTypeAny, {
-                    ascendant: string;
-                    ascendantDegree: number;
-                    planets: {
-                        longitude: number;
-                        name: string;
-                        sign: string;
-                        signIndex: number;
-                        degree: number;
-                        isRetrograde: boolean;
-                        navamsaSign: string;
-                        dasamsaSign: string;
-                        drekkanaSign?: string | undefined;
-                        house?: number | undefined;
-                        dignity?: "neutral" | "exalted" | "own" | "debilitated" | undefined;
-                    }[];
-                    ayanamsa: number;
-                    chartType: string;
-                    currentDasha?: {
-                        mahadasha: {
-                            planet: string;
-                            startDate: string;
-                            endDate: string;
-                            years: number;
-                        };
-                        antardasha?: {
-                            planet: string;
-                            startDate: string;
-                            endDate: string;
-                            years: number;
-                        } | undefined;
-                        pratyantardasha?: {
-                            planet: string;
-                            startDate: string;
-                            endDate: string;
-                            years: number;
-                        } | undefined;
-                        sookshmadasha?: {
-                            planet: string;
-                            startDate: string;
-                            endDate: string;
-                            years: number;
-                        } | undefined;
-                    } | undefined;
-                }, {
-                    ascendant: string;
-                    ascendantDegree: number;
-                    planets: {
-                        longitude: number;
-                        name: string;
-                        sign: string;
-                        signIndex: number;
-                        degree: number;
-                        isRetrograde: boolean;
-                        navamsaSign: string;
-                        dasamsaSign: string;
-                        drekkanaSign?: string | undefined;
-                        house?: number | undefined;
-                        dignity?: "neutral" | "exalted" | "own" | "debilitated" | undefined;
-                    }[];
-                    ayanamsa: number;
-                    chartType: string;
-                    currentDasha?: {
-                        mahadasha: {
-                            planet: string;
-                            startDate: string;
-                            endDate: string;
-                            years: number;
-                        };
-                        antardasha?: {
-                            planet: string;
-                            startDate: string;
-                            endDate: string;
-                            years: number;
-                        } | undefined;
-                        pratyantardasha?: {
-                            planet: string;
-                            startDate: string;
-                            endDate: string;
-                            years: number;
-                        } | undefined;
-                        sookshmadasha?: {
-                            planet: string;
-                            startDate: string;
-                            endDate: string;
-                            years: number;
-                        } | undefined;
-                    } | undefined;
+                    trace?: {
+                        title: string;
+                        points: string[];
+                    }[] | undefined;
+                    tuningId?: number | null | undefined;
                 }>>;
                 timing: zod.ZodOptional<zod.ZodObject<{
                     timeBased: zod.ZodBoolean;
@@ -4660,7 +3011,6 @@ export declare const GetAnalysisHistoryResponse: zod.ZodObject<{
                     activations: zod.ZodArray<zod.ZodString, "many">;
                     summary: zod.ZodString;
                 }, "strip", zod.ZodTypeAny, {
-                    house: number;
                     summary: string;
                     timeBased: boolean;
                     basis: "question";
@@ -4690,6 +3040,7 @@ export declare const GetAnalysisHistoryResponse: zod.ZodObject<{
                             durationYears?: number | undefined;
                         };
                     };
+                    house: number;
                     houseSign: string;
                     houseLord: string;
                     activations: string[];
@@ -4720,7 +3071,6 @@ export declare const GetAnalysisHistoryResponse: zod.ZodObject<{
                         notes: string[];
                     } | null | undefined;
                 }, {
-                    house: number;
                     summary: string;
                     timeBased: boolean;
                     basis: "question";
@@ -4750,6 +3100,7 @@ export declare const GetAnalysisHistoryResponse: zod.ZodObject<{
                             durationYears?: number | undefined;
                         };
                     };
+                    house: number;
                     houseSign: string;
                     houseLord: string;
                     activations: string[];
@@ -4779,6 +3130,67 @@ export declare const GetAnalysisHistoryResponse: zod.ZodObject<{
                         }[];
                         notes: string[];
                     } | null | undefined;
+                }>>;
+                skippedReason: zod.ZodOptional<zod.ZodNullable<zod.ZodString>>;
+                outlook: zod.ZodOptional<zod.ZodObject<{
+                    chance: zod.ZodNumber;
+                    level: zod.ZodEnum<["high", "fair", "low"]>;
+                    headline: zod.ZodString;
+                    favours: zod.ZodArray<zod.ZodString, "many">;
+                    against: zod.ZodArray<zod.ZodString, "many">;
+                    timing: zod.ZodOptional<zod.ZodNullable<zod.ZodObject<{
+                        text: zod.ZodString;
+                        from: zod.ZodString;
+                        to: zod.ZodString;
+                        confidence: zod.ZodEnum<["low", "medium", "high"]>;
+                        basis: zod.ZodString;
+                        dashaCheck: zod.ZodOptional<zod.ZodString>;
+                    }, "strip", zod.ZodTypeAny, {
+                        confidence: "low" | "medium" | "high";
+                        text: string;
+                        basis: string;
+                        from: string;
+                        to: string;
+                        dashaCheck?: string | undefined;
+                    }, {
+                        confidence: "low" | "medium" | "high";
+                        text: string;
+                        basis: string;
+                        from: string;
+                        to: string;
+                        dashaCheck?: string | undefined;
+                    }>>>;
+                    timingNote: zod.ZodOptional<zod.ZodNullable<zod.ZodString>>;
+                }, "strip", zod.ZodTypeAny, {
+                    chance: number;
+                    level: "low" | "high" | "fair";
+                    headline: string;
+                    favours: string[];
+                    against: string[];
+                    timing?: {
+                        confidence: "low" | "medium" | "high";
+                        text: string;
+                        basis: string;
+                        from: string;
+                        to: string;
+                        dashaCheck?: string | undefined;
+                    } | null | undefined;
+                    timingNote?: string | null | undefined;
+                }, {
+                    chance: number;
+                    level: "low" | "high" | "fair";
+                    headline: string;
+                    favours: string[];
+                    against: string[];
+                    timing?: {
+                        confidence: "low" | "medium" | "high";
+                        text: string;
+                        basis: string;
+                        from: string;
+                        to: string;
+                        dashaCheck?: string | undefined;
+                    } | null | undefined;
+                    timingNote?: string | null | undefined;
                 }>>;
                 location: zod.ZodOptional<zod.ZodObject<{
                     latitude: zod.ZodNumber;
@@ -4798,95 +3210,14 @@ export declare const GetAnalysisHistoryResponse: zod.ZodObject<{
                     signal: "favorable" | "challenging" | "neutral";
                 };
                 interpretation: string;
-                vedicD1?: {
-                    ascendant: string;
-                    ascendantDegree: number;
-                    planets: {
-                        longitude: number;
-                        name: string;
-                        sign: string;
-                        signIndex: number;
-                        degree: number;
-                        isRetrograde: boolean;
-                        navamsaSign: string;
-                        dasamsaSign: string;
-                        drekkanaSign?: string | undefined;
-                        house?: number | undefined;
-                        dignity?: "neutral" | "exalted" | "own" | "debilitated" | undefined;
-                    }[];
-                    ayanamsa: number;
-                    chartType: string;
-                    currentDasha?: {
-                        mahadasha: {
-                            planet: string;
-                            startDate: string;
-                            endDate: string;
-                            years: number;
-                        };
-                        antardasha?: {
-                            planet: string;
-                            startDate: string;
-                            endDate: string;
-                            years: number;
-                        } | undefined;
-                        pratyantardasha?: {
-                            planet: string;
-                            startDate: string;
-                            endDate: string;
-                            years: number;
-                        } | undefined;
-                        sookshmadasha?: {
-                            planet: string;
-                            startDate: string;
-                            endDate: string;
-                            years: number;
-                        } | undefined;
-                    } | undefined;
+                ascendant?: {
+                    sign: string;
+                    degree: number;
+                    lord?: string | undefined;
                 } | undefined;
-                vedicD3?: {
-                    ascendant: string;
-                    ascendantDegree: number;
-                    planets: {
-                        longitude: number;
-                        name: string;
-                        sign: string;
-                        signIndex: number;
-                        degree: number;
-                        isRetrograde: boolean;
-                        navamsaSign: string;
-                        dasamsaSign: string;
-                        drekkanaSign?: string | undefined;
-                        house?: number | undefined;
-                        dignity?: "neutral" | "exalted" | "own" | "debilitated" | undefined;
-                    }[];
-                    ayanamsa: number;
-                    chartType: string;
-                    currentDasha?: {
-                        mahadasha: {
-                            planet: string;
-                            startDate: string;
-                            endDate: string;
-                            years: number;
-                        };
-                        antardasha?: {
-                            planet: string;
-                            startDate: string;
-                            endDate: string;
-                            years: number;
-                        } | undefined;
-                        pratyantardasha?: {
-                            planet: string;
-                            startDate: string;
-                            endDate: string;
-                            years: number;
-                        } | undefined;
-                        sookshmadasha?: {
-                            planet: string;
-                            startDate: string;
-                            endDate: string;
-                            years: number;
-                        } | undefined;
-                    } | undefined;
+                tuning?: {
+                    id?: number | null | undefined;
+                    astroShare?: number | null | undefined;
                 } | undefined;
                 prashna?: {
                     score: number;
@@ -4908,6 +3239,7 @@ export declare const GetAnalysisHistoryResponse: zod.ZodObject<{
                         label: string;
                         effect: number;
                         detail: string;
+                        family?: string | undefined;
                     }[];
                     summary: string;
                     latitude?: number | undefined;
@@ -4915,99 +3247,22 @@ export declare const GetAnalysisHistoryResponse: zod.ZodObject<{
                     risk?: "low" | "medium" | "high" | undefined;
                     stability?: "low" | "medium" | "high" | undefined;
                     dominantPlanet?: string | undefined;
-                } | undefined;
-                vedicD9?: {
-                    ascendant: string;
-                    ascendantDegree: number;
-                    planets: {
-                        longitude: number;
-                        name: string;
-                        sign: string;
-                        signIndex: number;
-                        degree: number;
-                        isRetrograde: boolean;
-                        navamsaSign: string;
-                        dasamsaSign: string;
-                        drekkanaSign?: string | undefined;
-                        house?: number | undefined;
-                        dignity?: "neutral" | "exalted" | "own" | "debilitated" | undefined;
-                    }[];
-                    ayanamsa: number;
-                    chartType: string;
-                    currentDasha?: {
-                        mahadasha: {
-                            planet: string;
-                            startDate: string;
-                            endDate: string;
-                            years: number;
-                        };
-                        antardasha?: {
-                            planet: string;
-                            startDate: string;
-                            endDate: string;
-                            years: number;
-                        } | undefined;
-                        pratyantardasha?: {
-                            planet: string;
-                            startDate: string;
-                            endDate: string;
-                            years: number;
-                        } | undefined;
-                        sookshmadasha?: {
-                            planet: string;
-                            startDate: string;
-                            endDate: string;
-                            years: number;
-                        } | undefined;
+                    lagnaDegree?: number | undefined;
+                    focus?: {
+                        themes?: string[] | undefined;
+                        houses?: number[] | undefined;
                     } | undefined;
-                } | undefined;
-                vedicD10?: {
-                    ascendant: string;
-                    ascendantDegree: number;
-                    planets: {
-                        longitude: number;
-                        name: string;
-                        sign: string;
-                        signIndex: number;
-                        degree: number;
-                        isRetrograde: boolean;
-                        navamsaSign: string;
-                        dasamsaSign: string;
-                        drekkanaSign?: string | undefined;
-                        house?: number | undefined;
-                        dignity?: "neutral" | "exalted" | "own" | "debilitated" | undefined;
-                    }[];
-                    ayanamsa: number;
-                    chartType: string;
-                    currentDasha?: {
-                        mahadasha: {
-                            planet: string;
-                            startDate: string;
-                            endDate: string;
-                            years: number;
-                        };
-                        antardasha?: {
-                            planet: string;
-                            startDate: string;
-                            endDate: string;
-                            years: number;
-                        } | undefined;
-                        pratyantardasha?: {
-                            planet: string;
-                            startDate: string;
-                            endDate: string;
-                            years: number;
-                        } | undefined;
-                        sookshmadasha?: {
-                            planet: string;
-                            startDate: string;
-                            endDate: string;
-                            years: number;
-                        } | undefined;
+                    fit?: {
+                        ok: boolean;
+                        problems: string[];
                     } | undefined;
+                    trace?: {
+                        title: string;
+                        points: string[];
+                    }[] | undefined;
+                    tuningId?: number | null | undefined;
                 } | undefined;
                 timing?: {
-                    house: number;
                     summary: string;
                     timeBased: boolean;
                     basis: "question";
@@ -5037,6 +3292,7 @@ export declare const GetAnalysisHistoryResponse: zod.ZodObject<{
                             durationYears?: number | undefined;
                         };
                     };
+                    house: number;
                     houseSign: string;
                     houseLord: string;
                     activations: string[];
@@ -5066,6 +3322,23 @@ export declare const GetAnalysisHistoryResponse: zod.ZodObject<{
                         }[];
                         notes: string[];
                     } | null | undefined;
+                } | undefined;
+                skippedReason?: string | null | undefined;
+                outlook?: {
+                    chance: number;
+                    level: "low" | "high" | "fair";
+                    headline: string;
+                    favours: string[];
+                    against: string[];
+                    timing?: {
+                        confidence: "low" | "medium" | "high";
+                        text: string;
+                        basis: string;
+                        from: string;
+                        to: string;
+                        dashaCheck?: string | undefined;
+                    } | null | undefined;
+                    timingNote?: string | null | undefined;
                 } | undefined;
                 location?: {
                     latitude: number;
@@ -5079,95 +3352,14 @@ export declare const GetAnalysisHistoryResponse: zod.ZodObject<{
                     signal: "favorable" | "challenging" | "neutral";
                 };
                 interpretation: string;
-                vedicD1?: {
-                    ascendant: string;
-                    ascendantDegree: number;
-                    planets: {
-                        longitude: number;
-                        name: string;
-                        sign: string;
-                        signIndex: number;
-                        degree: number;
-                        isRetrograde: boolean;
-                        navamsaSign: string;
-                        dasamsaSign: string;
-                        drekkanaSign?: string | undefined;
-                        house?: number | undefined;
-                        dignity?: "neutral" | "exalted" | "own" | "debilitated" | undefined;
-                    }[];
-                    ayanamsa: number;
-                    chartType: string;
-                    currentDasha?: {
-                        mahadasha: {
-                            planet: string;
-                            startDate: string;
-                            endDate: string;
-                            years: number;
-                        };
-                        antardasha?: {
-                            planet: string;
-                            startDate: string;
-                            endDate: string;
-                            years: number;
-                        } | undefined;
-                        pratyantardasha?: {
-                            planet: string;
-                            startDate: string;
-                            endDate: string;
-                            years: number;
-                        } | undefined;
-                        sookshmadasha?: {
-                            planet: string;
-                            startDate: string;
-                            endDate: string;
-                            years: number;
-                        } | undefined;
-                    } | undefined;
+                ascendant?: {
+                    sign: string;
+                    degree: number;
+                    lord?: string | undefined;
                 } | undefined;
-                vedicD3?: {
-                    ascendant: string;
-                    ascendantDegree: number;
-                    planets: {
-                        longitude: number;
-                        name: string;
-                        sign: string;
-                        signIndex: number;
-                        degree: number;
-                        isRetrograde: boolean;
-                        navamsaSign: string;
-                        dasamsaSign: string;
-                        drekkanaSign?: string | undefined;
-                        house?: number | undefined;
-                        dignity?: "neutral" | "exalted" | "own" | "debilitated" | undefined;
-                    }[];
-                    ayanamsa: number;
-                    chartType: string;
-                    currentDasha?: {
-                        mahadasha: {
-                            planet: string;
-                            startDate: string;
-                            endDate: string;
-                            years: number;
-                        };
-                        antardasha?: {
-                            planet: string;
-                            startDate: string;
-                            endDate: string;
-                            years: number;
-                        } | undefined;
-                        pratyantardasha?: {
-                            planet: string;
-                            startDate: string;
-                            endDate: string;
-                            years: number;
-                        } | undefined;
-                        sookshmadasha?: {
-                            planet: string;
-                            startDate: string;
-                            endDate: string;
-                            years: number;
-                        } | undefined;
-                    } | undefined;
+                tuning?: {
+                    id?: number | null | undefined;
+                    astroShare?: number | null | undefined;
                 } | undefined;
                 prashna?: {
                     score: number;
@@ -5189,6 +3381,7 @@ export declare const GetAnalysisHistoryResponse: zod.ZodObject<{
                         label: string;
                         effect: number;
                         detail: string;
+                        family?: string | undefined;
                     }[];
                     summary: string;
                     latitude?: number | undefined;
@@ -5196,99 +3389,22 @@ export declare const GetAnalysisHistoryResponse: zod.ZodObject<{
                     risk?: "low" | "medium" | "high" | undefined;
                     stability?: "low" | "medium" | "high" | undefined;
                     dominantPlanet?: string | undefined;
-                } | undefined;
-                vedicD9?: {
-                    ascendant: string;
-                    ascendantDegree: number;
-                    planets: {
-                        longitude: number;
-                        name: string;
-                        sign: string;
-                        signIndex: number;
-                        degree: number;
-                        isRetrograde: boolean;
-                        navamsaSign: string;
-                        dasamsaSign: string;
-                        drekkanaSign?: string | undefined;
-                        house?: number | undefined;
-                        dignity?: "neutral" | "exalted" | "own" | "debilitated" | undefined;
-                    }[];
-                    ayanamsa: number;
-                    chartType: string;
-                    currentDasha?: {
-                        mahadasha: {
-                            planet: string;
-                            startDate: string;
-                            endDate: string;
-                            years: number;
-                        };
-                        antardasha?: {
-                            planet: string;
-                            startDate: string;
-                            endDate: string;
-                            years: number;
-                        } | undefined;
-                        pratyantardasha?: {
-                            planet: string;
-                            startDate: string;
-                            endDate: string;
-                            years: number;
-                        } | undefined;
-                        sookshmadasha?: {
-                            planet: string;
-                            startDate: string;
-                            endDate: string;
-                            years: number;
-                        } | undefined;
+                    lagnaDegree?: number | undefined;
+                    focus?: {
+                        themes?: string[] | undefined;
+                        houses?: number[] | undefined;
                     } | undefined;
-                } | undefined;
-                vedicD10?: {
-                    ascendant: string;
-                    ascendantDegree: number;
-                    planets: {
-                        longitude: number;
-                        name: string;
-                        sign: string;
-                        signIndex: number;
-                        degree: number;
-                        isRetrograde: boolean;
-                        navamsaSign: string;
-                        dasamsaSign: string;
-                        drekkanaSign?: string | undefined;
-                        house?: number | undefined;
-                        dignity?: "neutral" | "exalted" | "own" | "debilitated" | undefined;
-                    }[];
-                    ayanamsa: number;
-                    chartType: string;
-                    currentDasha?: {
-                        mahadasha: {
-                            planet: string;
-                            startDate: string;
-                            endDate: string;
-                            years: number;
-                        };
-                        antardasha?: {
-                            planet: string;
-                            startDate: string;
-                            endDate: string;
-                            years: number;
-                        } | undefined;
-                        pratyantardasha?: {
-                            planet: string;
-                            startDate: string;
-                            endDate: string;
-                            years: number;
-                        } | undefined;
-                        sookshmadasha?: {
-                            planet: string;
-                            startDate: string;
-                            endDate: string;
-                            years: number;
-                        } | undefined;
+                    fit?: {
+                        ok: boolean;
+                        problems: string[];
                     } | undefined;
+                    trace?: {
+                        title: string;
+                        points: string[];
+                    }[] | undefined;
+                    tuningId?: number | null | undefined;
                 } | undefined;
                 timing?: {
-                    house: number;
                     summary: string;
                     timeBased: boolean;
                     basis: "question";
@@ -5318,6 +3434,7 @@ export declare const GetAnalysisHistoryResponse: zod.ZodObject<{
                             durationYears?: number | undefined;
                         };
                     };
+                    house: number;
                     houseSign: string;
                     houseLord: string;
                     activations: string[];
@@ -5347,6 +3464,23 @@ export declare const GetAnalysisHistoryResponse: zod.ZodObject<{
                         }[];
                         notes: string[];
                     } | null | undefined;
+                } | undefined;
+                skippedReason?: string | null | undefined;
+                outlook?: {
+                    chance: number;
+                    level: "low" | "high" | "fair";
+                    headline: string;
+                    favours: string[];
+                    against: string[];
+                    timing?: {
+                        confidence: "low" | "medium" | "high";
+                        text: string;
+                        basis: string;
+                        from: string;
+                        to: string;
+                        dashaCheck?: string | undefined;
+                    } | null | undefined;
+                    timingNote?: string | null | undefined;
                 } | undefined;
                 location?: {
                     latitude: number;
@@ -5363,7 +3497,7 @@ export declare const GetAnalysisHistoryResponse: zod.ZodObject<{
                 astroInsight: zod.ZodString;
                 advice: zod.ZodString;
                 timeframeDays: zod.ZodNumber;
-                source: zod.ZodEnum<["ai+astro", "ai", "engine"]>;
+                source: zod.ZodEnum<["ai+astro", "ai", "inbuilt", "engine"]>;
                 usedAi: zod.ZodOptional<zod.ZodBoolean>;
                 usedAstrology: zod.ZodOptional<zod.ZodBoolean>;
                 calibration: zod.ZodOptional<zod.ZodObject<{
@@ -5397,6 +3531,7 @@ export declare const GetAnalysisHistoryResponse: zod.ZodObject<{
                     logic: number;
                 }>>;
             }, "strip", zod.ZodTypeAny, {
+                source: "ai" | "ai+astro" | "inbuilt" | "engine";
                 confidence: "low" | "medium" | "high";
                 score: number;
                 summary: string;
@@ -5404,7 +3539,6 @@ export declare const GetAnalysisHistoryResponse: zod.ZodObject<{
                 astroInsight: string;
                 advice: string;
                 timeframeDays: number;
-                source: "ai" | "ai+astro" | "engine";
                 reasoning?: string | undefined;
                 usedAi?: boolean | undefined;
                 usedAstrology?: boolean | undefined;
@@ -5424,6 +3558,7 @@ export declare const GetAnalysisHistoryResponse: zod.ZodObject<{
                     logic: number;
                 } | undefined;
             }, {
+                source: "ai" | "ai+astro" | "inbuilt" | "engine";
                 confidence: "low" | "medium" | "high";
                 score: number;
                 summary: string;
@@ -5431,7 +3566,6 @@ export declare const GetAnalysisHistoryResponse: zod.ZodObject<{
                 astroInsight: string;
                 advice: string;
                 timeframeDays: number;
-                source: "ai" | "ai+astro" | "engine";
                 reasoning?: string | undefined;
                 usedAi?: boolean | undefined;
                 usedAstrology?: boolean | undefined;
@@ -5452,26 +3586,26 @@ export declare const GetAnalysisHistoryResponse: zod.ZodObject<{
                 } | undefined;
             }>>;
             modules: zod.ZodOptional<zod.ZodArray<zod.ZodObject<{
-                key: zod.ZodEnum<["AJIT", "MANU", "FILTER", "SIVI", "ASTRO", "AI"]>;
+                key: zod.ZodEnum<["AJIT", "MANU", "FILTER", "SIVI", "ASTRO", "RSMI", "AI"]>;
                 name: zod.ZodString;
-                area: zod.ZodEnum<["intent", "emotion", "paths", "astrology", "synthesis"]>;
+                area: zod.ZodEnum<["intent", "emotion", "paths", "astrology", "silence", "synthesis"]>;
                 role: zod.ZodOptional<zod.ZodString>;
                 active: zod.ZodBoolean;
                 verdict: zod.ZodString;
                 evidence: zod.ZodArray<zod.ZodString, "many">;
             }, "strip", zod.ZodTypeAny, {
-                key: "AJIT" | "MANU" | "FILTER" | "SIVI" | "ASTRO" | "AI";
-                name: string;
+                key: "AJIT" | "MANU" | "FILTER" | "SIVI" | "ASTRO" | "RSMI" | "AI";
                 verdict: string;
-                area: "intent" | "emotion" | "synthesis" | "paths" | "astrology";
+                name: string;
+                area: "intent" | "emotion" | "silence" | "synthesis" | "paths" | "astrology";
                 active: boolean;
                 evidence: string[];
                 role?: string | undefined;
             }, {
-                key: "AJIT" | "MANU" | "FILTER" | "SIVI" | "ASTRO" | "AI";
-                name: string;
+                key: "AJIT" | "MANU" | "FILTER" | "SIVI" | "ASTRO" | "RSMI" | "AI";
                 verdict: string;
-                area: "intent" | "emotion" | "synthesis" | "paths" | "astrology";
+                name: string;
+                area: "intent" | "emotion" | "silence" | "synthesis" | "paths" | "astrology";
                 active: boolean;
                 evidence: string[];
                 role?: string | undefined;
@@ -5496,17 +3630,17 @@ export declare const GetAnalysisHistoryResponse: zod.ZodObject<{
                 depth: zod.ZodEnum<["standard", "deep", "expert"]>;
                 depthChosen: zod.ZodEnum<["auto", "user"]>;
                 lines: zod.ZodArray<zod.ZodObject<{
-                    key: zod.ZodEnum<["astro", "ajit", "manu", "sivi", "ai"]>;
+                    key: zod.ZodEnum<["astro", "ajit", "manu", "sivi", "rsmi", "ai"]>;
                     label: zod.ZodString;
                     credits: zod.ZodNumber;
                     note: zod.ZodString;
                 }, "strip", zod.ZodTypeAny, {
-                    key: "astro" | "ajit" | "manu" | "sivi" | "ai";
+                    key: "astro" | "ajit" | "manu" | "sivi" | "rsmi" | "ai";
                     label: string;
                     credits: number;
                     note: string;
                 }, {
-                    key: "astro" | "ajit" | "manu" | "sivi" | "ai";
+                    key: "astro" | "ajit" | "manu" | "sivi" | "rsmi" | "ai";
                     label: string;
                     credits: number;
                     note: string;
@@ -5515,7 +3649,7 @@ export declare const GetAnalysisHistoryResponse: zod.ZodObject<{
                 depth: "standard" | "deep" | "expert";
                 depthChosen: "auto" | "user";
                 lines: {
-                    key: "astro" | "ajit" | "manu" | "sivi" | "ai";
+                    key: "astro" | "ajit" | "manu" | "sivi" | "rsmi" | "ai";
                     label: string;
                     credits: number;
                     note: string;
@@ -5527,7 +3661,7 @@ export declare const GetAnalysisHistoryResponse: zod.ZodObject<{
                 depth: "standard" | "deep" | "expert";
                 depthChosen: "auto" | "user";
                 lines: {
-                    key: "astro" | "ajit" | "manu" | "sivi" | "ai";
+                    key: "astro" | "ajit" | "manu" | "sivi" | "rsmi" | "ai";
                     label: string;
                     credits: number;
                     note: string;
@@ -5548,95 +3682,14 @@ export declare const GetAnalysisHistoryResponse: zod.ZodObject<{
                     signal: "favorable" | "challenging" | "neutral";
                 };
                 interpretation: string;
-                vedicD1?: {
-                    ascendant: string;
-                    ascendantDegree: number;
-                    planets: {
-                        longitude: number;
-                        name: string;
-                        sign: string;
-                        signIndex: number;
-                        degree: number;
-                        isRetrograde: boolean;
-                        navamsaSign: string;
-                        dasamsaSign: string;
-                        drekkanaSign?: string | undefined;
-                        house?: number | undefined;
-                        dignity?: "neutral" | "exalted" | "own" | "debilitated" | undefined;
-                    }[];
-                    ayanamsa: number;
-                    chartType: string;
-                    currentDasha?: {
-                        mahadasha: {
-                            planet: string;
-                            startDate: string;
-                            endDate: string;
-                            years: number;
-                        };
-                        antardasha?: {
-                            planet: string;
-                            startDate: string;
-                            endDate: string;
-                            years: number;
-                        } | undefined;
-                        pratyantardasha?: {
-                            planet: string;
-                            startDate: string;
-                            endDate: string;
-                            years: number;
-                        } | undefined;
-                        sookshmadasha?: {
-                            planet: string;
-                            startDate: string;
-                            endDate: string;
-                            years: number;
-                        } | undefined;
-                    } | undefined;
+                ascendant?: {
+                    sign: string;
+                    degree: number;
+                    lord?: string | undefined;
                 } | undefined;
-                vedicD3?: {
-                    ascendant: string;
-                    ascendantDegree: number;
-                    planets: {
-                        longitude: number;
-                        name: string;
-                        sign: string;
-                        signIndex: number;
-                        degree: number;
-                        isRetrograde: boolean;
-                        navamsaSign: string;
-                        dasamsaSign: string;
-                        drekkanaSign?: string | undefined;
-                        house?: number | undefined;
-                        dignity?: "neutral" | "exalted" | "own" | "debilitated" | undefined;
-                    }[];
-                    ayanamsa: number;
-                    chartType: string;
-                    currentDasha?: {
-                        mahadasha: {
-                            planet: string;
-                            startDate: string;
-                            endDate: string;
-                            years: number;
-                        };
-                        antardasha?: {
-                            planet: string;
-                            startDate: string;
-                            endDate: string;
-                            years: number;
-                        } | undefined;
-                        pratyantardasha?: {
-                            planet: string;
-                            startDate: string;
-                            endDate: string;
-                            years: number;
-                        } | undefined;
-                        sookshmadasha?: {
-                            planet: string;
-                            startDate: string;
-                            endDate: string;
-                            years: number;
-                        } | undefined;
-                    } | undefined;
+                tuning?: {
+                    id?: number | null | undefined;
+                    astroShare?: number | null | undefined;
                 } | undefined;
                 prashna?: {
                     score: number;
@@ -5658,6 +3711,7 @@ export declare const GetAnalysisHistoryResponse: zod.ZodObject<{
                         label: string;
                         effect: number;
                         detail: string;
+                        family?: string | undefined;
                     }[];
                     summary: string;
                     latitude?: number | undefined;
@@ -5665,99 +3719,22 @@ export declare const GetAnalysisHistoryResponse: zod.ZodObject<{
                     risk?: "low" | "medium" | "high" | undefined;
                     stability?: "low" | "medium" | "high" | undefined;
                     dominantPlanet?: string | undefined;
-                } | undefined;
-                vedicD9?: {
-                    ascendant: string;
-                    ascendantDegree: number;
-                    planets: {
-                        longitude: number;
-                        name: string;
-                        sign: string;
-                        signIndex: number;
-                        degree: number;
-                        isRetrograde: boolean;
-                        navamsaSign: string;
-                        dasamsaSign: string;
-                        drekkanaSign?: string | undefined;
-                        house?: number | undefined;
-                        dignity?: "neutral" | "exalted" | "own" | "debilitated" | undefined;
-                    }[];
-                    ayanamsa: number;
-                    chartType: string;
-                    currentDasha?: {
-                        mahadasha: {
-                            planet: string;
-                            startDate: string;
-                            endDate: string;
-                            years: number;
-                        };
-                        antardasha?: {
-                            planet: string;
-                            startDate: string;
-                            endDate: string;
-                            years: number;
-                        } | undefined;
-                        pratyantardasha?: {
-                            planet: string;
-                            startDate: string;
-                            endDate: string;
-                            years: number;
-                        } | undefined;
-                        sookshmadasha?: {
-                            planet: string;
-                            startDate: string;
-                            endDate: string;
-                            years: number;
-                        } | undefined;
+                    lagnaDegree?: number | undefined;
+                    focus?: {
+                        themes?: string[] | undefined;
+                        houses?: number[] | undefined;
                     } | undefined;
-                } | undefined;
-                vedicD10?: {
-                    ascendant: string;
-                    ascendantDegree: number;
-                    planets: {
-                        longitude: number;
-                        name: string;
-                        sign: string;
-                        signIndex: number;
-                        degree: number;
-                        isRetrograde: boolean;
-                        navamsaSign: string;
-                        dasamsaSign: string;
-                        drekkanaSign?: string | undefined;
-                        house?: number | undefined;
-                        dignity?: "neutral" | "exalted" | "own" | "debilitated" | undefined;
-                    }[];
-                    ayanamsa: number;
-                    chartType: string;
-                    currentDasha?: {
-                        mahadasha: {
-                            planet: string;
-                            startDate: string;
-                            endDate: string;
-                            years: number;
-                        };
-                        antardasha?: {
-                            planet: string;
-                            startDate: string;
-                            endDate: string;
-                            years: number;
-                        } | undefined;
-                        pratyantardasha?: {
-                            planet: string;
-                            startDate: string;
-                            endDate: string;
-                            years: number;
-                        } | undefined;
-                        sookshmadasha?: {
-                            planet: string;
-                            startDate: string;
-                            endDate: string;
-                            years: number;
-                        } | undefined;
+                    fit?: {
+                        ok: boolean;
+                        problems: string[];
                     } | undefined;
+                    trace?: {
+                        title: string;
+                        points: string[];
+                    }[] | undefined;
+                    tuningId?: number | null | undefined;
                 } | undefined;
                 timing?: {
-                    house: number;
                     summary: string;
                     timeBased: boolean;
                     basis: "question";
@@ -5787,6 +3764,7 @@ export declare const GetAnalysisHistoryResponse: zod.ZodObject<{
                             durationYears?: number | undefined;
                         };
                     };
+                    house: number;
                     houseSign: string;
                     houseLord: string;
                     activations: string[];
@@ -5817,6 +3795,23 @@ export declare const GetAnalysisHistoryResponse: zod.ZodObject<{
                         notes: string[];
                     } | null | undefined;
                 } | undefined;
+                skippedReason?: string | null | undefined;
+                outlook?: {
+                    chance: number;
+                    level: "low" | "high" | "fair";
+                    headline: string;
+                    favours: string[];
+                    against: string[];
+                    timing?: {
+                        confidence: "low" | "medium" | "high";
+                        text: string;
+                        basis: string;
+                        from: string;
+                        to: string;
+                        dashaCheck?: string | undefined;
+                    } | null | undefined;
+                    timingNote?: string | null | undefined;
+                } | undefined;
                 location?: {
                     latitude: number;
                     longitude: number;
@@ -5834,18 +3829,34 @@ export declare const GetAnalysisHistoryResponse: zod.ZodObject<{
                 intensity: "low" | "medium" | "high";
             };
             simulation: {
+                source: "ai" | "rules";
+                context: {
+                    desiredOutcome: string;
+                    inferred: boolean;
+                    knownFacts: string[];
+                    constraints: string[];
+                };
                 bestPath: {
                     action: string;
                     risk: "low" | "medium" | "high";
                     stability: "low" | "medium" | "high";
                     outcome: "positive" | "negative" | "mixed";
+                    benefits: string[];
+                    downsides: string[];
+                    uncertainties: string[];
+                    reversible: boolean;
                 };
                 alternatives: {
                     action: string;
                     risk: "low" | "medium" | "high";
                     stability: "low" | "medium" | "high";
                     outcome: "positive" | "negative" | "mixed";
+                    benefits: string[];
+                    downsides: string[];
+                    uncertainties: string[];
+                    reversible: boolean;
                 }[];
+                comparison: string;
             };
             finalVerdict: {
                 recommendedAction: string;
@@ -5860,11 +3871,15 @@ export declare const GetAnalysisHistoryResponse: zod.ZodObject<{
                 useAi?: boolean | undefined;
                 useAstrology?: boolean | undefined;
             } | undefined;
+            clarifications?: {
+                question: string;
+                answer: string;
+            }[] | undefined;
             credits?: {
                 depth: "standard" | "deep" | "expert";
                 depthChosen: "auto" | "user";
                 lines: {
-                    key: "astro" | "ajit" | "manu" | "sivi" | "ai";
+                    key: "astro" | "ajit" | "manu" | "sivi" | "rsmi" | "ai";
                     label: string;
                     credits: number;
                     note: string;
@@ -5873,7 +3888,40 @@ export declare const GetAnalysisHistoryResponse: zod.ZodObject<{
                 balance: number | null;
                 charged: number;
             } | undefined;
+            safety?: {
+                action: "allow" | "support" | "redirect" | "block";
+                category: "none" | "self_harm" | "self_harm_method" | "harm_others" | "weapons" | "minor_sexual" | "manipulation";
+                message?: string | undefined;
+            } | undefined;
+            silence?: {
+                source: "ai" | "rules";
+                subject: "other" | "self";
+                channel: "message" | "in_person" | "call" | "organisation";
+                trigger: string;
+                duration: {
+                    bucket: "unknown" | "moments" | "minutes" | "hours" | "days" | "weeks";
+                    text?: string | null | undefined;
+                };
+                meanings: {
+                    why: string;
+                    meaning: string;
+                    likelihood: "more likely" | "possible" | "less likely";
+                }[];
+                unknowns: string[];
+                checks: string[];
+                caution: string;
+                who?: string | null | undefined;
+            } | undefined;
+            indirectRoute?: {
+                source: "ai" | "rules";
+                blocker: string;
+                cues: string[];
+                idea: string;
+                steps: string[];
+                fairness: string;
+            } | undefined;
             synthesis?: {
+                source: "ai" | "ai+astro" | "inbuilt" | "engine";
                 confidence: "low" | "medium" | "high";
                 score: number;
                 summary: string;
@@ -5881,7 +3929,6 @@ export declare const GetAnalysisHistoryResponse: zod.ZodObject<{
                 astroInsight: string;
                 advice: string;
                 timeframeDays: number;
-                source: "ai" | "ai+astro" | "engine";
                 reasoning?: string | undefined;
                 usedAi?: boolean | undefined;
                 usedAstrology?: boolean | undefined;
@@ -5902,10 +3949,10 @@ export declare const GetAnalysisHistoryResponse: zod.ZodObject<{
                 } | undefined;
             } | undefined;
             modules?: {
-                key: "AJIT" | "MANU" | "FILTER" | "SIVI" | "ASTRO" | "AI";
-                name: string;
+                key: "AJIT" | "MANU" | "FILTER" | "SIVI" | "ASTRO" | "RSMI" | "AI";
                 verdict: string;
-                area: "intent" | "emotion" | "synthesis" | "paths" | "astrology";
+                name: string;
+                area: "intent" | "emotion" | "silence" | "synthesis" | "paths" | "astrology";
                 active: boolean;
                 evidence: string[];
                 role?: string | undefined;
@@ -5921,95 +3968,14 @@ export declare const GetAnalysisHistoryResponse: zod.ZodObject<{
                     signal: "favorable" | "challenging" | "neutral";
                 };
                 interpretation: string;
-                vedicD1?: {
-                    ascendant: string;
-                    ascendantDegree: number;
-                    planets: {
-                        longitude: number;
-                        name: string;
-                        sign: string;
-                        signIndex: number;
-                        degree: number;
-                        isRetrograde: boolean;
-                        navamsaSign: string;
-                        dasamsaSign: string;
-                        drekkanaSign?: string | undefined;
-                        house?: number | undefined;
-                        dignity?: "neutral" | "exalted" | "own" | "debilitated" | undefined;
-                    }[];
-                    ayanamsa: number;
-                    chartType: string;
-                    currentDasha?: {
-                        mahadasha: {
-                            planet: string;
-                            startDate: string;
-                            endDate: string;
-                            years: number;
-                        };
-                        antardasha?: {
-                            planet: string;
-                            startDate: string;
-                            endDate: string;
-                            years: number;
-                        } | undefined;
-                        pratyantardasha?: {
-                            planet: string;
-                            startDate: string;
-                            endDate: string;
-                            years: number;
-                        } | undefined;
-                        sookshmadasha?: {
-                            planet: string;
-                            startDate: string;
-                            endDate: string;
-                            years: number;
-                        } | undefined;
-                    } | undefined;
+                ascendant?: {
+                    sign: string;
+                    degree: number;
+                    lord?: string | undefined;
                 } | undefined;
-                vedicD3?: {
-                    ascendant: string;
-                    ascendantDegree: number;
-                    planets: {
-                        longitude: number;
-                        name: string;
-                        sign: string;
-                        signIndex: number;
-                        degree: number;
-                        isRetrograde: boolean;
-                        navamsaSign: string;
-                        dasamsaSign: string;
-                        drekkanaSign?: string | undefined;
-                        house?: number | undefined;
-                        dignity?: "neutral" | "exalted" | "own" | "debilitated" | undefined;
-                    }[];
-                    ayanamsa: number;
-                    chartType: string;
-                    currentDasha?: {
-                        mahadasha: {
-                            planet: string;
-                            startDate: string;
-                            endDate: string;
-                            years: number;
-                        };
-                        antardasha?: {
-                            planet: string;
-                            startDate: string;
-                            endDate: string;
-                            years: number;
-                        } | undefined;
-                        pratyantardasha?: {
-                            planet: string;
-                            startDate: string;
-                            endDate: string;
-                            years: number;
-                        } | undefined;
-                        sookshmadasha?: {
-                            planet: string;
-                            startDate: string;
-                            endDate: string;
-                            years: number;
-                        } | undefined;
-                    } | undefined;
+                tuning?: {
+                    id?: number | null | undefined;
+                    astroShare?: number | null | undefined;
                 } | undefined;
                 prashna?: {
                     score: number;
@@ -6031,6 +3997,7 @@ export declare const GetAnalysisHistoryResponse: zod.ZodObject<{
                         label: string;
                         effect: number;
                         detail: string;
+                        family?: string | undefined;
                     }[];
                     summary: string;
                     latitude?: number | undefined;
@@ -6038,99 +4005,22 @@ export declare const GetAnalysisHistoryResponse: zod.ZodObject<{
                     risk?: "low" | "medium" | "high" | undefined;
                     stability?: "low" | "medium" | "high" | undefined;
                     dominantPlanet?: string | undefined;
-                } | undefined;
-                vedicD9?: {
-                    ascendant: string;
-                    ascendantDegree: number;
-                    planets: {
-                        longitude: number;
-                        name: string;
-                        sign: string;
-                        signIndex: number;
-                        degree: number;
-                        isRetrograde: boolean;
-                        navamsaSign: string;
-                        dasamsaSign: string;
-                        drekkanaSign?: string | undefined;
-                        house?: number | undefined;
-                        dignity?: "neutral" | "exalted" | "own" | "debilitated" | undefined;
-                    }[];
-                    ayanamsa: number;
-                    chartType: string;
-                    currentDasha?: {
-                        mahadasha: {
-                            planet: string;
-                            startDate: string;
-                            endDate: string;
-                            years: number;
-                        };
-                        antardasha?: {
-                            planet: string;
-                            startDate: string;
-                            endDate: string;
-                            years: number;
-                        } | undefined;
-                        pratyantardasha?: {
-                            planet: string;
-                            startDate: string;
-                            endDate: string;
-                            years: number;
-                        } | undefined;
-                        sookshmadasha?: {
-                            planet: string;
-                            startDate: string;
-                            endDate: string;
-                            years: number;
-                        } | undefined;
+                    lagnaDegree?: number | undefined;
+                    focus?: {
+                        themes?: string[] | undefined;
+                        houses?: number[] | undefined;
                     } | undefined;
-                } | undefined;
-                vedicD10?: {
-                    ascendant: string;
-                    ascendantDegree: number;
-                    planets: {
-                        longitude: number;
-                        name: string;
-                        sign: string;
-                        signIndex: number;
-                        degree: number;
-                        isRetrograde: boolean;
-                        navamsaSign: string;
-                        dasamsaSign: string;
-                        drekkanaSign?: string | undefined;
-                        house?: number | undefined;
-                        dignity?: "neutral" | "exalted" | "own" | "debilitated" | undefined;
-                    }[];
-                    ayanamsa: number;
-                    chartType: string;
-                    currentDasha?: {
-                        mahadasha: {
-                            planet: string;
-                            startDate: string;
-                            endDate: string;
-                            years: number;
-                        };
-                        antardasha?: {
-                            planet: string;
-                            startDate: string;
-                            endDate: string;
-                            years: number;
-                        } | undefined;
-                        pratyantardasha?: {
-                            planet: string;
-                            startDate: string;
-                            endDate: string;
-                            years: number;
-                        } | undefined;
-                        sookshmadasha?: {
-                            planet: string;
-                            startDate: string;
-                            endDate: string;
-                            years: number;
-                        } | undefined;
+                    fit?: {
+                        ok: boolean;
+                        problems: string[];
                     } | undefined;
+                    trace?: {
+                        title: string;
+                        points: string[];
+                    }[] | undefined;
+                    tuningId?: number | null | undefined;
                 } | undefined;
                 timing?: {
-                    house: number;
                     summary: string;
                     timeBased: boolean;
                     basis: "question";
@@ -6160,6 +4050,7 @@ export declare const GetAnalysisHistoryResponse: zod.ZodObject<{
                             durationYears?: number | undefined;
                         };
                     };
+                    house: number;
                     houseSign: string;
                     houseLord: string;
                     activations: string[];
@@ -6190,6 +4081,23 @@ export declare const GetAnalysisHistoryResponse: zod.ZodObject<{
                         notes: string[];
                     } | null | undefined;
                 } | undefined;
+                skippedReason?: string | null | undefined;
+                outlook?: {
+                    chance: number;
+                    level: "low" | "high" | "fair";
+                    headline: string;
+                    favours: string[];
+                    against: string[];
+                    timing?: {
+                        confidence: "low" | "medium" | "high";
+                        text: string;
+                        basis: string;
+                        from: string;
+                        to: string;
+                        dashaCheck?: string | undefined;
+                    } | null | undefined;
+                    timingNote?: string | null | undefined;
+                } | undefined;
                 location?: {
                     latitude: number;
                     longitude: number;
@@ -6207,18 +4115,34 @@ export declare const GetAnalysisHistoryResponse: zod.ZodObject<{
                 intensity: "low" | "medium" | "high";
             };
             simulation: {
+                source: "ai" | "rules";
+                context: {
+                    desiredOutcome: string;
+                    inferred: boolean;
+                    knownFacts: string[];
+                    constraints: string[];
+                };
                 bestPath: {
                     action: string;
                     risk: "low" | "medium" | "high";
                     stability: "low" | "medium" | "high";
                     outcome: "positive" | "negative" | "mixed";
+                    benefits: string[];
+                    downsides: string[];
+                    uncertainties: string[];
+                    reversible: boolean;
                 };
                 alternatives: {
                     action: string;
                     risk: "low" | "medium" | "high";
                     stability: "low" | "medium" | "high";
                     outcome: "positive" | "negative" | "mixed";
+                    benefits: string[];
+                    downsides: string[];
+                    uncertainties: string[];
+                    reversible: boolean;
                 }[];
+                comparison: string;
             };
             finalVerdict: {
                 recommendedAction: string;
@@ -6233,11 +4157,15 @@ export declare const GetAnalysisHistoryResponse: zod.ZodObject<{
                 useAi?: boolean | undefined;
                 useAstrology?: boolean | undefined;
             } | undefined;
+            clarifications?: {
+                question: string;
+                answer: string;
+            }[] | undefined;
             credits?: {
                 depth: "standard" | "deep" | "expert";
                 depthChosen: "auto" | "user";
                 lines: {
-                    key: "astro" | "ajit" | "manu" | "sivi" | "ai";
+                    key: "astro" | "ajit" | "manu" | "sivi" | "rsmi" | "ai";
                     label: string;
                     credits: number;
                     note: string;
@@ -6246,7 +4174,40 @@ export declare const GetAnalysisHistoryResponse: zod.ZodObject<{
                 balance: number | null;
                 charged: number;
             } | undefined;
+            safety?: {
+                action: "allow" | "support" | "redirect" | "block";
+                category: "none" | "self_harm" | "self_harm_method" | "harm_others" | "weapons" | "minor_sexual" | "manipulation";
+                message?: string | undefined;
+            } | undefined;
+            silence?: {
+                source: "ai" | "rules";
+                subject: "other" | "self";
+                channel: "message" | "in_person" | "call" | "organisation";
+                trigger: string;
+                duration: {
+                    bucket: "unknown" | "moments" | "minutes" | "hours" | "days" | "weeks";
+                    text?: string | null | undefined;
+                };
+                meanings: {
+                    why: string;
+                    meaning: string;
+                    likelihood: "more likely" | "possible" | "less likely";
+                }[];
+                unknowns: string[];
+                checks: string[];
+                caution: string;
+                who?: string | null | undefined;
+            } | undefined;
+            indirectRoute?: {
+                source: "ai" | "rules";
+                blocker: string;
+                cues: string[];
+                idea: string;
+                steps: string[];
+                fairness: string;
+            } | undefined;
             synthesis?: {
+                source: "ai" | "ai+astro" | "inbuilt" | "engine";
                 confidence: "low" | "medium" | "high";
                 score: number;
                 summary: string;
@@ -6254,7 +4215,6 @@ export declare const GetAnalysisHistoryResponse: zod.ZodObject<{
                 astroInsight: string;
                 advice: string;
                 timeframeDays: number;
-                source: "ai" | "ai+astro" | "engine";
                 reasoning?: string | undefined;
                 usedAi?: boolean | undefined;
                 usedAstrology?: boolean | undefined;
@@ -6275,10 +4235,10 @@ export declare const GetAnalysisHistoryResponse: zod.ZodObject<{
                 } | undefined;
             } | undefined;
             modules?: {
-                key: "AJIT" | "MANU" | "FILTER" | "SIVI" | "ASTRO" | "AI";
-                name: string;
+                key: "AJIT" | "MANU" | "FILTER" | "SIVI" | "ASTRO" | "RSMI" | "AI";
                 verdict: string;
-                area: "intent" | "emotion" | "synthesis" | "paths" | "astrology";
+                name: string;
+                area: "intent" | "emotion" | "silence" | "synthesis" | "paths" | "astrology";
                 active: boolean;
                 evidence: string[];
                 role?: string | undefined;
@@ -6305,95 +4265,14 @@ export declare const GetAnalysisHistoryResponse: zod.ZodObject<{
                     signal: "favorable" | "challenging" | "neutral";
                 };
                 interpretation: string;
-                vedicD1?: {
-                    ascendant: string;
-                    ascendantDegree: number;
-                    planets: {
-                        longitude: number;
-                        name: string;
-                        sign: string;
-                        signIndex: number;
-                        degree: number;
-                        isRetrograde: boolean;
-                        navamsaSign: string;
-                        dasamsaSign: string;
-                        drekkanaSign?: string | undefined;
-                        house?: number | undefined;
-                        dignity?: "neutral" | "exalted" | "own" | "debilitated" | undefined;
-                    }[];
-                    ayanamsa: number;
-                    chartType: string;
-                    currentDasha?: {
-                        mahadasha: {
-                            planet: string;
-                            startDate: string;
-                            endDate: string;
-                            years: number;
-                        };
-                        antardasha?: {
-                            planet: string;
-                            startDate: string;
-                            endDate: string;
-                            years: number;
-                        } | undefined;
-                        pratyantardasha?: {
-                            planet: string;
-                            startDate: string;
-                            endDate: string;
-                            years: number;
-                        } | undefined;
-                        sookshmadasha?: {
-                            planet: string;
-                            startDate: string;
-                            endDate: string;
-                            years: number;
-                        } | undefined;
-                    } | undefined;
+                ascendant?: {
+                    sign: string;
+                    degree: number;
+                    lord?: string | undefined;
                 } | undefined;
-                vedicD3?: {
-                    ascendant: string;
-                    ascendantDegree: number;
-                    planets: {
-                        longitude: number;
-                        name: string;
-                        sign: string;
-                        signIndex: number;
-                        degree: number;
-                        isRetrograde: boolean;
-                        navamsaSign: string;
-                        dasamsaSign: string;
-                        drekkanaSign?: string | undefined;
-                        house?: number | undefined;
-                        dignity?: "neutral" | "exalted" | "own" | "debilitated" | undefined;
-                    }[];
-                    ayanamsa: number;
-                    chartType: string;
-                    currentDasha?: {
-                        mahadasha: {
-                            planet: string;
-                            startDate: string;
-                            endDate: string;
-                            years: number;
-                        };
-                        antardasha?: {
-                            planet: string;
-                            startDate: string;
-                            endDate: string;
-                            years: number;
-                        } | undefined;
-                        pratyantardasha?: {
-                            planet: string;
-                            startDate: string;
-                            endDate: string;
-                            years: number;
-                        } | undefined;
-                        sookshmadasha?: {
-                            planet: string;
-                            startDate: string;
-                            endDate: string;
-                            years: number;
-                        } | undefined;
-                    } | undefined;
+                tuning?: {
+                    id?: number | null | undefined;
+                    astroShare?: number | null | undefined;
                 } | undefined;
                 prashna?: {
                     score: number;
@@ -6415,6 +4294,7 @@ export declare const GetAnalysisHistoryResponse: zod.ZodObject<{
                         label: string;
                         effect: number;
                         detail: string;
+                        family?: string | undefined;
                     }[];
                     summary: string;
                     latitude?: number | undefined;
@@ -6422,99 +4302,22 @@ export declare const GetAnalysisHistoryResponse: zod.ZodObject<{
                     risk?: "low" | "medium" | "high" | undefined;
                     stability?: "low" | "medium" | "high" | undefined;
                     dominantPlanet?: string | undefined;
-                } | undefined;
-                vedicD9?: {
-                    ascendant: string;
-                    ascendantDegree: number;
-                    planets: {
-                        longitude: number;
-                        name: string;
-                        sign: string;
-                        signIndex: number;
-                        degree: number;
-                        isRetrograde: boolean;
-                        navamsaSign: string;
-                        dasamsaSign: string;
-                        drekkanaSign?: string | undefined;
-                        house?: number | undefined;
-                        dignity?: "neutral" | "exalted" | "own" | "debilitated" | undefined;
-                    }[];
-                    ayanamsa: number;
-                    chartType: string;
-                    currentDasha?: {
-                        mahadasha: {
-                            planet: string;
-                            startDate: string;
-                            endDate: string;
-                            years: number;
-                        };
-                        antardasha?: {
-                            planet: string;
-                            startDate: string;
-                            endDate: string;
-                            years: number;
-                        } | undefined;
-                        pratyantardasha?: {
-                            planet: string;
-                            startDate: string;
-                            endDate: string;
-                            years: number;
-                        } | undefined;
-                        sookshmadasha?: {
-                            planet: string;
-                            startDate: string;
-                            endDate: string;
-                            years: number;
-                        } | undefined;
+                    lagnaDegree?: number | undefined;
+                    focus?: {
+                        themes?: string[] | undefined;
+                        houses?: number[] | undefined;
                     } | undefined;
-                } | undefined;
-                vedicD10?: {
-                    ascendant: string;
-                    ascendantDegree: number;
-                    planets: {
-                        longitude: number;
-                        name: string;
-                        sign: string;
-                        signIndex: number;
-                        degree: number;
-                        isRetrograde: boolean;
-                        navamsaSign: string;
-                        dasamsaSign: string;
-                        drekkanaSign?: string | undefined;
-                        house?: number | undefined;
-                        dignity?: "neutral" | "exalted" | "own" | "debilitated" | undefined;
-                    }[];
-                    ayanamsa: number;
-                    chartType: string;
-                    currentDasha?: {
-                        mahadasha: {
-                            planet: string;
-                            startDate: string;
-                            endDate: string;
-                            years: number;
-                        };
-                        antardasha?: {
-                            planet: string;
-                            startDate: string;
-                            endDate: string;
-                            years: number;
-                        } | undefined;
-                        pratyantardasha?: {
-                            planet: string;
-                            startDate: string;
-                            endDate: string;
-                            years: number;
-                        } | undefined;
-                        sookshmadasha?: {
-                            planet: string;
-                            startDate: string;
-                            endDate: string;
-                            years: number;
-                        } | undefined;
+                    fit?: {
+                        ok: boolean;
+                        problems: string[];
                     } | undefined;
+                    trace?: {
+                        title: string;
+                        points: string[];
+                    }[] | undefined;
+                    tuningId?: number | null | undefined;
                 } | undefined;
                 timing?: {
-                    house: number;
                     summary: string;
                     timeBased: boolean;
                     basis: "question";
@@ -6544,6 +4347,7 @@ export declare const GetAnalysisHistoryResponse: zod.ZodObject<{
                             durationYears?: number | undefined;
                         };
                     };
+                    house: number;
                     houseSign: string;
                     houseLord: string;
                     activations: string[];
@@ -6574,6 +4378,23 @@ export declare const GetAnalysisHistoryResponse: zod.ZodObject<{
                         notes: string[];
                     } | null | undefined;
                 } | undefined;
+                skippedReason?: string | null | undefined;
+                outlook?: {
+                    chance: number;
+                    level: "low" | "high" | "fair";
+                    headline: string;
+                    favours: string[];
+                    against: string[];
+                    timing?: {
+                        confidence: "low" | "medium" | "high";
+                        text: string;
+                        basis: string;
+                        from: string;
+                        to: string;
+                        dashaCheck?: string | undefined;
+                    } | null | undefined;
+                    timingNote?: string | null | undefined;
+                } | undefined;
                 location?: {
                     latitude: number;
                     longitude: number;
@@ -6591,18 +4412,34 @@ export declare const GetAnalysisHistoryResponse: zod.ZodObject<{
                 intensity: "low" | "medium" | "high";
             };
             simulation: {
+                source: "ai" | "rules";
+                context: {
+                    desiredOutcome: string;
+                    inferred: boolean;
+                    knownFacts: string[];
+                    constraints: string[];
+                };
                 bestPath: {
                     action: string;
                     risk: "low" | "medium" | "high";
                     stability: "low" | "medium" | "high";
                     outcome: "positive" | "negative" | "mixed";
+                    benefits: string[];
+                    downsides: string[];
+                    uncertainties: string[];
+                    reversible: boolean;
                 };
                 alternatives: {
                     action: string;
                     risk: "low" | "medium" | "high";
                     stability: "low" | "medium" | "high";
                     outcome: "positive" | "negative" | "mixed";
+                    benefits: string[];
+                    downsides: string[];
+                    uncertainties: string[];
+                    reversible: boolean;
                 }[];
+                comparison: string;
             };
             finalVerdict: {
                 recommendedAction: string;
@@ -6617,11 +4454,15 @@ export declare const GetAnalysisHistoryResponse: zod.ZodObject<{
                 useAi?: boolean | undefined;
                 useAstrology?: boolean | undefined;
             } | undefined;
+            clarifications?: {
+                question: string;
+                answer: string;
+            }[] | undefined;
             credits?: {
                 depth: "standard" | "deep" | "expert";
                 depthChosen: "auto" | "user";
                 lines: {
-                    key: "astro" | "ajit" | "manu" | "sivi" | "ai";
+                    key: "astro" | "ajit" | "manu" | "sivi" | "rsmi" | "ai";
                     label: string;
                     credits: number;
                     note: string;
@@ -6630,7 +4471,40 @@ export declare const GetAnalysisHistoryResponse: zod.ZodObject<{
                 balance: number | null;
                 charged: number;
             } | undefined;
+            safety?: {
+                action: "allow" | "support" | "redirect" | "block";
+                category: "none" | "self_harm" | "self_harm_method" | "harm_others" | "weapons" | "minor_sexual" | "manipulation";
+                message?: string | undefined;
+            } | undefined;
+            silence?: {
+                source: "ai" | "rules";
+                subject: "other" | "self";
+                channel: "message" | "in_person" | "call" | "organisation";
+                trigger: string;
+                duration: {
+                    bucket: "unknown" | "moments" | "minutes" | "hours" | "days" | "weeks";
+                    text?: string | null | undefined;
+                };
+                meanings: {
+                    why: string;
+                    meaning: string;
+                    likelihood: "more likely" | "possible" | "less likely";
+                }[];
+                unknowns: string[];
+                checks: string[];
+                caution: string;
+                who?: string | null | undefined;
+            } | undefined;
+            indirectRoute?: {
+                source: "ai" | "rules";
+                blocker: string;
+                cues: string[];
+                idea: string;
+                steps: string[];
+                fairness: string;
+            } | undefined;
             synthesis?: {
+                source: "ai" | "ai+astro" | "inbuilt" | "engine";
                 confidence: "low" | "medium" | "high";
                 score: number;
                 summary: string;
@@ -6638,7 +4512,6 @@ export declare const GetAnalysisHistoryResponse: zod.ZodObject<{
                 astroInsight: string;
                 advice: string;
                 timeframeDays: number;
-                source: "ai" | "ai+astro" | "engine";
                 reasoning?: string | undefined;
                 usedAi?: boolean | undefined;
                 usedAstrology?: boolean | undefined;
@@ -6659,10 +4532,10 @@ export declare const GetAnalysisHistoryResponse: zod.ZodObject<{
                 } | undefined;
             } | undefined;
             modules?: {
-                key: "AJIT" | "MANU" | "FILTER" | "SIVI" | "ASTRO" | "AI";
-                name: string;
+                key: "AJIT" | "MANU" | "FILTER" | "SIVI" | "ASTRO" | "RSMI" | "AI";
                 verdict: string;
-                area: "intent" | "emotion" | "synthesis" | "paths" | "astrology";
+                name: string;
+                area: "intent" | "emotion" | "silence" | "synthesis" | "paths" | "astrology";
                 active: boolean;
                 evidence: string[];
                 role?: string | undefined;
@@ -6688,95 +4561,14 @@ export declare const GetAnalysisHistoryResponse: zod.ZodObject<{
                     signal: "favorable" | "challenging" | "neutral";
                 };
                 interpretation: string;
-                vedicD1?: {
-                    ascendant: string;
-                    ascendantDegree: number;
-                    planets: {
-                        longitude: number;
-                        name: string;
-                        sign: string;
-                        signIndex: number;
-                        degree: number;
-                        isRetrograde: boolean;
-                        navamsaSign: string;
-                        dasamsaSign: string;
-                        drekkanaSign?: string | undefined;
-                        house?: number | undefined;
-                        dignity?: "neutral" | "exalted" | "own" | "debilitated" | undefined;
-                    }[];
-                    ayanamsa: number;
-                    chartType: string;
-                    currentDasha?: {
-                        mahadasha: {
-                            planet: string;
-                            startDate: string;
-                            endDate: string;
-                            years: number;
-                        };
-                        antardasha?: {
-                            planet: string;
-                            startDate: string;
-                            endDate: string;
-                            years: number;
-                        } | undefined;
-                        pratyantardasha?: {
-                            planet: string;
-                            startDate: string;
-                            endDate: string;
-                            years: number;
-                        } | undefined;
-                        sookshmadasha?: {
-                            planet: string;
-                            startDate: string;
-                            endDate: string;
-                            years: number;
-                        } | undefined;
-                    } | undefined;
+                ascendant?: {
+                    sign: string;
+                    degree: number;
+                    lord?: string | undefined;
                 } | undefined;
-                vedicD3?: {
-                    ascendant: string;
-                    ascendantDegree: number;
-                    planets: {
-                        longitude: number;
-                        name: string;
-                        sign: string;
-                        signIndex: number;
-                        degree: number;
-                        isRetrograde: boolean;
-                        navamsaSign: string;
-                        dasamsaSign: string;
-                        drekkanaSign?: string | undefined;
-                        house?: number | undefined;
-                        dignity?: "neutral" | "exalted" | "own" | "debilitated" | undefined;
-                    }[];
-                    ayanamsa: number;
-                    chartType: string;
-                    currentDasha?: {
-                        mahadasha: {
-                            planet: string;
-                            startDate: string;
-                            endDate: string;
-                            years: number;
-                        };
-                        antardasha?: {
-                            planet: string;
-                            startDate: string;
-                            endDate: string;
-                            years: number;
-                        } | undefined;
-                        pratyantardasha?: {
-                            planet: string;
-                            startDate: string;
-                            endDate: string;
-                            years: number;
-                        } | undefined;
-                        sookshmadasha?: {
-                            planet: string;
-                            startDate: string;
-                            endDate: string;
-                            years: number;
-                        } | undefined;
-                    } | undefined;
+                tuning?: {
+                    id?: number | null | undefined;
+                    astroShare?: number | null | undefined;
                 } | undefined;
                 prashna?: {
                     score: number;
@@ -6798,6 +4590,7 @@ export declare const GetAnalysisHistoryResponse: zod.ZodObject<{
                         label: string;
                         effect: number;
                         detail: string;
+                        family?: string | undefined;
                     }[];
                     summary: string;
                     latitude?: number | undefined;
@@ -6805,99 +4598,22 @@ export declare const GetAnalysisHistoryResponse: zod.ZodObject<{
                     risk?: "low" | "medium" | "high" | undefined;
                     stability?: "low" | "medium" | "high" | undefined;
                     dominantPlanet?: string | undefined;
-                } | undefined;
-                vedicD9?: {
-                    ascendant: string;
-                    ascendantDegree: number;
-                    planets: {
-                        longitude: number;
-                        name: string;
-                        sign: string;
-                        signIndex: number;
-                        degree: number;
-                        isRetrograde: boolean;
-                        navamsaSign: string;
-                        dasamsaSign: string;
-                        drekkanaSign?: string | undefined;
-                        house?: number | undefined;
-                        dignity?: "neutral" | "exalted" | "own" | "debilitated" | undefined;
-                    }[];
-                    ayanamsa: number;
-                    chartType: string;
-                    currentDasha?: {
-                        mahadasha: {
-                            planet: string;
-                            startDate: string;
-                            endDate: string;
-                            years: number;
-                        };
-                        antardasha?: {
-                            planet: string;
-                            startDate: string;
-                            endDate: string;
-                            years: number;
-                        } | undefined;
-                        pratyantardasha?: {
-                            planet: string;
-                            startDate: string;
-                            endDate: string;
-                            years: number;
-                        } | undefined;
-                        sookshmadasha?: {
-                            planet: string;
-                            startDate: string;
-                            endDate: string;
-                            years: number;
-                        } | undefined;
+                    lagnaDegree?: number | undefined;
+                    focus?: {
+                        themes?: string[] | undefined;
+                        houses?: number[] | undefined;
                     } | undefined;
-                } | undefined;
-                vedicD10?: {
-                    ascendant: string;
-                    ascendantDegree: number;
-                    planets: {
-                        longitude: number;
-                        name: string;
-                        sign: string;
-                        signIndex: number;
-                        degree: number;
-                        isRetrograde: boolean;
-                        navamsaSign: string;
-                        dasamsaSign: string;
-                        drekkanaSign?: string | undefined;
-                        house?: number | undefined;
-                        dignity?: "neutral" | "exalted" | "own" | "debilitated" | undefined;
-                    }[];
-                    ayanamsa: number;
-                    chartType: string;
-                    currentDasha?: {
-                        mahadasha: {
-                            planet: string;
-                            startDate: string;
-                            endDate: string;
-                            years: number;
-                        };
-                        antardasha?: {
-                            planet: string;
-                            startDate: string;
-                            endDate: string;
-                            years: number;
-                        } | undefined;
-                        pratyantardasha?: {
-                            planet: string;
-                            startDate: string;
-                            endDate: string;
-                            years: number;
-                        } | undefined;
-                        sookshmadasha?: {
-                            planet: string;
-                            startDate: string;
-                            endDate: string;
-                            years: number;
-                        } | undefined;
+                    fit?: {
+                        ok: boolean;
+                        problems: string[];
                     } | undefined;
+                    trace?: {
+                        title: string;
+                        points: string[];
+                    }[] | undefined;
+                    tuningId?: number | null | undefined;
                 } | undefined;
                 timing?: {
-                    house: number;
                     summary: string;
                     timeBased: boolean;
                     basis: "question";
@@ -6927,6 +4643,7 @@ export declare const GetAnalysisHistoryResponse: zod.ZodObject<{
                             durationYears?: number | undefined;
                         };
                     };
+                    house: number;
                     houseSign: string;
                     houseLord: string;
                     activations: string[];
@@ -6957,6 +4674,23 @@ export declare const GetAnalysisHistoryResponse: zod.ZodObject<{
                         notes: string[];
                     } | null | undefined;
                 } | undefined;
+                skippedReason?: string | null | undefined;
+                outlook?: {
+                    chance: number;
+                    level: "low" | "high" | "fair";
+                    headline: string;
+                    favours: string[];
+                    against: string[];
+                    timing?: {
+                        confidence: "low" | "medium" | "high";
+                        text: string;
+                        basis: string;
+                        from: string;
+                        to: string;
+                        dashaCheck?: string | undefined;
+                    } | null | undefined;
+                    timingNote?: string | null | undefined;
+                } | undefined;
                 location?: {
                     latitude: number;
                     longitude: number;
@@ -6974,18 +4708,34 @@ export declare const GetAnalysisHistoryResponse: zod.ZodObject<{
                 intensity: "low" | "medium" | "high";
             };
             simulation: {
+                source: "ai" | "rules";
+                context: {
+                    desiredOutcome: string;
+                    inferred: boolean;
+                    knownFacts: string[];
+                    constraints: string[];
+                };
                 bestPath: {
                     action: string;
                     risk: "low" | "medium" | "high";
                     stability: "low" | "medium" | "high";
                     outcome: "positive" | "negative" | "mixed";
+                    benefits: string[];
+                    downsides: string[];
+                    uncertainties: string[];
+                    reversible: boolean;
                 };
                 alternatives: {
                     action: string;
                     risk: "low" | "medium" | "high";
                     stability: "low" | "medium" | "high";
                     outcome: "positive" | "negative" | "mixed";
+                    benefits: string[];
+                    downsides: string[];
+                    uncertainties: string[];
+                    reversible: boolean;
                 }[];
+                comparison: string;
             };
             finalVerdict: {
                 recommendedAction: string;
@@ -7000,11 +4750,15 @@ export declare const GetAnalysisHistoryResponse: zod.ZodObject<{
                 useAi?: boolean | undefined;
                 useAstrology?: boolean | undefined;
             } | undefined;
+            clarifications?: {
+                question: string;
+                answer: string;
+            }[] | undefined;
             credits?: {
                 depth: "standard" | "deep" | "expert";
                 depthChosen: "auto" | "user";
                 lines: {
-                    key: "astro" | "ajit" | "manu" | "sivi" | "ai";
+                    key: "astro" | "ajit" | "manu" | "sivi" | "rsmi" | "ai";
                     label: string;
                     credits: number;
                     note: string;
@@ -7013,7 +4767,40 @@ export declare const GetAnalysisHistoryResponse: zod.ZodObject<{
                 balance: number | null;
                 charged: number;
             } | undefined;
+            safety?: {
+                action: "allow" | "support" | "redirect" | "block";
+                category: "none" | "self_harm" | "self_harm_method" | "harm_others" | "weapons" | "minor_sexual" | "manipulation";
+                message?: string | undefined;
+            } | undefined;
+            silence?: {
+                source: "ai" | "rules";
+                subject: "other" | "self";
+                channel: "message" | "in_person" | "call" | "organisation";
+                trigger: string;
+                duration: {
+                    bucket: "unknown" | "moments" | "minutes" | "hours" | "days" | "weeks";
+                    text?: string | null | undefined;
+                };
+                meanings: {
+                    why: string;
+                    meaning: string;
+                    likelihood: "more likely" | "possible" | "less likely";
+                }[];
+                unknowns: string[];
+                checks: string[];
+                caution: string;
+                who?: string | null | undefined;
+            } | undefined;
+            indirectRoute?: {
+                source: "ai" | "rules";
+                blocker: string;
+                cues: string[];
+                idea: string;
+                steps: string[];
+                fairness: string;
+            } | undefined;
             synthesis?: {
+                source: "ai" | "ai+astro" | "inbuilt" | "engine";
                 confidence: "low" | "medium" | "high";
                 score: number;
                 summary: string;
@@ -7021,7 +4808,6 @@ export declare const GetAnalysisHistoryResponse: zod.ZodObject<{
                 astroInsight: string;
                 advice: string;
                 timeframeDays: number;
-                source: "ai" | "ai+astro" | "engine";
                 reasoning?: string | undefined;
                 usedAi?: boolean | undefined;
                 usedAstrology?: boolean | undefined;
@@ -7042,10 +4828,10 @@ export declare const GetAnalysisHistoryResponse: zod.ZodObject<{
                 } | undefined;
             } | undefined;
             modules?: {
-                key: "AJIT" | "MANU" | "FILTER" | "SIVI" | "ASTRO" | "AI";
-                name: string;
+                key: "AJIT" | "MANU" | "FILTER" | "SIVI" | "ASTRO" | "RSMI" | "AI";
                 verdict: string;
-                area: "intent" | "emotion" | "synthesis" | "paths" | "astrology";
+                name: string;
+                area: "intent" | "emotion" | "silence" | "synthesis" | "paths" | "astrology";
                 active: boolean;
                 evidence: string[];
                 role?: string | undefined;
@@ -7079,95 +4865,14 @@ export declare const GetAnalysisHistoryResponse: zod.ZodObject<{
                     signal: "favorable" | "challenging" | "neutral";
                 };
                 interpretation: string;
-                vedicD1?: {
-                    ascendant: string;
-                    ascendantDegree: number;
-                    planets: {
-                        longitude: number;
-                        name: string;
-                        sign: string;
-                        signIndex: number;
-                        degree: number;
-                        isRetrograde: boolean;
-                        navamsaSign: string;
-                        dasamsaSign: string;
-                        drekkanaSign?: string | undefined;
-                        house?: number | undefined;
-                        dignity?: "neutral" | "exalted" | "own" | "debilitated" | undefined;
-                    }[];
-                    ayanamsa: number;
-                    chartType: string;
-                    currentDasha?: {
-                        mahadasha: {
-                            planet: string;
-                            startDate: string;
-                            endDate: string;
-                            years: number;
-                        };
-                        antardasha?: {
-                            planet: string;
-                            startDate: string;
-                            endDate: string;
-                            years: number;
-                        } | undefined;
-                        pratyantardasha?: {
-                            planet: string;
-                            startDate: string;
-                            endDate: string;
-                            years: number;
-                        } | undefined;
-                        sookshmadasha?: {
-                            planet: string;
-                            startDate: string;
-                            endDate: string;
-                            years: number;
-                        } | undefined;
-                    } | undefined;
+                ascendant?: {
+                    sign: string;
+                    degree: number;
+                    lord?: string | undefined;
                 } | undefined;
-                vedicD3?: {
-                    ascendant: string;
-                    ascendantDegree: number;
-                    planets: {
-                        longitude: number;
-                        name: string;
-                        sign: string;
-                        signIndex: number;
-                        degree: number;
-                        isRetrograde: boolean;
-                        navamsaSign: string;
-                        dasamsaSign: string;
-                        drekkanaSign?: string | undefined;
-                        house?: number | undefined;
-                        dignity?: "neutral" | "exalted" | "own" | "debilitated" | undefined;
-                    }[];
-                    ayanamsa: number;
-                    chartType: string;
-                    currentDasha?: {
-                        mahadasha: {
-                            planet: string;
-                            startDate: string;
-                            endDate: string;
-                            years: number;
-                        };
-                        antardasha?: {
-                            planet: string;
-                            startDate: string;
-                            endDate: string;
-                            years: number;
-                        } | undefined;
-                        pratyantardasha?: {
-                            planet: string;
-                            startDate: string;
-                            endDate: string;
-                            years: number;
-                        } | undefined;
-                        sookshmadasha?: {
-                            planet: string;
-                            startDate: string;
-                            endDate: string;
-                            years: number;
-                        } | undefined;
-                    } | undefined;
+                tuning?: {
+                    id?: number | null | undefined;
+                    astroShare?: number | null | undefined;
                 } | undefined;
                 prashna?: {
                     score: number;
@@ -7189,6 +4894,7 @@ export declare const GetAnalysisHistoryResponse: zod.ZodObject<{
                         label: string;
                         effect: number;
                         detail: string;
+                        family?: string | undefined;
                     }[];
                     summary: string;
                     latitude?: number | undefined;
@@ -7196,99 +4902,22 @@ export declare const GetAnalysisHistoryResponse: zod.ZodObject<{
                     risk?: "low" | "medium" | "high" | undefined;
                     stability?: "low" | "medium" | "high" | undefined;
                     dominantPlanet?: string | undefined;
-                } | undefined;
-                vedicD9?: {
-                    ascendant: string;
-                    ascendantDegree: number;
-                    planets: {
-                        longitude: number;
-                        name: string;
-                        sign: string;
-                        signIndex: number;
-                        degree: number;
-                        isRetrograde: boolean;
-                        navamsaSign: string;
-                        dasamsaSign: string;
-                        drekkanaSign?: string | undefined;
-                        house?: number | undefined;
-                        dignity?: "neutral" | "exalted" | "own" | "debilitated" | undefined;
-                    }[];
-                    ayanamsa: number;
-                    chartType: string;
-                    currentDasha?: {
-                        mahadasha: {
-                            planet: string;
-                            startDate: string;
-                            endDate: string;
-                            years: number;
-                        };
-                        antardasha?: {
-                            planet: string;
-                            startDate: string;
-                            endDate: string;
-                            years: number;
-                        } | undefined;
-                        pratyantardasha?: {
-                            planet: string;
-                            startDate: string;
-                            endDate: string;
-                            years: number;
-                        } | undefined;
-                        sookshmadasha?: {
-                            planet: string;
-                            startDate: string;
-                            endDate: string;
-                            years: number;
-                        } | undefined;
+                    lagnaDegree?: number | undefined;
+                    focus?: {
+                        themes?: string[] | undefined;
+                        houses?: number[] | undefined;
                     } | undefined;
-                } | undefined;
-                vedicD10?: {
-                    ascendant: string;
-                    ascendantDegree: number;
-                    planets: {
-                        longitude: number;
-                        name: string;
-                        sign: string;
-                        signIndex: number;
-                        degree: number;
-                        isRetrograde: boolean;
-                        navamsaSign: string;
-                        dasamsaSign: string;
-                        drekkanaSign?: string | undefined;
-                        house?: number | undefined;
-                        dignity?: "neutral" | "exalted" | "own" | "debilitated" | undefined;
-                    }[];
-                    ayanamsa: number;
-                    chartType: string;
-                    currentDasha?: {
-                        mahadasha: {
-                            planet: string;
-                            startDate: string;
-                            endDate: string;
-                            years: number;
-                        };
-                        antardasha?: {
-                            planet: string;
-                            startDate: string;
-                            endDate: string;
-                            years: number;
-                        } | undefined;
-                        pratyantardasha?: {
-                            planet: string;
-                            startDate: string;
-                            endDate: string;
-                            years: number;
-                        } | undefined;
-                        sookshmadasha?: {
-                            planet: string;
-                            startDate: string;
-                            endDate: string;
-                            years: number;
-                        } | undefined;
+                    fit?: {
+                        ok: boolean;
+                        problems: string[];
                     } | undefined;
+                    trace?: {
+                        title: string;
+                        points: string[];
+                    }[] | undefined;
+                    tuningId?: number | null | undefined;
                 } | undefined;
                 timing?: {
-                    house: number;
                     summary: string;
                     timeBased: boolean;
                     basis: "question";
@@ -7318,6 +4947,7 @@ export declare const GetAnalysisHistoryResponse: zod.ZodObject<{
                             durationYears?: number | undefined;
                         };
                     };
+                    house: number;
                     houseSign: string;
                     houseLord: string;
                     activations: string[];
@@ -7348,6 +4978,23 @@ export declare const GetAnalysisHistoryResponse: zod.ZodObject<{
                         notes: string[];
                     } | null | undefined;
                 } | undefined;
+                skippedReason?: string | null | undefined;
+                outlook?: {
+                    chance: number;
+                    level: "low" | "high" | "fair";
+                    headline: string;
+                    favours: string[];
+                    against: string[];
+                    timing?: {
+                        confidence: "low" | "medium" | "high";
+                        text: string;
+                        basis: string;
+                        from: string;
+                        to: string;
+                        dashaCheck?: string | undefined;
+                    } | null | undefined;
+                    timingNote?: string | null | undefined;
+                } | undefined;
                 location?: {
                     latitude: number;
                     longitude: number;
@@ -7365,18 +5012,34 @@ export declare const GetAnalysisHistoryResponse: zod.ZodObject<{
                 intensity: "low" | "medium" | "high";
             };
             simulation: {
+                source: "ai" | "rules";
+                context: {
+                    desiredOutcome: string;
+                    inferred: boolean;
+                    knownFacts: string[];
+                    constraints: string[];
+                };
                 bestPath: {
                     action: string;
                     risk: "low" | "medium" | "high";
                     stability: "low" | "medium" | "high";
                     outcome: "positive" | "negative" | "mixed";
+                    benefits: string[];
+                    downsides: string[];
+                    uncertainties: string[];
+                    reversible: boolean;
                 };
                 alternatives: {
                     action: string;
                     risk: "low" | "medium" | "high";
                     stability: "low" | "medium" | "high";
                     outcome: "positive" | "negative" | "mixed";
+                    benefits: string[];
+                    downsides: string[];
+                    uncertainties: string[];
+                    reversible: boolean;
                 }[];
+                comparison: string;
             };
             finalVerdict: {
                 recommendedAction: string;
@@ -7391,11 +5054,15 @@ export declare const GetAnalysisHistoryResponse: zod.ZodObject<{
                 useAi?: boolean | undefined;
                 useAstrology?: boolean | undefined;
             } | undefined;
+            clarifications?: {
+                question: string;
+                answer: string;
+            }[] | undefined;
             credits?: {
                 depth: "standard" | "deep" | "expert";
                 depthChosen: "auto" | "user";
                 lines: {
-                    key: "astro" | "ajit" | "manu" | "sivi" | "ai";
+                    key: "astro" | "ajit" | "manu" | "sivi" | "rsmi" | "ai";
                     label: string;
                     credits: number;
                     note: string;
@@ -7404,7 +5071,40 @@ export declare const GetAnalysisHistoryResponse: zod.ZodObject<{
                 balance: number | null;
                 charged: number;
             } | undefined;
+            safety?: {
+                action: "allow" | "support" | "redirect" | "block";
+                category: "none" | "self_harm" | "self_harm_method" | "harm_others" | "weapons" | "minor_sexual" | "manipulation";
+                message?: string | undefined;
+            } | undefined;
+            silence?: {
+                source: "ai" | "rules";
+                subject: "other" | "self";
+                channel: "message" | "in_person" | "call" | "organisation";
+                trigger: string;
+                duration: {
+                    bucket: "unknown" | "moments" | "minutes" | "hours" | "days" | "weeks";
+                    text?: string | null | undefined;
+                };
+                meanings: {
+                    why: string;
+                    meaning: string;
+                    likelihood: "more likely" | "possible" | "less likely";
+                }[];
+                unknowns: string[];
+                checks: string[];
+                caution: string;
+                who?: string | null | undefined;
+            } | undefined;
+            indirectRoute?: {
+                source: "ai" | "rules";
+                blocker: string;
+                cues: string[];
+                idea: string;
+                steps: string[];
+                fairness: string;
+            } | undefined;
             synthesis?: {
+                source: "ai" | "ai+astro" | "inbuilt" | "engine";
                 confidence: "low" | "medium" | "high";
                 score: number;
                 summary: string;
@@ -7412,7 +5112,6 @@ export declare const GetAnalysisHistoryResponse: zod.ZodObject<{
                 astroInsight: string;
                 advice: string;
                 timeframeDays: number;
-                source: "ai" | "ai+astro" | "engine";
                 reasoning?: string | undefined;
                 usedAi?: boolean | undefined;
                 usedAstrology?: boolean | undefined;
@@ -7433,10 +5132,10 @@ export declare const GetAnalysisHistoryResponse: zod.ZodObject<{
                 } | undefined;
             } | undefined;
             modules?: {
-                key: "AJIT" | "MANU" | "FILTER" | "SIVI" | "ASTRO" | "AI";
-                name: string;
+                key: "AJIT" | "MANU" | "FILTER" | "SIVI" | "ASTRO" | "RSMI" | "AI";
                 verdict: string;
-                area: "intent" | "emotion" | "synthesis" | "paths" | "astrology";
+                name: string;
+                area: "intent" | "emotion" | "silence" | "synthesis" | "paths" | "astrology";
                 active: boolean;
                 evidence: string[];
                 role?: string | undefined;
@@ -7467,95 +5166,14 @@ export declare const GetAnalysisHistoryResponse: zod.ZodObject<{
                     signal: "favorable" | "challenging" | "neutral";
                 };
                 interpretation: string;
-                vedicD1?: {
-                    ascendant: string;
-                    ascendantDegree: number;
-                    planets: {
-                        longitude: number;
-                        name: string;
-                        sign: string;
-                        signIndex: number;
-                        degree: number;
-                        isRetrograde: boolean;
-                        navamsaSign: string;
-                        dasamsaSign: string;
-                        drekkanaSign?: string | undefined;
-                        house?: number | undefined;
-                        dignity?: "neutral" | "exalted" | "own" | "debilitated" | undefined;
-                    }[];
-                    ayanamsa: number;
-                    chartType: string;
-                    currentDasha?: {
-                        mahadasha: {
-                            planet: string;
-                            startDate: string;
-                            endDate: string;
-                            years: number;
-                        };
-                        antardasha?: {
-                            planet: string;
-                            startDate: string;
-                            endDate: string;
-                            years: number;
-                        } | undefined;
-                        pratyantardasha?: {
-                            planet: string;
-                            startDate: string;
-                            endDate: string;
-                            years: number;
-                        } | undefined;
-                        sookshmadasha?: {
-                            planet: string;
-                            startDate: string;
-                            endDate: string;
-                            years: number;
-                        } | undefined;
-                    } | undefined;
+                ascendant?: {
+                    sign: string;
+                    degree: number;
+                    lord?: string | undefined;
                 } | undefined;
-                vedicD3?: {
-                    ascendant: string;
-                    ascendantDegree: number;
-                    planets: {
-                        longitude: number;
-                        name: string;
-                        sign: string;
-                        signIndex: number;
-                        degree: number;
-                        isRetrograde: boolean;
-                        navamsaSign: string;
-                        dasamsaSign: string;
-                        drekkanaSign?: string | undefined;
-                        house?: number | undefined;
-                        dignity?: "neutral" | "exalted" | "own" | "debilitated" | undefined;
-                    }[];
-                    ayanamsa: number;
-                    chartType: string;
-                    currentDasha?: {
-                        mahadasha: {
-                            planet: string;
-                            startDate: string;
-                            endDate: string;
-                            years: number;
-                        };
-                        antardasha?: {
-                            planet: string;
-                            startDate: string;
-                            endDate: string;
-                            years: number;
-                        } | undefined;
-                        pratyantardasha?: {
-                            planet: string;
-                            startDate: string;
-                            endDate: string;
-                            years: number;
-                        } | undefined;
-                        sookshmadasha?: {
-                            planet: string;
-                            startDate: string;
-                            endDate: string;
-                            years: number;
-                        } | undefined;
-                    } | undefined;
+                tuning?: {
+                    id?: number | null | undefined;
+                    astroShare?: number | null | undefined;
                 } | undefined;
                 prashna?: {
                     score: number;
@@ -7577,6 +5195,7 @@ export declare const GetAnalysisHistoryResponse: zod.ZodObject<{
                         label: string;
                         effect: number;
                         detail: string;
+                        family?: string | undefined;
                     }[];
                     summary: string;
                     latitude?: number | undefined;
@@ -7584,99 +5203,22 @@ export declare const GetAnalysisHistoryResponse: zod.ZodObject<{
                     risk?: "low" | "medium" | "high" | undefined;
                     stability?: "low" | "medium" | "high" | undefined;
                     dominantPlanet?: string | undefined;
-                } | undefined;
-                vedicD9?: {
-                    ascendant: string;
-                    ascendantDegree: number;
-                    planets: {
-                        longitude: number;
-                        name: string;
-                        sign: string;
-                        signIndex: number;
-                        degree: number;
-                        isRetrograde: boolean;
-                        navamsaSign: string;
-                        dasamsaSign: string;
-                        drekkanaSign?: string | undefined;
-                        house?: number | undefined;
-                        dignity?: "neutral" | "exalted" | "own" | "debilitated" | undefined;
-                    }[];
-                    ayanamsa: number;
-                    chartType: string;
-                    currentDasha?: {
-                        mahadasha: {
-                            planet: string;
-                            startDate: string;
-                            endDate: string;
-                            years: number;
-                        };
-                        antardasha?: {
-                            planet: string;
-                            startDate: string;
-                            endDate: string;
-                            years: number;
-                        } | undefined;
-                        pratyantardasha?: {
-                            planet: string;
-                            startDate: string;
-                            endDate: string;
-                            years: number;
-                        } | undefined;
-                        sookshmadasha?: {
-                            planet: string;
-                            startDate: string;
-                            endDate: string;
-                            years: number;
-                        } | undefined;
+                    lagnaDegree?: number | undefined;
+                    focus?: {
+                        themes?: string[] | undefined;
+                        houses?: number[] | undefined;
                     } | undefined;
-                } | undefined;
-                vedicD10?: {
-                    ascendant: string;
-                    ascendantDegree: number;
-                    planets: {
-                        longitude: number;
-                        name: string;
-                        sign: string;
-                        signIndex: number;
-                        degree: number;
-                        isRetrograde: boolean;
-                        navamsaSign: string;
-                        dasamsaSign: string;
-                        drekkanaSign?: string | undefined;
-                        house?: number | undefined;
-                        dignity?: "neutral" | "exalted" | "own" | "debilitated" | undefined;
-                    }[];
-                    ayanamsa: number;
-                    chartType: string;
-                    currentDasha?: {
-                        mahadasha: {
-                            planet: string;
-                            startDate: string;
-                            endDate: string;
-                            years: number;
-                        };
-                        antardasha?: {
-                            planet: string;
-                            startDate: string;
-                            endDate: string;
-                            years: number;
-                        } | undefined;
-                        pratyantardasha?: {
-                            planet: string;
-                            startDate: string;
-                            endDate: string;
-                            years: number;
-                        } | undefined;
-                        sookshmadasha?: {
-                            planet: string;
-                            startDate: string;
-                            endDate: string;
-                            years: number;
-                        } | undefined;
+                    fit?: {
+                        ok: boolean;
+                        problems: string[];
                     } | undefined;
+                    trace?: {
+                        title: string;
+                        points: string[];
+                    }[] | undefined;
+                    tuningId?: number | null | undefined;
                 } | undefined;
                 timing?: {
-                    house: number;
                     summary: string;
                     timeBased: boolean;
                     basis: "question";
@@ -7706,6 +5248,7 @@ export declare const GetAnalysisHistoryResponse: zod.ZodObject<{
                             durationYears?: number | undefined;
                         };
                     };
+                    house: number;
                     houseSign: string;
                     houseLord: string;
                     activations: string[];
@@ -7736,6 +5279,23 @@ export declare const GetAnalysisHistoryResponse: zod.ZodObject<{
                         notes: string[];
                     } | null | undefined;
                 } | undefined;
+                skippedReason?: string | null | undefined;
+                outlook?: {
+                    chance: number;
+                    level: "low" | "high" | "fair";
+                    headline: string;
+                    favours: string[];
+                    against: string[];
+                    timing?: {
+                        confidence: "low" | "medium" | "high";
+                        text: string;
+                        basis: string;
+                        from: string;
+                        to: string;
+                        dashaCheck?: string | undefined;
+                    } | null | undefined;
+                    timingNote?: string | null | undefined;
+                } | undefined;
                 location?: {
                     latitude: number;
                     longitude: number;
@@ -7753,18 +5313,34 @@ export declare const GetAnalysisHistoryResponse: zod.ZodObject<{
                 intensity: "low" | "medium" | "high";
             };
             simulation: {
+                source: "ai" | "rules";
+                context: {
+                    desiredOutcome: string;
+                    inferred: boolean;
+                    knownFacts: string[];
+                    constraints: string[];
+                };
                 bestPath: {
                     action: string;
                     risk: "low" | "medium" | "high";
                     stability: "low" | "medium" | "high";
                     outcome: "positive" | "negative" | "mixed";
+                    benefits: string[];
+                    downsides: string[];
+                    uncertainties: string[];
+                    reversible: boolean;
                 };
                 alternatives: {
                     action: string;
                     risk: "low" | "medium" | "high";
                     stability: "low" | "medium" | "high";
                     outcome: "positive" | "negative" | "mixed";
+                    benefits: string[];
+                    downsides: string[];
+                    uncertainties: string[];
+                    reversible: boolean;
                 }[];
+                comparison: string;
             };
             finalVerdict: {
                 recommendedAction: string;
@@ -7779,11 +5355,15 @@ export declare const GetAnalysisHistoryResponse: zod.ZodObject<{
                 useAi?: boolean | undefined;
                 useAstrology?: boolean | undefined;
             } | undefined;
+            clarifications?: {
+                question: string;
+                answer: string;
+            }[] | undefined;
             credits?: {
                 depth: "standard" | "deep" | "expert";
                 depthChosen: "auto" | "user";
                 lines: {
-                    key: "astro" | "ajit" | "manu" | "sivi" | "ai";
+                    key: "astro" | "ajit" | "manu" | "sivi" | "rsmi" | "ai";
                     label: string;
                     credits: number;
                     note: string;
@@ -7792,7 +5372,40 @@ export declare const GetAnalysisHistoryResponse: zod.ZodObject<{
                 balance: number | null;
                 charged: number;
             } | undefined;
+            safety?: {
+                action: "allow" | "support" | "redirect" | "block";
+                category: "none" | "self_harm" | "self_harm_method" | "harm_others" | "weapons" | "minor_sexual" | "manipulation";
+                message?: string | undefined;
+            } | undefined;
+            silence?: {
+                source: "ai" | "rules";
+                subject: "other" | "self";
+                channel: "message" | "in_person" | "call" | "organisation";
+                trigger: string;
+                duration: {
+                    bucket: "unknown" | "moments" | "minutes" | "hours" | "days" | "weeks";
+                    text?: string | null | undefined;
+                };
+                meanings: {
+                    why: string;
+                    meaning: string;
+                    likelihood: "more likely" | "possible" | "less likely";
+                }[];
+                unknowns: string[];
+                checks: string[];
+                caution: string;
+                who?: string | null | undefined;
+            } | undefined;
+            indirectRoute?: {
+                source: "ai" | "rules";
+                blocker: string;
+                cues: string[];
+                idea: string;
+                steps: string[];
+                fairness: string;
+            } | undefined;
             synthesis?: {
+                source: "ai" | "ai+astro" | "inbuilt" | "engine";
                 confidence: "low" | "medium" | "high";
                 score: number;
                 summary: string;
@@ -7800,7 +5413,6 @@ export declare const GetAnalysisHistoryResponse: zod.ZodObject<{
                 astroInsight: string;
                 advice: string;
                 timeframeDays: number;
-                source: "ai" | "ai+astro" | "engine";
                 reasoning?: string | undefined;
                 usedAi?: boolean | undefined;
                 usedAstrology?: boolean | undefined;
@@ -7821,10 +5433,10 @@ export declare const GetAnalysisHistoryResponse: zod.ZodObject<{
                 } | undefined;
             } | undefined;
             modules?: {
-                key: "AJIT" | "MANU" | "FILTER" | "SIVI" | "ASTRO" | "AI";
-                name: string;
+                key: "AJIT" | "MANU" | "FILTER" | "SIVI" | "ASTRO" | "RSMI" | "AI";
                 verdict: string;
-                area: "intent" | "emotion" | "synthesis" | "paths" | "astrology";
+                name: string;
+                area: "intent" | "emotion" | "silence" | "synthesis" | "paths" | "astrology";
                 active: boolean;
                 evidence: string[];
                 role?: string | undefined;
@@ -7870,6 +5482,8 @@ export declare const GetAnalysisByIdParams: zod.ZodObject<{
 }, {
     id: number;
 }>;
+export declare const getAnalysisByIdResponseFullAnalysisClarificationsItemQuestionMax = 300;
+export declare const getAnalysisByIdResponseFullAnalysisClarificationsItemAnswerMax = 500;
 export declare const GetAnalysisByIdResponse: zod.ZodObject<{
     id: zod.ZodNumber;
     situation: zod.ZodString;
@@ -7908,65 +5522,253 @@ export declare const GetAnalysisByIdResponse: zod.ZodObject<{
             intensity: "low" | "medium" | "high";
         }>;
         simulation: zod.ZodObject<{
+            context: zod.ZodObject<{
+                desiredOutcome: zod.ZodString;
+                inferred: zod.ZodBoolean;
+                knownFacts: zod.ZodArray<zod.ZodString, "many">;
+                constraints: zod.ZodArray<zod.ZodString, "many">;
+            }, "strip", zod.ZodTypeAny, {
+                desiredOutcome: string;
+                inferred: boolean;
+                knownFacts: string[];
+                constraints: string[];
+            }, {
+                desiredOutcome: string;
+                inferred: boolean;
+                knownFacts: string[];
+                constraints: string[];
+            }>;
             bestPath: zod.ZodObject<{
                 action: zod.ZodString;
                 risk: zod.ZodEnum<["low", "medium", "high"]>;
                 stability: zod.ZodEnum<["low", "medium", "high"]>;
                 outcome: zod.ZodEnum<["positive", "negative", "mixed"]>;
+                benefits: zod.ZodArray<zod.ZodString, "many">;
+                downsides: zod.ZodArray<zod.ZodString, "many">;
+                uncertainties: zod.ZodArray<zod.ZodString, "many">;
+                reversible: zod.ZodBoolean;
             }, "strip", zod.ZodTypeAny, {
                 action: string;
                 risk: "low" | "medium" | "high";
                 stability: "low" | "medium" | "high";
                 outcome: "positive" | "negative" | "mixed";
+                benefits: string[];
+                downsides: string[];
+                uncertainties: string[];
+                reversible: boolean;
             }, {
                 action: string;
                 risk: "low" | "medium" | "high";
                 stability: "low" | "medium" | "high";
                 outcome: "positive" | "negative" | "mixed";
+                benefits: string[];
+                downsides: string[];
+                uncertainties: string[];
+                reversible: boolean;
             }>;
             alternatives: zod.ZodArray<zod.ZodObject<{
                 action: zod.ZodString;
                 risk: zod.ZodEnum<["low", "medium", "high"]>;
                 stability: zod.ZodEnum<["low", "medium", "high"]>;
                 outcome: zod.ZodEnum<["positive", "negative", "mixed"]>;
+                benefits: zod.ZodArray<zod.ZodString, "many">;
+                downsides: zod.ZodArray<zod.ZodString, "many">;
+                uncertainties: zod.ZodArray<zod.ZodString, "many">;
+                reversible: zod.ZodBoolean;
             }, "strip", zod.ZodTypeAny, {
                 action: string;
                 risk: "low" | "medium" | "high";
                 stability: "low" | "medium" | "high";
                 outcome: "positive" | "negative" | "mixed";
+                benefits: string[];
+                downsides: string[];
+                uncertainties: string[];
+                reversible: boolean;
             }, {
                 action: string;
                 risk: "low" | "medium" | "high";
                 stability: "low" | "medium" | "high";
                 outcome: "positive" | "negative" | "mixed";
+                benefits: string[];
+                downsides: string[];
+                uncertainties: string[];
+                reversible: boolean;
             }>, "many">;
+            comparison: zod.ZodString;
+            source: zod.ZodEnum<["rules", "ai"]>;
         }, "strip", zod.ZodTypeAny, {
+            source: "ai" | "rules";
+            context: {
+                desiredOutcome: string;
+                inferred: boolean;
+                knownFacts: string[];
+                constraints: string[];
+            };
             bestPath: {
                 action: string;
                 risk: "low" | "medium" | "high";
                 stability: "low" | "medium" | "high";
                 outcome: "positive" | "negative" | "mixed";
+                benefits: string[];
+                downsides: string[];
+                uncertainties: string[];
+                reversible: boolean;
             };
             alternatives: {
                 action: string;
                 risk: "low" | "medium" | "high";
                 stability: "low" | "medium" | "high";
                 outcome: "positive" | "negative" | "mixed";
+                benefits: string[];
+                downsides: string[];
+                uncertainties: string[];
+                reversible: boolean;
             }[];
+            comparison: string;
         }, {
+            source: "ai" | "rules";
+            context: {
+                desiredOutcome: string;
+                inferred: boolean;
+                knownFacts: string[];
+                constraints: string[];
+            };
             bestPath: {
                 action: string;
                 risk: "low" | "medium" | "high";
                 stability: "low" | "medium" | "high";
                 outcome: "positive" | "negative" | "mixed";
+                benefits: string[];
+                downsides: string[];
+                uncertainties: string[];
+                reversible: boolean;
             };
             alternatives: {
                 action: string;
                 risk: "low" | "medium" | "high";
                 stability: "low" | "medium" | "high";
                 outcome: "positive" | "negative" | "mixed";
+                benefits: string[];
+                downsides: string[];
+                uncertainties: string[];
+                reversible: boolean;
             }[];
+            comparison: string;
         }>;
+        safety: zod.ZodOptional<zod.ZodObject<{
+            action: zod.ZodEnum<["allow", "support", "redirect", "block"]>;
+            category: zod.ZodEnum<["none", "self_harm", "self_harm_method", "harm_others", "weapons", "minor_sexual", "manipulation"]>;
+            message: zod.ZodOptional<zod.ZodString>;
+        }, "strip", zod.ZodTypeAny, {
+            action: "allow" | "support" | "redirect" | "block";
+            category: "none" | "self_harm" | "self_harm_method" | "harm_others" | "weapons" | "minor_sexual" | "manipulation";
+            message?: string | undefined;
+        }, {
+            action: "allow" | "support" | "redirect" | "block";
+            category: "none" | "self_harm" | "self_harm_method" | "harm_others" | "weapons" | "minor_sexual" | "manipulation";
+            message?: string | undefined;
+        }>>;
+        silence: zod.ZodOptional<zod.ZodObject<{
+            subject: zod.ZodEnum<["other", "self"]>;
+            channel: zod.ZodEnum<["in_person", "message", "call", "organisation"]>;
+            who: zod.ZodOptional<zod.ZodNullable<zod.ZodString>>;
+            trigger: zod.ZodString;
+            duration: zod.ZodObject<{
+                bucket: zod.ZodEnum<["moments", "minutes", "hours", "days", "weeks", "unknown"]>;
+                text: zod.ZodOptional<zod.ZodNullable<zod.ZodString>>;
+            }, "strip", zod.ZodTypeAny, {
+                bucket: "unknown" | "moments" | "minutes" | "hours" | "days" | "weeks";
+                text?: string | null | undefined;
+            }, {
+                bucket: "unknown" | "moments" | "minutes" | "hours" | "days" | "weeks";
+                text?: string | null | undefined;
+            }>;
+            meanings: zod.ZodArray<zod.ZodObject<{
+                meaning: zod.ZodString;
+                likelihood: zod.ZodEnum<["more likely", "possible", "less likely"]>;
+                why: zod.ZodString;
+            }, "strip", zod.ZodTypeAny, {
+                why: string;
+                meaning: string;
+                likelihood: "more likely" | "possible" | "less likely";
+            }, {
+                why: string;
+                meaning: string;
+                likelihood: "more likely" | "possible" | "less likely";
+            }>, "many">;
+            unknowns: zod.ZodArray<zod.ZodString, "many">;
+            checks: zod.ZodArray<zod.ZodString, "many">;
+            caution: zod.ZodString;
+            source: zod.ZodEnum<["rules", "ai"]>;
+        }, "strip", zod.ZodTypeAny, {
+            source: "ai" | "rules";
+            subject: "other" | "self";
+            channel: "message" | "in_person" | "call" | "organisation";
+            trigger: string;
+            duration: {
+                bucket: "unknown" | "moments" | "minutes" | "hours" | "days" | "weeks";
+                text?: string | null | undefined;
+            };
+            meanings: {
+                why: string;
+                meaning: string;
+                likelihood: "more likely" | "possible" | "less likely";
+            }[];
+            unknowns: string[];
+            checks: string[];
+            caution: string;
+            who?: string | null | undefined;
+        }, {
+            source: "ai" | "rules";
+            subject: "other" | "self";
+            channel: "message" | "in_person" | "call" | "organisation";
+            trigger: string;
+            duration: {
+                bucket: "unknown" | "moments" | "minutes" | "hours" | "days" | "weeks";
+                text?: string | null | undefined;
+            };
+            meanings: {
+                why: string;
+                meaning: string;
+                likelihood: "more likely" | "possible" | "less likely";
+            }[];
+            unknowns: string[];
+            checks: string[];
+            caution: string;
+            who?: string | null | undefined;
+        }>>;
+        indirectRoute: zod.ZodOptional<zod.ZodObject<{
+            blocker: zod.ZodString;
+            cues: zod.ZodArray<zod.ZodString, "many">;
+            idea: zod.ZodString;
+            steps: zod.ZodArray<zod.ZodString, "many">;
+            fairness: zod.ZodString;
+            source: zod.ZodEnum<["rules", "ai"]>;
+        }, "strip", zod.ZodTypeAny, {
+            source: "ai" | "rules";
+            blocker: string;
+            cues: string[];
+            idea: string;
+            steps: string[];
+            fairness: string;
+        }, {
+            source: "ai" | "rules";
+            blocker: string;
+            cues: string[];
+            idea: string;
+            steps: string[];
+            fairness: string;
+        }>>;
+        clarifications: zod.ZodOptional<zod.ZodArray<zod.ZodObject<{
+            question: zod.ZodString;
+            answer: zod.ZodString;
+        }, "strip", zod.ZodTypeAny, {
+            question: string;
+            answer: string;
+        }, {
+            question: string;
+            answer: string;
+        }>, "many">>;
         finalVerdict: zod.ZodObject<{
             recommendedAction: zod.ZodString;
             reasoning: zod.ZodString;
@@ -7998,499 +5800,28 @@ export declare const GetAnalysisByIdResponse: zod.ZodObject<{
                 signal: "favorable" | "challenging" | "neutral";
             }>;
             interpretation: zod.ZodString;
-            vedicD1: zod.ZodOptional<zod.ZodObject<{
-                ascendant: zod.ZodString;
-                ascendantDegree: zod.ZodNumber;
-                planets: zod.ZodArray<zod.ZodObject<{
-                    name: zod.ZodString;
-                    longitude: zod.ZodNumber;
-                    sign: zod.ZodString;
-                    signIndex: zod.ZodNumber;
-                    degree: zod.ZodNumber;
-                    isRetrograde: zod.ZodBoolean;
-                    navamsaSign: zod.ZodString;
-                    dasamsaSign: zod.ZodString;
-                    drekkanaSign: zod.ZodOptional<zod.ZodString>;
-                    house: zod.ZodOptional<zod.ZodNumber>;
-                    dignity: zod.ZodOptional<zod.ZodEnum<["exalted", "own", "debilitated", "neutral"]>>;
-                }, "strip", zod.ZodTypeAny, {
-                    longitude: number;
-                    name: string;
-                    sign: string;
-                    signIndex: number;
-                    degree: number;
-                    isRetrograde: boolean;
-                    navamsaSign: string;
-                    dasamsaSign: string;
-                    drekkanaSign?: string | undefined;
-                    house?: number | undefined;
-                    dignity?: "neutral" | "exalted" | "own" | "debilitated" | undefined;
-                }, {
-                    longitude: number;
-                    name: string;
-                    sign: string;
-                    signIndex: number;
-                    degree: number;
-                    isRetrograde: boolean;
-                    navamsaSign: string;
-                    dasamsaSign: string;
-                    drekkanaSign?: string | undefined;
-                    house?: number | undefined;
-                    dignity?: "neutral" | "exalted" | "own" | "debilitated" | undefined;
-                }>, "many">;
-                currentDasha: zod.ZodOptional<zod.ZodObject<{
-                    mahadasha: zod.ZodObject<{
-                        planet: zod.ZodString;
-                        startDate: zod.ZodString;
-                        endDate: zod.ZodString;
-                        years: zod.ZodNumber;
-                    }, "strip", zod.ZodTypeAny, {
-                        planet: string;
-                        startDate: string;
-                        endDate: string;
-                        years: number;
-                    }, {
-                        planet: string;
-                        startDate: string;
-                        endDate: string;
-                        years: number;
-                    }>;
-                    antardasha: zod.ZodOptional<zod.ZodObject<{
-                        planet: zod.ZodString;
-                        startDate: zod.ZodString;
-                        endDate: zod.ZodString;
-                        years: zod.ZodNumber;
-                    }, "strip", zod.ZodTypeAny, {
-                        planet: string;
-                        startDate: string;
-                        endDate: string;
-                        years: number;
-                    }, {
-                        planet: string;
-                        startDate: string;
-                        endDate: string;
-                        years: number;
-                    }>>;
-                    pratyantardasha: zod.ZodOptional<zod.ZodObject<{
-                        planet: zod.ZodString;
-                        startDate: zod.ZodString;
-                        endDate: zod.ZodString;
-                        years: zod.ZodNumber;
-                    }, "strip", zod.ZodTypeAny, {
-                        planet: string;
-                        startDate: string;
-                        endDate: string;
-                        years: number;
-                    }, {
-                        planet: string;
-                        startDate: string;
-                        endDate: string;
-                        years: number;
-                    }>>;
-                    sookshmadasha: zod.ZodOptional<zod.ZodObject<{
-                        planet: zod.ZodString;
-                        startDate: zod.ZodString;
-                        endDate: zod.ZodString;
-                        years: zod.ZodNumber;
-                    }, "strip", zod.ZodTypeAny, {
-                        planet: string;
-                        startDate: string;
-                        endDate: string;
-                        years: number;
-                    }, {
-                        planet: string;
-                        startDate: string;
-                        endDate: string;
-                        years: number;
-                    }>>;
-                }, "strip", zod.ZodTypeAny, {
-                    mahadasha: {
-                        planet: string;
-                        startDate: string;
-                        endDate: string;
-                        years: number;
-                    };
-                    antardasha?: {
-                        planet: string;
-                        startDate: string;
-                        endDate: string;
-                        years: number;
-                    } | undefined;
-                    pratyantardasha?: {
-                        planet: string;
-                        startDate: string;
-                        endDate: string;
-                        years: number;
-                    } | undefined;
-                    sookshmadasha?: {
-                        planet: string;
-                        startDate: string;
-                        endDate: string;
-                        years: number;
-                    } | undefined;
-                }, {
-                    mahadasha: {
-                        planet: string;
-                        startDate: string;
-                        endDate: string;
-                        years: number;
-                    };
-                    antardasha?: {
-                        planet: string;
-                        startDate: string;
-                        endDate: string;
-                        years: number;
-                    } | undefined;
-                    pratyantardasha?: {
-                        planet: string;
-                        startDate: string;
-                        endDate: string;
-                        years: number;
-                    } | undefined;
-                    sookshmadasha?: {
-                        planet: string;
-                        startDate: string;
-                        endDate: string;
-                        years: number;
-                    } | undefined;
-                }>>;
-                ayanamsa: zod.ZodNumber;
-                chartType: zod.ZodString;
+            ascendant: zod.ZodOptional<zod.ZodObject<{
+                sign: zod.ZodString;
+                degree: zod.ZodNumber;
+                lord: zod.ZodOptional<zod.ZodString>;
             }, "strip", zod.ZodTypeAny, {
-                ascendant: string;
-                ascendantDegree: number;
-                planets: {
-                    longitude: number;
-                    name: string;
-                    sign: string;
-                    signIndex: number;
-                    degree: number;
-                    isRetrograde: boolean;
-                    navamsaSign: string;
-                    dasamsaSign: string;
-                    drekkanaSign?: string | undefined;
-                    house?: number | undefined;
-                    dignity?: "neutral" | "exalted" | "own" | "debilitated" | undefined;
-                }[];
-                ayanamsa: number;
-                chartType: string;
-                currentDasha?: {
-                    mahadasha: {
-                        planet: string;
-                        startDate: string;
-                        endDate: string;
-                        years: number;
-                    };
-                    antardasha?: {
-                        planet: string;
-                        startDate: string;
-                        endDate: string;
-                        years: number;
-                    } | undefined;
-                    pratyantardasha?: {
-                        planet: string;
-                        startDate: string;
-                        endDate: string;
-                        years: number;
-                    } | undefined;
-                    sookshmadasha?: {
-                        planet: string;
-                        startDate: string;
-                        endDate: string;
-                        years: number;
-                    } | undefined;
-                } | undefined;
+                sign: string;
+                degree: number;
+                lord?: string | undefined;
             }, {
-                ascendant: string;
-                ascendantDegree: number;
-                planets: {
-                    longitude: number;
-                    name: string;
-                    sign: string;
-                    signIndex: number;
-                    degree: number;
-                    isRetrograde: boolean;
-                    navamsaSign: string;
-                    dasamsaSign: string;
-                    drekkanaSign?: string | undefined;
-                    house?: number | undefined;
-                    dignity?: "neutral" | "exalted" | "own" | "debilitated" | undefined;
-                }[];
-                ayanamsa: number;
-                chartType: string;
-                currentDasha?: {
-                    mahadasha: {
-                        planet: string;
-                        startDate: string;
-                        endDate: string;
-                        years: number;
-                    };
-                    antardasha?: {
-                        planet: string;
-                        startDate: string;
-                        endDate: string;
-                        years: number;
-                    } | undefined;
-                    pratyantardasha?: {
-                        planet: string;
-                        startDate: string;
-                        endDate: string;
-                        years: number;
-                    } | undefined;
-                    sookshmadasha?: {
-                        planet: string;
-                        startDate: string;
-                        endDate: string;
-                        years: number;
-                    } | undefined;
-                } | undefined;
+                sign: string;
+                degree: number;
+                lord?: string | undefined;
             }>>;
-            vedicD3: zod.ZodOptional<zod.ZodObject<{
-                ascendant: zod.ZodString;
-                ascendantDegree: zod.ZodNumber;
-                planets: zod.ZodArray<zod.ZodObject<{
-                    name: zod.ZodString;
-                    longitude: zod.ZodNumber;
-                    sign: zod.ZodString;
-                    signIndex: zod.ZodNumber;
-                    degree: zod.ZodNumber;
-                    isRetrograde: zod.ZodBoolean;
-                    navamsaSign: zod.ZodString;
-                    dasamsaSign: zod.ZodString;
-                    drekkanaSign: zod.ZodOptional<zod.ZodString>;
-                    house: zod.ZodOptional<zod.ZodNumber>;
-                    dignity: zod.ZodOptional<zod.ZodEnum<["exalted", "own", "debilitated", "neutral"]>>;
-                }, "strip", zod.ZodTypeAny, {
-                    longitude: number;
-                    name: string;
-                    sign: string;
-                    signIndex: number;
-                    degree: number;
-                    isRetrograde: boolean;
-                    navamsaSign: string;
-                    dasamsaSign: string;
-                    drekkanaSign?: string | undefined;
-                    house?: number | undefined;
-                    dignity?: "neutral" | "exalted" | "own" | "debilitated" | undefined;
-                }, {
-                    longitude: number;
-                    name: string;
-                    sign: string;
-                    signIndex: number;
-                    degree: number;
-                    isRetrograde: boolean;
-                    navamsaSign: string;
-                    dasamsaSign: string;
-                    drekkanaSign?: string | undefined;
-                    house?: number | undefined;
-                    dignity?: "neutral" | "exalted" | "own" | "debilitated" | undefined;
-                }>, "many">;
-                currentDasha: zod.ZodOptional<zod.ZodObject<{
-                    mahadasha: zod.ZodObject<{
-                        planet: zod.ZodString;
-                        startDate: zod.ZodString;
-                        endDate: zod.ZodString;
-                        years: zod.ZodNumber;
-                    }, "strip", zod.ZodTypeAny, {
-                        planet: string;
-                        startDate: string;
-                        endDate: string;
-                        years: number;
-                    }, {
-                        planet: string;
-                        startDate: string;
-                        endDate: string;
-                        years: number;
-                    }>;
-                    antardasha: zod.ZodOptional<zod.ZodObject<{
-                        planet: zod.ZodString;
-                        startDate: zod.ZodString;
-                        endDate: zod.ZodString;
-                        years: zod.ZodNumber;
-                    }, "strip", zod.ZodTypeAny, {
-                        planet: string;
-                        startDate: string;
-                        endDate: string;
-                        years: number;
-                    }, {
-                        planet: string;
-                        startDate: string;
-                        endDate: string;
-                        years: number;
-                    }>>;
-                    pratyantardasha: zod.ZodOptional<zod.ZodObject<{
-                        planet: zod.ZodString;
-                        startDate: zod.ZodString;
-                        endDate: zod.ZodString;
-                        years: zod.ZodNumber;
-                    }, "strip", zod.ZodTypeAny, {
-                        planet: string;
-                        startDate: string;
-                        endDate: string;
-                        years: number;
-                    }, {
-                        planet: string;
-                        startDate: string;
-                        endDate: string;
-                        years: number;
-                    }>>;
-                    sookshmadasha: zod.ZodOptional<zod.ZodObject<{
-                        planet: zod.ZodString;
-                        startDate: zod.ZodString;
-                        endDate: zod.ZodString;
-                        years: zod.ZodNumber;
-                    }, "strip", zod.ZodTypeAny, {
-                        planet: string;
-                        startDate: string;
-                        endDate: string;
-                        years: number;
-                    }, {
-                        planet: string;
-                        startDate: string;
-                        endDate: string;
-                        years: number;
-                    }>>;
-                }, "strip", zod.ZodTypeAny, {
-                    mahadasha: {
-                        planet: string;
-                        startDate: string;
-                        endDate: string;
-                        years: number;
-                    };
-                    antardasha?: {
-                        planet: string;
-                        startDate: string;
-                        endDate: string;
-                        years: number;
-                    } | undefined;
-                    pratyantardasha?: {
-                        planet: string;
-                        startDate: string;
-                        endDate: string;
-                        years: number;
-                    } | undefined;
-                    sookshmadasha?: {
-                        planet: string;
-                        startDate: string;
-                        endDate: string;
-                        years: number;
-                    } | undefined;
-                }, {
-                    mahadasha: {
-                        planet: string;
-                        startDate: string;
-                        endDate: string;
-                        years: number;
-                    };
-                    antardasha?: {
-                        planet: string;
-                        startDate: string;
-                        endDate: string;
-                        years: number;
-                    } | undefined;
-                    pratyantardasha?: {
-                        planet: string;
-                        startDate: string;
-                        endDate: string;
-                        years: number;
-                    } | undefined;
-                    sookshmadasha?: {
-                        planet: string;
-                        startDate: string;
-                        endDate: string;
-                        years: number;
-                    } | undefined;
-                }>>;
-                ayanamsa: zod.ZodNumber;
-                chartType: zod.ZodString;
+            tuning: zod.ZodOptional<zod.ZodObject<{
+                id: zod.ZodOptional<zod.ZodNullable<zod.ZodNumber>>;
+                astroShare: zod.ZodOptional<zod.ZodNullable<zod.ZodNumber>>;
             }, "strip", zod.ZodTypeAny, {
-                ascendant: string;
-                ascendantDegree: number;
-                planets: {
-                    longitude: number;
-                    name: string;
-                    sign: string;
-                    signIndex: number;
-                    degree: number;
-                    isRetrograde: boolean;
-                    navamsaSign: string;
-                    dasamsaSign: string;
-                    drekkanaSign?: string | undefined;
-                    house?: number | undefined;
-                    dignity?: "neutral" | "exalted" | "own" | "debilitated" | undefined;
-                }[];
-                ayanamsa: number;
-                chartType: string;
-                currentDasha?: {
-                    mahadasha: {
-                        planet: string;
-                        startDate: string;
-                        endDate: string;
-                        years: number;
-                    };
-                    antardasha?: {
-                        planet: string;
-                        startDate: string;
-                        endDate: string;
-                        years: number;
-                    } | undefined;
-                    pratyantardasha?: {
-                        planet: string;
-                        startDate: string;
-                        endDate: string;
-                        years: number;
-                    } | undefined;
-                    sookshmadasha?: {
-                        planet: string;
-                        startDate: string;
-                        endDate: string;
-                        years: number;
-                    } | undefined;
-                } | undefined;
+                id?: number | null | undefined;
+                astroShare?: number | null | undefined;
             }, {
-                ascendant: string;
-                ascendantDegree: number;
-                planets: {
-                    longitude: number;
-                    name: string;
-                    sign: string;
-                    signIndex: number;
-                    degree: number;
-                    isRetrograde: boolean;
-                    navamsaSign: string;
-                    dasamsaSign: string;
-                    drekkanaSign?: string | undefined;
-                    house?: number | undefined;
-                    dignity?: "neutral" | "exalted" | "own" | "debilitated" | undefined;
-                }[];
-                ayanamsa: number;
-                chartType: string;
-                currentDasha?: {
-                    mahadasha: {
-                        planet: string;
-                        startDate: string;
-                        endDate: string;
-                        years: number;
-                    };
-                    antardasha?: {
-                        planet: string;
-                        startDate: string;
-                        endDate: string;
-                        years: number;
-                    } | undefined;
-                    pratyantardasha?: {
-                        planet: string;
-                        startDate: string;
-                        endDate: string;
-                        years: number;
-                    } | undefined;
-                    sookshmadasha?: {
-                        planet: string;
-                        startDate: string;
-                        endDate: string;
-                        years: number;
-                    } | undefined;
-                } | undefined;
+                id?: number | null | undefined;
+                astroShare?: number | null | undefined;
             }>>;
             prashna: zod.ZodOptional<zod.ZodObject<{
                 castAt: zod.ZodString;
@@ -8498,6 +5829,7 @@ export declare const GetAnalysisByIdResponse: zod.ZodObject<{
                 longitude: zod.ZodOptional<zod.ZodNumber>;
                 lagna: zod.ZodString;
                 lagnaLord: zod.ZodString;
+                lagnaDegree: zod.ZodOptional<zod.ZodNumber>;
                 moonSign: zod.ZodString;
                 moonNakshatra: zod.ZodString;
                 moonWaxing: zod.ZodBoolean;
@@ -8520,14 +5852,17 @@ export declare const GetAnalysisByIdResponse: zod.ZodObject<{
                     label: zod.ZodString;
                     effect: zod.ZodNumber;
                     detail: zod.ZodString;
+                    family: zod.ZodOptional<zod.ZodString>;
                 }, "strip", zod.ZodTypeAny, {
                     label: string;
                     effect: number;
                     detail: string;
+                    family?: string | undefined;
                 }, {
                     label: string;
                     effect: number;
                     detail: string;
+                    family?: string | undefined;
                 }>, "many">;
                 score: zod.ZodNumber;
                 signal: zod.ZodEnum<["favorable", "challenging", "neutral"]>;
@@ -8535,6 +5870,37 @@ export declare const GetAnalysisByIdResponse: zod.ZodObject<{
                 risk: zod.ZodOptional<zod.ZodEnum<["low", "medium", "high"]>>;
                 dominantPlanet: zod.ZodOptional<zod.ZodString>;
                 summary: zod.ZodString;
+                focus: zod.ZodOptional<zod.ZodObject<{
+                    themes: zod.ZodOptional<zod.ZodArray<zod.ZodString, "many">>;
+                    houses: zod.ZodOptional<zod.ZodArray<zod.ZodNumber, "many">>;
+                }, "strip", zod.ZodTypeAny, {
+                    themes?: string[] | undefined;
+                    houses?: number[] | undefined;
+                }, {
+                    themes?: string[] | undefined;
+                    houses?: number[] | undefined;
+                }>>;
+                fit: zod.ZodOptional<zod.ZodObject<{
+                    ok: zod.ZodBoolean;
+                    problems: zod.ZodArray<zod.ZodString, "many">;
+                }, "strip", zod.ZodTypeAny, {
+                    ok: boolean;
+                    problems: string[];
+                }, {
+                    ok: boolean;
+                    problems: string[];
+                }>>;
+                trace: zod.ZodOptional<zod.ZodArray<zod.ZodObject<{
+                    title: zod.ZodString;
+                    points: zod.ZodArray<zod.ZodString, "many">;
+                }, "strip", zod.ZodTypeAny, {
+                    title: string;
+                    points: string[];
+                }, {
+                    title: string;
+                    points: string[];
+                }>, "many">>;
+                tuningId: zod.ZodOptional<zod.ZodNullable<zod.ZodNumber>>;
             }, "strip", zod.ZodTypeAny, {
                 score: number;
                 signal: "favorable" | "challenging" | "neutral";
@@ -8555,6 +5921,7 @@ export declare const GetAnalysisByIdResponse: zod.ZodObject<{
                     label: string;
                     effect: number;
                     detail: string;
+                    family?: string | undefined;
                 }[];
                 summary: string;
                 latitude?: number | undefined;
@@ -8562,6 +5929,20 @@ export declare const GetAnalysisByIdResponse: zod.ZodObject<{
                 risk?: "low" | "medium" | "high" | undefined;
                 stability?: "low" | "medium" | "high" | undefined;
                 dominantPlanet?: string | undefined;
+                lagnaDegree?: number | undefined;
+                focus?: {
+                    themes?: string[] | undefined;
+                    houses?: number[] | undefined;
+                } | undefined;
+                fit?: {
+                    ok: boolean;
+                    problems: string[];
+                } | undefined;
+                trace?: {
+                    title: string;
+                    points: string[];
+                }[] | undefined;
+                tuningId?: number | null | undefined;
             }, {
                 score: number;
                 signal: "favorable" | "challenging" | "neutral";
@@ -8582,6 +5963,7 @@ export declare const GetAnalysisByIdResponse: zod.ZodObject<{
                     label: string;
                     effect: number;
                     detail: string;
+                    family?: string | undefined;
                 }[];
                 summary: string;
                 latitude?: number | undefined;
@@ -8589,500 +5971,20 @@ export declare const GetAnalysisByIdResponse: zod.ZodObject<{
                 risk?: "low" | "medium" | "high" | undefined;
                 stability?: "low" | "medium" | "high" | undefined;
                 dominantPlanet?: string | undefined;
-            }>>;
-            vedicD9: zod.ZodOptional<zod.ZodObject<{
-                ascendant: zod.ZodString;
-                ascendantDegree: zod.ZodNumber;
-                planets: zod.ZodArray<zod.ZodObject<{
-                    name: zod.ZodString;
-                    longitude: zod.ZodNumber;
-                    sign: zod.ZodString;
-                    signIndex: zod.ZodNumber;
-                    degree: zod.ZodNumber;
-                    isRetrograde: zod.ZodBoolean;
-                    navamsaSign: zod.ZodString;
-                    dasamsaSign: zod.ZodString;
-                    drekkanaSign: zod.ZodOptional<zod.ZodString>;
-                    house: zod.ZodOptional<zod.ZodNumber>;
-                    dignity: zod.ZodOptional<zod.ZodEnum<["exalted", "own", "debilitated", "neutral"]>>;
-                }, "strip", zod.ZodTypeAny, {
-                    longitude: number;
-                    name: string;
-                    sign: string;
-                    signIndex: number;
-                    degree: number;
-                    isRetrograde: boolean;
-                    navamsaSign: string;
-                    dasamsaSign: string;
-                    drekkanaSign?: string | undefined;
-                    house?: number | undefined;
-                    dignity?: "neutral" | "exalted" | "own" | "debilitated" | undefined;
-                }, {
-                    longitude: number;
-                    name: string;
-                    sign: string;
-                    signIndex: number;
-                    degree: number;
-                    isRetrograde: boolean;
-                    navamsaSign: string;
-                    dasamsaSign: string;
-                    drekkanaSign?: string | undefined;
-                    house?: number | undefined;
-                    dignity?: "neutral" | "exalted" | "own" | "debilitated" | undefined;
-                }>, "many">;
-                currentDasha: zod.ZodOptional<zod.ZodObject<{
-                    mahadasha: zod.ZodObject<{
-                        planet: zod.ZodString;
-                        startDate: zod.ZodString;
-                        endDate: zod.ZodString;
-                        years: zod.ZodNumber;
-                    }, "strip", zod.ZodTypeAny, {
-                        planet: string;
-                        startDate: string;
-                        endDate: string;
-                        years: number;
-                    }, {
-                        planet: string;
-                        startDate: string;
-                        endDate: string;
-                        years: number;
-                    }>;
-                    antardasha: zod.ZodOptional<zod.ZodObject<{
-                        planet: zod.ZodString;
-                        startDate: zod.ZodString;
-                        endDate: zod.ZodString;
-                        years: zod.ZodNumber;
-                    }, "strip", zod.ZodTypeAny, {
-                        planet: string;
-                        startDate: string;
-                        endDate: string;
-                        years: number;
-                    }, {
-                        planet: string;
-                        startDate: string;
-                        endDate: string;
-                        years: number;
-                    }>>;
-                    pratyantardasha: zod.ZodOptional<zod.ZodObject<{
-                        planet: zod.ZodString;
-                        startDate: zod.ZodString;
-                        endDate: zod.ZodString;
-                        years: zod.ZodNumber;
-                    }, "strip", zod.ZodTypeAny, {
-                        planet: string;
-                        startDate: string;
-                        endDate: string;
-                        years: number;
-                    }, {
-                        planet: string;
-                        startDate: string;
-                        endDate: string;
-                        years: number;
-                    }>>;
-                    sookshmadasha: zod.ZodOptional<zod.ZodObject<{
-                        planet: zod.ZodString;
-                        startDate: zod.ZodString;
-                        endDate: zod.ZodString;
-                        years: zod.ZodNumber;
-                    }, "strip", zod.ZodTypeAny, {
-                        planet: string;
-                        startDate: string;
-                        endDate: string;
-                        years: number;
-                    }, {
-                        planet: string;
-                        startDate: string;
-                        endDate: string;
-                        years: number;
-                    }>>;
-                }, "strip", zod.ZodTypeAny, {
-                    mahadasha: {
-                        planet: string;
-                        startDate: string;
-                        endDate: string;
-                        years: number;
-                    };
-                    antardasha?: {
-                        planet: string;
-                        startDate: string;
-                        endDate: string;
-                        years: number;
-                    } | undefined;
-                    pratyantardasha?: {
-                        planet: string;
-                        startDate: string;
-                        endDate: string;
-                        years: number;
-                    } | undefined;
-                    sookshmadasha?: {
-                        planet: string;
-                        startDate: string;
-                        endDate: string;
-                        years: number;
-                    } | undefined;
-                }, {
-                    mahadasha: {
-                        planet: string;
-                        startDate: string;
-                        endDate: string;
-                        years: number;
-                    };
-                    antardasha?: {
-                        planet: string;
-                        startDate: string;
-                        endDate: string;
-                        years: number;
-                    } | undefined;
-                    pratyantardasha?: {
-                        planet: string;
-                        startDate: string;
-                        endDate: string;
-                        years: number;
-                    } | undefined;
-                    sookshmadasha?: {
-                        planet: string;
-                        startDate: string;
-                        endDate: string;
-                        years: number;
-                    } | undefined;
-                }>>;
-                ayanamsa: zod.ZodNumber;
-                chartType: zod.ZodString;
-            }, "strip", zod.ZodTypeAny, {
-                ascendant: string;
-                ascendantDegree: number;
-                planets: {
-                    longitude: number;
-                    name: string;
-                    sign: string;
-                    signIndex: number;
-                    degree: number;
-                    isRetrograde: boolean;
-                    navamsaSign: string;
-                    dasamsaSign: string;
-                    drekkanaSign?: string | undefined;
-                    house?: number | undefined;
-                    dignity?: "neutral" | "exalted" | "own" | "debilitated" | undefined;
-                }[];
-                ayanamsa: number;
-                chartType: string;
-                currentDasha?: {
-                    mahadasha: {
-                        planet: string;
-                        startDate: string;
-                        endDate: string;
-                        years: number;
-                    };
-                    antardasha?: {
-                        planet: string;
-                        startDate: string;
-                        endDate: string;
-                        years: number;
-                    } | undefined;
-                    pratyantardasha?: {
-                        planet: string;
-                        startDate: string;
-                        endDate: string;
-                        years: number;
-                    } | undefined;
-                    sookshmadasha?: {
-                        planet: string;
-                        startDate: string;
-                        endDate: string;
-                        years: number;
-                    } | undefined;
+                lagnaDegree?: number | undefined;
+                focus?: {
+                    themes?: string[] | undefined;
+                    houses?: number[] | undefined;
                 } | undefined;
-            }, {
-                ascendant: string;
-                ascendantDegree: number;
-                planets: {
-                    longitude: number;
-                    name: string;
-                    sign: string;
-                    signIndex: number;
-                    degree: number;
-                    isRetrograde: boolean;
-                    navamsaSign: string;
-                    dasamsaSign: string;
-                    drekkanaSign?: string | undefined;
-                    house?: number | undefined;
-                    dignity?: "neutral" | "exalted" | "own" | "debilitated" | undefined;
-                }[];
-                ayanamsa: number;
-                chartType: string;
-                currentDasha?: {
-                    mahadasha: {
-                        planet: string;
-                        startDate: string;
-                        endDate: string;
-                        years: number;
-                    };
-                    antardasha?: {
-                        planet: string;
-                        startDate: string;
-                        endDate: string;
-                        years: number;
-                    } | undefined;
-                    pratyantardasha?: {
-                        planet: string;
-                        startDate: string;
-                        endDate: string;
-                        years: number;
-                    } | undefined;
-                    sookshmadasha?: {
-                        planet: string;
-                        startDate: string;
-                        endDate: string;
-                        years: number;
-                    } | undefined;
+                fit?: {
+                    ok: boolean;
+                    problems: string[];
                 } | undefined;
-            }>>;
-            vedicD10: zod.ZodOptional<zod.ZodObject<{
-                ascendant: zod.ZodString;
-                ascendantDegree: zod.ZodNumber;
-                planets: zod.ZodArray<zod.ZodObject<{
-                    name: zod.ZodString;
-                    longitude: zod.ZodNumber;
-                    sign: zod.ZodString;
-                    signIndex: zod.ZodNumber;
-                    degree: zod.ZodNumber;
-                    isRetrograde: zod.ZodBoolean;
-                    navamsaSign: zod.ZodString;
-                    dasamsaSign: zod.ZodString;
-                    drekkanaSign: zod.ZodOptional<zod.ZodString>;
-                    house: zod.ZodOptional<zod.ZodNumber>;
-                    dignity: zod.ZodOptional<zod.ZodEnum<["exalted", "own", "debilitated", "neutral"]>>;
-                }, "strip", zod.ZodTypeAny, {
-                    longitude: number;
-                    name: string;
-                    sign: string;
-                    signIndex: number;
-                    degree: number;
-                    isRetrograde: boolean;
-                    navamsaSign: string;
-                    dasamsaSign: string;
-                    drekkanaSign?: string | undefined;
-                    house?: number | undefined;
-                    dignity?: "neutral" | "exalted" | "own" | "debilitated" | undefined;
-                }, {
-                    longitude: number;
-                    name: string;
-                    sign: string;
-                    signIndex: number;
-                    degree: number;
-                    isRetrograde: boolean;
-                    navamsaSign: string;
-                    dasamsaSign: string;
-                    drekkanaSign?: string | undefined;
-                    house?: number | undefined;
-                    dignity?: "neutral" | "exalted" | "own" | "debilitated" | undefined;
-                }>, "many">;
-                currentDasha: zod.ZodOptional<zod.ZodObject<{
-                    mahadasha: zod.ZodObject<{
-                        planet: zod.ZodString;
-                        startDate: zod.ZodString;
-                        endDate: zod.ZodString;
-                        years: zod.ZodNumber;
-                    }, "strip", zod.ZodTypeAny, {
-                        planet: string;
-                        startDate: string;
-                        endDate: string;
-                        years: number;
-                    }, {
-                        planet: string;
-                        startDate: string;
-                        endDate: string;
-                        years: number;
-                    }>;
-                    antardasha: zod.ZodOptional<zod.ZodObject<{
-                        planet: zod.ZodString;
-                        startDate: zod.ZodString;
-                        endDate: zod.ZodString;
-                        years: zod.ZodNumber;
-                    }, "strip", zod.ZodTypeAny, {
-                        planet: string;
-                        startDate: string;
-                        endDate: string;
-                        years: number;
-                    }, {
-                        planet: string;
-                        startDate: string;
-                        endDate: string;
-                        years: number;
-                    }>>;
-                    pratyantardasha: zod.ZodOptional<zod.ZodObject<{
-                        planet: zod.ZodString;
-                        startDate: zod.ZodString;
-                        endDate: zod.ZodString;
-                        years: zod.ZodNumber;
-                    }, "strip", zod.ZodTypeAny, {
-                        planet: string;
-                        startDate: string;
-                        endDate: string;
-                        years: number;
-                    }, {
-                        planet: string;
-                        startDate: string;
-                        endDate: string;
-                        years: number;
-                    }>>;
-                    sookshmadasha: zod.ZodOptional<zod.ZodObject<{
-                        planet: zod.ZodString;
-                        startDate: zod.ZodString;
-                        endDate: zod.ZodString;
-                        years: zod.ZodNumber;
-                    }, "strip", zod.ZodTypeAny, {
-                        planet: string;
-                        startDate: string;
-                        endDate: string;
-                        years: number;
-                    }, {
-                        planet: string;
-                        startDate: string;
-                        endDate: string;
-                        years: number;
-                    }>>;
-                }, "strip", zod.ZodTypeAny, {
-                    mahadasha: {
-                        planet: string;
-                        startDate: string;
-                        endDate: string;
-                        years: number;
-                    };
-                    antardasha?: {
-                        planet: string;
-                        startDate: string;
-                        endDate: string;
-                        years: number;
-                    } | undefined;
-                    pratyantardasha?: {
-                        planet: string;
-                        startDate: string;
-                        endDate: string;
-                        years: number;
-                    } | undefined;
-                    sookshmadasha?: {
-                        planet: string;
-                        startDate: string;
-                        endDate: string;
-                        years: number;
-                    } | undefined;
-                }, {
-                    mahadasha: {
-                        planet: string;
-                        startDate: string;
-                        endDate: string;
-                        years: number;
-                    };
-                    antardasha?: {
-                        planet: string;
-                        startDate: string;
-                        endDate: string;
-                        years: number;
-                    } | undefined;
-                    pratyantardasha?: {
-                        planet: string;
-                        startDate: string;
-                        endDate: string;
-                        years: number;
-                    } | undefined;
-                    sookshmadasha?: {
-                        planet: string;
-                        startDate: string;
-                        endDate: string;
-                        years: number;
-                    } | undefined;
-                }>>;
-                ayanamsa: zod.ZodNumber;
-                chartType: zod.ZodString;
-            }, "strip", zod.ZodTypeAny, {
-                ascendant: string;
-                ascendantDegree: number;
-                planets: {
-                    longitude: number;
-                    name: string;
-                    sign: string;
-                    signIndex: number;
-                    degree: number;
-                    isRetrograde: boolean;
-                    navamsaSign: string;
-                    dasamsaSign: string;
-                    drekkanaSign?: string | undefined;
-                    house?: number | undefined;
-                    dignity?: "neutral" | "exalted" | "own" | "debilitated" | undefined;
-                }[];
-                ayanamsa: number;
-                chartType: string;
-                currentDasha?: {
-                    mahadasha: {
-                        planet: string;
-                        startDate: string;
-                        endDate: string;
-                        years: number;
-                    };
-                    antardasha?: {
-                        planet: string;
-                        startDate: string;
-                        endDate: string;
-                        years: number;
-                    } | undefined;
-                    pratyantardasha?: {
-                        planet: string;
-                        startDate: string;
-                        endDate: string;
-                        years: number;
-                    } | undefined;
-                    sookshmadasha?: {
-                        planet: string;
-                        startDate: string;
-                        endDate: string;
-                        years: number;
-                    } | undefined;
-                } | undefined;
-            }, {
-                ascendant: string;
-                ascendantDegree: number;
-                planets: {
-                    longitude: number;
-                    name: string;
-                    sign: string;
-                    signIndex: number;
-                    degree: number;
-                    isRetrograde: boolean;
-                    navamsaSign: string;
-                    dasamsaSign: string;
-                    drekkanaSign?: string | undefined;
-                    house?: number | undefined;
-                    dignity?: "neutral" | "exalted" | "own" | "debilitated" | undefined;
-                }[];
-                ayanamsa: number;
-                chartType: string;
-                currentDasha?: {
-                    mahadasha: {
-                        planet: string;
-                        startDate: string;
-                        endDate: string;
-                        years: number;
-                    };
-                    antardasha?: {
-                        planet: string;
-                        startDate: string;
-                        endDate: string;
-                        years: number;
-                    } | undefined;
-                    pratyantardasha?: {
-                        planet: string;
-                        startDate: string;
-                        endDate: string;
-                        years: number;
-                    } | undefined;
-                    sookshmadasha?: {
-                        planet: string;
-                        startDate: string;
-                        endDate: string;
-                        years: number;
-                    } | undefined;
-                } | undefined;
+                trace?: {
+                    title: string;
+                    points: string[];
+                }[] | undefined;
+                tuningId?: number | null | undefined;
             }>>;
             timing: zod.ZodOptional<zod.ZodObject<{
                 timeBased: zod.ZodBoolean;
@@ -9321,7 +6223,6 @@ export declare const GetAnalysisByIdResponse: zod.ZodObject<{
                 activations: zod.ZodArray<zod.ZodString, "many">;
                 summary: zod.ZodString;
             }, "strip", zod.ZodTypeAny, {
-                house: number;
                 summary: string;
                 timeBased: boolean;
                 basis: "question";
@@ -9351,6 +6252,7 @@ export declare const GetAnalysisByIdResponse: zod.ZodObject<{
                         durationYears?: number | undefined;
                     };
                 };
+                house: number;
                 houseSign: string;
                 houseLord: string;
                 activations: string[];
@@ -9381,7 +6283,6 @@ export declare const GetAnalysisByIdResponse: zod.ZodObject<{
                     notes: string[];
                 } | null | undefined;
             }, {
-                house: number;
                 summary: string;
                 timeBased: boolean;
                 basis: "question";
@@ -9411,6 +6312,7 @@ export declare const GetAnalysisByIdResponse: zod.ZodObject<{
                         durationYears?: number | undefined;
                     };
                 };
+                house: number;
                 houseSign: string;
                 houseLord: string;
                 activations: string[];
@@ -9440,6 +6342,67 @@ export declare const GetAnalysisByIdResponse: zod.ZodObject<{
                     }[];
                     notes: string[];
                 } | null | undefined;
+            }>>;
+            skippedReason: zod.ZodOptional<zod.ZodNullable<zod.ZodString>>;
+            outlook: zod.ZodOptional<zod.ZodObject<{
+                chance: zod.ZodNumber;
+                level: zod.ZodEnum<["high", "fair", "low"]>;
+                headline: zod.ZodString;
+                favours: zod.ZodArray<zod.ZodString, "many">;
+                against: zod.ZodArray<zod.ZodString, "many">;
+                timing: zod.ZodOptional<zod.ZodNullable<zod.ZodObject<{
+                    text: zod.ZodString;
+                    from: zod.ZodString;
+                    to: zod.ZodString;
+                    confidence: zod.ZodEnum<["low", "medium", "high"]>;
+                    basis: zod.ZodString;
+                    dashaCheck: zod.ZodOptional<zod.ZodString>;
+                }, "strip", zod.ZodTypeAny, {
+                    confidence: "low" | "medium" | "high";
+                    text: string;
+                    basis: string;
+                    from: string;
+                    to: string;
+                    dashaCheck?: string | undefined;
+                }, {
+                    confidence: "low" | "medium" | "high";
+                    text: string;
+                    basis: string;
+                    from: string;
+                    to: string;
+                    dashaCheck?: string | undefined;
+                }>>>;
+                timingNote: zod.ZodOptional<zod.ZodNullable<zod.ZodString>>;
+            }, "strip", zod.ZodTypeAny, {
+                chance: number;
+                level: "low" | "high" | "fair";
+                headline: string;
+                favours: string[];
+                against: string[];
+                timing?: {
+                    confidence: "low" | "medium" | "high";
+                    text: string;
+                    basis: string;
+                    from: string;
+                    to: string;
+                    dashaCheck?: string | undefined;
+                } | null | undefined;
+                timingNote?: string | null | undefined;
+            }, {
+                chance: number;
+                level: "low" | "high" | "fair";
+                headline: string;
+                favours: string[];
+                against: string[];
+                timing?: {
+                    confidence: "low" | "medium" | "high";
+                    text: string;
+                    basis: string;
+                    from: string;
+                    to: string;
+                    dashaCheck?: string | undefined;
+                } | null | undefined;
+                timingNote?: string | null | undefined;
             }>>;
             location: zod.ZodOptional<zod.ZodObject<{
                 latitude: zod.ZodNumber;
@@ -9459,95 +6422,14 @@ export declare const GetAnalysisByIdResponse: zod.ZodObject<{
                 signal: "favorable" | "challenging" | "neutral";
             };
             interpretation: string;
-            vedicD1?: {
-                ascendant: string;
-                ascendantDegree: number;
-                planets: {
-                    longitude: number;
-                    name: string;
-                    sign: string;
-                    signIndex: number;
-                    degree: number;
-                    isRetrograde: boolean;
-                    navamsaSign: string;
-                    dasamsaSign: string;
-                    drekkanaSign?: string | undefined;
-                    house?: number | undefined;
-                    dignity?: "neutral" | "exalted" | "own" | "debilitated" | undefined;
-                }[];
-                ayanamsa: number;
-                chartType: string;
-                currentDasha?: {
-                    mahadasha: {
-                        planet: string;
-                        startDate: string;
-                        endDate: string;
-                        years: number;
-                    };
-                    antardasha?: {
-                        planet: string;
-                        startDate: string;
-                        endDate: string;
-                        years: number;
-                    } | undefined;
-                    pratyantardasha?: {
-                        planet: string;
-                        startDate: string;
-                        endDate: string;
-                        years: number;
-                    } | undefined;
-                    sookshmadasha?: {
-                        planet: string;
-                        startDate: string;
-                        endDate: string;
-                        years: number;
-                    } | undefined;
-                } | undefined;
+            ascendant?: {
+                sign: string;
+                degree: number;
+                lord?: string | undefined;
             } | undefined;
-            vedicD3?: {
-                ascendant: string;
-                ascendantDegree: number;
-                planets: {
-                    longitude: number;
-                    name: string;
-                    sign: string;
-                    signIndex: number;
-                    degree: number;
-                    isRetrograde: boolean;
-                    navamsaSign: string;
-                    dasamsaSign: string;
-                    drekkanaSign?: string | undefined;
-                    house?: number | undefined;
-                    dignity?: "neutral" | "exalted" | "own" | "debilitated" | undefined;
-                }[];
-                ayanamsa: number;
-                chartType: string;
-                currentDasha?: {
-                    mahadasha: {
-                        planet: string;
-                        startDate: string;
-                        endDate: string;
-                        years: number;
-                    };
-                    antardasha?: {
-                        planet: string;
-                        startDate: string;
-                        endDate: string;
-                        years: number;
-                    } | undefined;
-                    pratyantardasha?: {
-                        planet: string;
-                        startDate: string;
-                        endDate: string;
-                        years: number;
-                    } | undefined;
-                    sookshmadasha?: {
-                        planet: string;
-                        startDate: string;
-                        endDate: string;
-                        years: number;
-                    } | undefined;
-                } | undefined;
+            tuning?: {
+                id?: number | null | undefined;
+                astroShare?: number | null | undefined;
             } | undefined;
             prashna?: {
                 score: number;
@@ -9569,6 +6451,7 @@ export declare const GetAnalysisByIdResponse: zod.ZodObject<{
                     label: string;
                     effect: number;
                     detail: string;
+                    family?: string | undefined;
                 }[];
                 summary: string;
                 latitude?: number | undefined;
@@ -9576,99 +6459,22 @@ export declare const GetAnalysisByIdResponse: zod.ZodObject<{
                 risk?: "low" | "medium" | "high" | undefined;
                 stability?: "low" | "medium" | "high" | undefined;
                 dominantPlanet?: string | undefined;
-            } | undefined;
-            vedicD9?: {
-                ascendant: string;
-                ascendantDegree: number;
-                planets: {
-                    longitude: number;
-                    name: string;
-                    sign: string;
-                    signIndex: number;
-                    degree: number;
-                    isRetrograde: boolean;
-                    navamsaSign: string;
-                    dasamsaSign: string;
-                    drekkanaSign?: string | undefined;
-                    house?: number | undefined;
-                    dignity?: "neutral" | "exalted" | "own" | "debilitated" | undefined;
-                }[];
-                ayanamsa: number;
-                chartType: string;
-                currentDasha?: {
-                    mahadasha: {
-                        planet: string;
-                        startDate: string;
-                        endDate: string;
-                        years: number;
-                    };
-                    antardasha?: {
-                        planet: string;
-                        startDate: string;
-                        endDate: string;
-                        years: number;
-                    } | undefined;
-                    pratyantardasha?: {
-                        planet: string;
-                        startDate: string;
-                        endDate: string;
-                        years: number;
-                    } | undefined;
-                    sookshmadasha?: {
-                        planet: string;
-                        startDate: string;
-                        endDate: string;
-                        years: number;
-                    } | undefined;
+                lagnaDegree?: number | undefined;
+                focus?: {
+                    themes?: string[] | undefined;
+                    houses?: number[] | undefined;
                 } | undefined;
-            } | undefined;
-            vedicD10?: {
-                ascendant: string;
-                ascendantDegree: number;
-                planets: {
-                    longitude: number;
-                    name: string;
-                    sign: string;
-                    signIndex: number;
-                    degree: number;
-                    isRetrograde: boolean;
-                    navamsaSign: string;
-                    dasamsaSign: string;
-                    drekkanaSign?: string | undefined;
-                    house?: number | undefined;
-                    dignity?: "neutral" | "exalted" | "own" | "debilitated" | undefined;
-                }[];
-                ayanamsa: number;
-                chartType: string;
-                currentDasha?: {
-                    mahadasha: {
-                        planet: string;
-                        startDate: string;
-                        endDate: string;
-                        years: number;
-                    };
-                    antardasha?: {
-                        planet: string;
-                        startDate: string;
-                        endDate: string;
-                        years: number;
-                    } | undefined;
-                    pratyantardasha?: {
-                        planet: string;
-                        startDate: string;
-                        endDate: string;
-                        years: number;
-                    } | undefined;
-                    sookshmadasha?: {
-                        planet: string;
-                        startDate: string;
-                        endDate: string;
-                        years: number;
-                    } | undefined;
+                fit?: {
+                    ok: boolean;
+                    problems: string[];
                 } | undefined;
+                trace?: {
+                    title: string;
+                    points: string[];
+                }[] | undefined;
+                tuningId?: number | null | undefined;
             } | undefined;
             timing?: {
-                house: number;
                 summary: string;
                 timeBased: boolean;
                 basis: "question";
@@ -9698,6 +6504,7 @@ export declare const GetAnalysisByIdResponse: zod.ZodObject<{
                         durationYears?: number | undefined;
                     };
                 };
+                house: number;
                 houseSign: string;
                 houseLord: string;
                 activations: string[];
@@ -9727,6 +6534,23 @@ export declare const GetAnalysisByIdResponse: zod.ZodObject<{
                     }[];
                     notes: string[];
                 } | null | undefined;
+            } | undefined;
+            skippedReason?: string | null | undefined;
+            outlook?: {
+                chance: number;
+                level: "low" | "high" | "fair";
+                headline: string;
+                favours: string[];
+                against: string[];
+                timing?: {
+                    confidence: "low" | "medium" | "high";
+                    text: string;
+                    basis: string;
+                    from: string;
+                    to: string;
+                    dashaCheck?: string | undefined;
+                } | null | undefined;
+                timingNote?: string | null | undefined;
             } | undefined;
             location?: {
                 latitude: number;
@@ -9740,95 +6564,14 @@ export declare const GetAnalysisByIdResponse: zod.ZodObject<{
                 signal: "favorable" | "challenging" | "neutral";
             };
             interpretation: string;
-            vedicD1?: {
-                ascendant: string;
-                ascendantDegree: number;
-                planets: {
-                    longitude: number;
-                    name: string;
-                    sign: string;
-                    signIndex: number;
-                    degree: number;
-                    isRetrograde: boolean;
-                    navamsaSign: string;
-                    dasamsaSign: string;
-                    drekkanaSign?: string | undefined;
-                    house?: number | undefined;
-                    dignity?: "neutral" | "exalted" | "own" | "debilitated" | undefined;
-                }[];
-                ayanamsa: number;
-                chartType: string;
-                currentDasha?: {
-                    mahadasha: {
-                        planet: string;
-                        startDate: string;
-                        endDate: string;
-                        years: number;
-                    };
-                    antardasha?: {
-                        planet: string;
-                        startDate: string;
-                        endDate: string;
-                        years: number;
-                    } | undefined;
-                    pratyantardasha?: {
-                        planet: string;
-                        startDate: string;
-                        endDate: string;
-                        years: number;
-                    } | undefined;
-                    sookshmadasha?: {
-                        planet: string;
-                        startDate: string;
-                        endDate: string;
-                        years: number;
-                    } | undefined;
-                } | undefined;
+            ascendant?: {
+                sign: string;
+                degree: number;
+                lord?: string | undefined;
             } | undefined;
-            vedicD3?: {
-                ascendant: string;
-                ascendantDegree: number;
-                planets: {
-                    longitude: number;
-                    name: string;
-                    sign: string;
-                    signIndex: number;
-                    degree: number;
-                    isRetrograde: boolean;
-                    navamsaSign: string;
-                    dasamsaSign: string;
-                    drekkanaSign?: string | undefined;
-                    house?: number | undefined;
-                    dignity?: "neutral" | "exalted" | "own" | "debilitated" | undefined;
-                }[];
-                ayanamsa: number;
-                chartType: string;
-                currentDasha?: {
-                    mahadasha: {
-                        planet: string;
-                        startDate: string;
-                        endDate: string;
-                        years: number;
-                    };
-                    antardasha?: {
-                        planet: string;
-                        startDate: string;
-                        endDate: string;
-                        years: number;
-                    } | undefined;
-                    pratyantardasha?: {
-                        planet: string;
-                        startDate: string;
-                        endDate: string;
-                        years: number;
-                    } | undefined;
-                    sookshmadasha?: {
-                        planet: string;
-                        startDate: string;
-                        endDate: string;
-                        years: number;
-                    } | undefined;
-                } | undefined;
+            tuning?: {
+                id?: number | null | undefined;
+                astroShare?: number | null | undefined;
             } | undefined;
             prashna?: {
                 score: number;
@@ -9850,6 +6593,7 @@ export declare const GetAnalysisByIdResponse: zod.ZodObject<{
                     label: string;
                     effect: number;
                     detail: string;
+                    family?: string | undefined;
                 }[];
                 summary: string;
                 latitude?: number | undefined;
@@ -9857,99 +6601,22 @@ export declare const GetAnalysisByIdResponse: zod.ZodObject<{
                 risk?: "low" | "medium" | "high" | undefined;
                 stability?: "low" | "medium" | "high" | undefined;
                 dominantPlanet?: string | undefined;
-            } | undefined;
-            vedicD9?: {
-                ascendant: string;
-                ascendantDegree: number;
-                planets: {
-                    longitude: number;
-                    name: string;
-                    sign: string;
-                    signIndex: number;
-                    degree: number;
-                    isRetrograde: boolean;
-                    navamsaSign: string;
-                    dasamsaSign: string;
-                    drekkanaSign?: string | undefined;
-                    house?: number | undefined;
-                    dignity?: "neutral" | "exalted" | "own" | "debilitated" | undefined;
-                }[];
-                ayanamsa: number;
-                chartType: string;
-                currentDasha?: {
-                    mahadasha: {
-                        planet: string;
-                        startDate: string;
-                        endDate: string;
-                        years: number;
-                    };
-                    antardasha?: {
-                        planet: string;
-                        startDate: string;
-                        endDate: string;
-                        years: number;
-                    } | undefined;
-                    pratyantardasha?: {
-                        planet: string;
-                        startDate: string;
-                        endDate: string;
-                        years: number;
-                    } | undefined;
-                    sookshmadasha?: {
-                        planet: string;
-                        startDate: string;
-                        endDate: string;
-                        years: number;
-                    } | undefined;
+                lagnaDegree?: number | undefined;
+                focus?: {
+                    themes?: string[] | undefined;
+                    houses?: number[] | undefined;
                 } | undefined;
-            } | undefined;
-            vedicD10?: {
-                ascendant: string;
-                ascendantDegree: number;
-                planets: {
-                    longitude: number;
-                    name: string;
-                    sign: string;
-                    signIndex: number;
-                    degree: number;
-                    isRetrograde: boolean;
-                    navamsaSign: string;
-                    dasamsaSign: string;
-                    drekkanaSign?: string | undefined;
-                    house?: number | undefined;
-                    dignity?: "neutral" | "exalted" | "own" | "debilitated" | undefined;
-                }[];
-                ayanamsa: number;
-                chartType: string;
-                currentDasha?: {
-                    mahadasha: {
-                        planet: string;
-                        startDate: string;
-                        endDate: string;
-                        years: number;
-                    };
-                    antardasha?: {
-                        planet: string;
-                        startDate: string;
-                        endDate: string;
-                        years: number;
-                    } | undefined;
-                    pratyantardasha?: {
-                        planet: string;
-                        startDate: string;
-                        endDate: string;
-                        years: number;
-                    } | undefined;
-                    sookshmadasha?: {
-                        planet: string;
-                        startDate: string;
-                        endDate: string;
-                        years: number;
-                    } | undefined;
+                fit?: {
+                    ok: boolean;
+                    problems: string[];
                 } | undefined;
+                trace?: {
+                    title: string;
+                    points: string[];
+                }[] | undefined;
+                tuningId?: number | null | undefined;
             } | undefined;
             timing?: {
-                house: number;
                 summary: string;
                 timeBased: boolean;
                 basis: "question";
@@ -9979,6 +6646,7 @@ export declare const GetAnalysisByIdResponse: zod.ZodObject<{
                         durationYears?: number | undefined;
                     };
                 };
+                house: number;
                 houseSign: string;
                 houseLord: string;
                 activations: string[];
@@ -10008,6 +6676,23 @@ export declare const GetAnalysisByIdResponse: zod.ZodObject<{
                     }[];
                     notes: string[];
                 } | null | undefined;
+            } | undefined;
+            skippedReason?: string | null | undefined;
+            outlook?: {
+                chance: number;
+                level: "low" | "high" | "fair";
+                headline: string;
+                favours: string[];
+                against: string[];
+                timing?: {
+                    confidence: "low" | "medium" | "high";
+                    text: string;
+                    basis: string;
+                    from: string;
+                    to: string;
+                    dashaCheck?: string | undefined;
+                } | null | undefined;
+                timingNote?: string | null | undefined;
             } | undefined;
             location?: {
                 latitude: number;
@@ -10024,7 +6709,7 @@ export declare const GetAnalysisByIdResponse: zod.ZodObject<{
             astroInsight: zod.ZodString;
             advice: zod.ZodString;
             timeframeDays: zod.ZodNumber;
-            source: zod.ZodEnum<["ai+astro", "ai", "engine"]>;
+            source: zod.ZodEnum<["ai+astro", "ai", "inbuilt", "engine"]>;
             usedAi: zod.ZodOptional<zod.ZodBoolean>;
             usedAstrology: zod.ZodOptional<zod.ZodBoolean>;
             calibration: zod.ZodOptional<zod.ZodObject<{
@@ -10058,6 +6743,7 @@ export declare const GetAnalysisByIdResponse: zod.ZodObject<{
                 logic: number;
             }>>;
         }, "strip", zod.ZodTypeAny, {
+            source: "ai" | "ai+astro" | "inbuilt" | "engine";
             confidence: "low" | "medium" | "high";
             score: number;
             summary: string;
@@ -10065,7 +6751,6 @@ export declare const GetAnalysisByIdResponse: zod.ZodObject<{
             astroInsight: string;
             advice: string;
             timeframeDays: number;
-            source: "ai" | "ai+astro" | "engine";
             reasoning?: string | undefined;
             usedAi?: boolean | undefined;
             usedAstrology?: boolean | undefined;
@@ -10085,6 +6770,7 @@ export declare const GetAnalysisByIdResponse: zod.ZodObject<{
                 logic: number;
             } | undefined;
         }, {
+            source: "ai" | "ai+astro" | "inbuilt" | "engine";
             confidence: "low" | "medium" | "high";
             score: number;
             summary: string;
@@ -10092,7 +6778,6 @@ export declare const GetAnalysisByIdResponse: zod.ZodObject<{
             astroInsight: string;
             advice: string;
             timeframeDays: number;
-            source: "ai" | "ai+astro" | "engine";
             reasoning?: string | undefined;
             usedAi?: boolean | undefined;
             usedAstrology?: boolean | undefined;
@@ -10113,26 +6798,26 @@ export declare const GetAnalysisByIdResponse: zod.ZodObject<{
             } | undefined;
         }>>;
         modules: zod.ZodOptional<zod.ZodArray<zod.ZodObject<{
-            key: zod.ZodEnum<["AJIT", "MANU", "FILTER", "SIVI", "ASTRO", "AI"]>;
+            key: zod.ZodEnum<["AJIT", "MANU", "FILTER", "SIVI", "ASTRO", "RSMI", "AI"]>;
             name: zod.ZodString;
-            area: zod.ZodEnum<["intent", "emotion", "paths", "astrology", "synthesis"]>;
+            area: zod.ZodEnum<["intent", "emotion", "paths", "astrology", "silence", "synthesis"]>;
             role: zod.ZodOptional<zod.ZodString>;
             active: zod.ZodBoolean;
             verdict: zod.ZodString;
             evidence: zod.ZodArray<zod.ZodString, "many">;
         }, "strip", zod.ZodTypeAny, {
-            key: "AJIT" | "MANU" | "FILTER" | "SIVI" | "ASTRO" | "AI";
-            name: string;
+            key: "AJIT" | "MANU" | "FILTER" | "SIVI" | "ASTRO" | "RSMI" | "AI";
             verdict: string;
-            area: "intent" | "emotion" | "synthesis" | "paths" | "astrology";
+            name: string;
+            area: "intent" | "emotion" | "silence" | "synthesis" | "paths" | "astrology";
             active: boolean;
             evidence: string[];
             role?: string | undefined;
         }, {
-            key: "AJIT" | "MANU" | "FILTER" | "SIVI" | "ASTRO" | "AI";
-            name: string;
+            key: "AJIT" | "MANU" | "FILTER" | "SIVI" | "ASTRO" | "RSMI" | "AI";
             verdict: string;
-            area: "intent" | "emotion" | "synthesis" | "paths" | "astrology";
+            name: string;
+            area: "intent" | "emotion" | "silence" | "synthesis" | "paths" | "astrology";
             active: boolean;
             evidence: string[];
             role?: string | undefined;
@@ -10157,17 +6842,17 @@ export declare const GetAnalysisByIdResponse: zod.ZodObject<{
             depth: zod.ZodEnum<["standard", "deep", "expert"]>;
             depthChosen: zod.ZodEnum<["auto", "user"]>;
             lines: zod.ZodArray<zod.ZodObject<{
-                key: zod.ZodEnum<["astro", "ajit", "manu", "sivi", "ai"]>;
+                key: zod.ZodEnum<["astro", "ajit", "manu", "sivi", "rsmi", "ai"]>;
                 label: zod.ZodString;
                 credits: zod.ZodNumber;
                 note: zod.ZodString;
             }, "strip", zod.ZodTypeAny, {
-                key: "astro" | "ajit" | "manu" | "sivi" | "ai";
+                key: "astro" | "ajit" | "manu" | "sivi" | "rsmi" | "ai";
                 label: string;
                 credits: number;
                 note: string;
             }, {
-                key: "astro" | "ajit" | "manu" | "sivi" | "ai";
+                key: "astro" | "ajit" | "manu" | "sivi" | "rsmi" | "ai";
                 label: string;
                 credits: number;
                 note: string;
@@ -10176,7 +6861,7 @@ export declare const GetAnalysisByIdResponse: zod.ZodObject<{
             depth: "standard" | "deep" | "expert";
             depthChosen: "auto" | "user";
             lines: {
-                key: "astro" | "ajit" | "manu" | "sivi" | "ai";
+                key: "astro" | "ajit" | "manu" | "sivi" | "rsmi" | "ai";
                 label: string;
                 credits: number;
                 note: string;
@@ -10188,7 +6873,7 @@ export declare const GetAnalysisByIdResponse: zod.ZodObject<{
             depth: "standard" | "deep" | "expert";
             depthChosen: "auto" | "user";
             lines: {
-                key: "astro" | "ajit" | "manu" | "sivi" | "ai";
+                key: "astro" | "ajit" | "manu" | "sivi" | "rsmi" | "ai";
                 label: string;
                 credits: number;
                 note: string;
@@ -10209,95 +6894,14 @@ export declare const GetAnalysisByIdResponse: zod.ZodObject<{
                 signal: "favorable" | "challenging" | "neutral";
             };
             interpretation: string;
-            vedicD1?: {
-                ascendant: string;
-                ascendantDegree: number;
-                planets: {
-                    longitude: number;
-                    name: string;
-                    sign: string;
-                    signIndex: number;
-                    degree: number;
-                    isRetrograde: boolean;
-                    navamsaSign: string;
-                    dasamsaSign: string;
-                    drekkanaSign?: string | undefined;
-                    house?: number | undefined;
-                    dignity?: "neutral" | "exalted" | "own" | "debilitated" | undefined;
-                }[];
-                ayanamsa: number;
-                chartType: string;
-                currentDasha?: {
-                    mahadasha: {
-                        planet: string;
-                        startDate: string;
-                        endDate: string;
-                        years: number;
-                    };
-                    antardasha?: {
-                        planet: string;
-                        startDate: string;
-                        endDate: string;
-                        years: number;
-                    } | undefined;
-                    pratyantardasha?: {
-                        planet: string;
-                        startDate: string;
-                        endDate: string;
-                        years: number;
-                    } | undefined;
-                    sookshmadasha?: {
-                        planet: string;
-                        startDate: string;
-                        endDate: string;
-                        years: number;
-                    } | undefined;
-                } | undefined;
+            ascendant?: {
+                sign: string;
+                degree: number;
+                lord?: string | undefined;
             } | undefined;
-            vedicD3?: {
-                ascendant: string;
-                ascendantDegree: number;
-                planets: {
-                    longitude: number;
-                    name: string;
-                    sign: string;
-                    signIndex: number;
-                    degree: number;
-                    isRetrograde: boolean;
-                    navamsaSign: string;
-                    dasamsaSign: string;
-                    drekkanaSign?: string | undefined;
-                    house?: number | undefined;
-                    dignity?: "neutral" | "exalted" | "own" | "debilitated" | undefined;
-                }[];
-                ayanamsa: number;
-                chartType: string;
-                currentDasha?: {
-                    mahadasha: {
-                        planet: string;
-                        startDate: string;
-                        endDate: string;
-                        years: number;
-                    };
-                    antardasha?: {
-                        planet: string;
-                        startDate: string;
-                        endDate: string;
-                        years: number;
-                    } | undefined;
-                    pratyantardasha?: {
-                        planet: string;
-                        startDate: string;
-                        endDate: string;
-                        years: number;
-                    } | undefined;
-                    sookshmadasha?: {
-                        planet: string;
-                        startDate: string;
-                        endDate: string;
-                        years: number;
-                    } | undefined;
-                } | undefined;
+            tuning?: {
+                id?: number | null | undefined;
+                astroShare?: number | null | undefined;
             } | undefined;
             prashna?: {
                 score: number;
@@ -10319,6 +6923,7 @@ export declare const GetAnalysisByIdResponse: zod.ZodObject<{
                     label: string;
                     effect: number;
                     detail: string;
+                    family?: string | undefined;
                 }[];
                 summary: string;
                 latitude?: number | undefined;
@@ -10326,99 +6931,22 @@ export declare const GetAnalysisByIdResponse: zod.ZodObject<{
                 risk?: "low" | "medium" | "high" | undefined;
                 stability?: "low" | "medium" | "high" | undefined;
                 dominantPlanet?: string | undefined;
-            } | undefined;
-            vedicD9?: {
-                ascendant: string;
-                ascendantDegree: number;
-                planets: {
-                    longitude: number;
-                    name: string;
-                    sign: string;
-                    signIndex: number;
-                    degree: number;
-                    isRetrograde: boolean;
-                    navamsaSign: string;
-                    dasamsaSign: string;
-                    drekkanaSign?: string | undefined;
-                    house?: number | undefined;
-                    dignity?: "neutral" | "exalted" | "own" | "debilitated" | undefined;
-                }[];
-                ayanamsa: number;
-                chartType: string;
-                currentDasha?: {
-                    mahadasha: {
-                        planet: string;
-                        startDate: string;
-                        endDate: string;
-                        years: number;
-                    };
-                    antardasha?: {
-                        planet: string;
-                        startDate: string;
-                        endDate: string;
-                        years: number;
-                    } | undefined;
-                    pratyantardasha?: {
-                        planet: string;
-                        startDate: string;
-                        endDate: string;
-                        years: number;
-                    } | undefined;
-                    sookshmadasha?: {
-                        planet: string;
-                        startDate: string;
-                        endDate: string;
-                        years: number;
-                    } | undefined;
+                lagnaDegree?: number | undefined;
+                focus?: {
+                    themes?: string[] | undefined;
+                    houses?: number[] | undefined;
                 } | undefined;
-            } | undefined;
-            vedicD10?: {
-                ascendant: string;
-                ascendantDegree: number;
-                planets: {
-                    longitude: number;
-                    name: string;
-                    sign: string;
-                    signIndex: number;
-                    degree: number;
-                    isRetrograde: boolean;
-                    navamsaSign: string;
-                    dasamsaSign: string;
-                    drekkanaSign?: string | undefined;
-                    house?: number | undefined;
-                    dignity?: "neutral" | "exalted" | "own" | "debilitated" | undefined;
-                }[];
-                ayanamsa: number;
-                chartType: string;
-                currentDasha?: {
-                    mahadasha: {
-                        planet: string;
-                        startDate: string;
-                        endDate: string;
-                        years: number;
-                    };
-                    antardasha?: {
-                        planet: string;
-                        startDate: string;
-                        endDate: string;
-                        years: number;
-                    } | undefined;
-                    pratyantardasha?: {
-                        planet: string;
-                        startDate: string;
-                        endDate: string;
-                        years: number;
-                    } | undefined;
-                    sookshmadasha?: {
-                        planet: string;
-                        startDate: string;
-                        endDate: string;
-                        years: number;
-                    } | undefined;
+                fit?: {
+                    ok: boolean;
+                    problems: string[];
                 } | undefined;
+                trace?: {
+                    title: string;
+                    points: string[];
+                }[] | undefined;
+                tuningId?: number | null | undefined;
             } | undefined;
             timing?: {
-                house: number;
                 summary: string;
                 timeBased: boolean;
                 basis: "question";
@@ -10448,6 +6976,7 @@ export declare const GetAnalysisByIdResponse: zod.ZodObject<{
                         durationYears?: number | undefined;
                     };
                 };
+                house: number;
                 houseSign: string;
                 houseLord: string;
                 activations: string[];
@@ -10478,6 +7007,23 @@ export declare const GetAnalysisByIdResponse: zod.ZodObject<{
                     notes: string[];
                 } | null | undefined;
             } | undefined;
+            skippedReason?: string | null | undefined;
+            outlook?: {
+                chance: number;
+                level: "low" | "high" | "fair";
+                headline: string;
+                favours: string[];
+                against: string[];
+                timing?: {
+                    confidence: "low" | "medium" | "high";
+                    text: string;
+                    basis: string;
+                    from: string;
+                    to: string;
+                    dashaCheck?: string | undefined;
+                } | null | undefined;
+                timingNote?: string | null | undefined;
+            } | undefined;
             location?: {
                 latitude: number;
                 longitude: number;
@@ -10495,18 +7041,34 @@ export declare const GetAnalysisByIdResponse: zod.ZodObject<{
             intensity: "low" | "medium" | "high";
         };
         simulation: {
+            source: "ai" | "rules";
+            context: {
+                desiredOutcome: string;
+                inferred: boolean;
+                knownFacts: string[];
+                constraints: string[];
+            };
             bestPath: {
                 action: string;
                 risk: "low" | "medium" | "high";
                 stability: "low" | "medium" | "high";
                 outcome: "positive" | "negative" | "mixed";
+                benefits: string[];
+                downsides: string[];
+                uncertainties: string[];
+                reversible: boolean;
             };
             alternatives: {
                 action: string;
                 risk: "low" | "medium" | "high";
                 stability: "low" | "medium" | "high";
                 outcome: "positive" | "negative" | "mixed";
+                benefits: string[];
+                downsides: string[];
+                uncertainties: string[];
+                reversible: boolean;
             }[];
+            comparison: string;
         };
         finalVerdict: {
             recommendedAction: string;
@@ -10521,11 +7083,15 @@ export declare const GetAnalysisByIdResponse: zod.ZodObject<{
             useAi?: boolean | undefined;
             useAstrology?: boolean | undefined;
         } | undefined;
+        clarifications?: {
+            question: string;
+            answer: string;
+        }[] | undefined;
         credits?: {
             depth: "standard" | "deep" | "expert";
             depthChosen: "auto" | "user";
             lines: {
-                key: "astro" | "ajit" | "manu" | "sivi" | "ai";
+                key: "astro" | "ajit" | "manu" | "sivi" | "rsmi" | "ai";
                 label: string;
                 credits: number;
                 note: string;
@@ -10534,7 +7100,40 @@ export declare const GetAnalysisByIdResponse: zod.ZodObject<{
             balance: number | null;
             charged: number;
         } | undefined;
+        safety?: {
+            action: "allow" | "support" | "redirect" | "block";
+            category: "none" | "self_harm" | "self_harm_method" | "harm_others" | "weapons" | "minor_sexual" | "manipulation";
+            message?: string | undefined;
+        } | undefined;
+        silence?: {
+            source: "ai" | "rules";
+            subject: "other" | "self";
+            channel: "message" | "in_person" | "call" | "organisation";
+            trigger: string;
+            duration: {
+                bucket: "unknown" | "moments" | "minutes" | "hours" | "days" | "weeks";
+                text?: string | null | undefined;
+            };
+            meanings: {
+                why: string;
+                meaning: string;
+                likelihood: "more likely" | "possible" | "less likely";
+            }[];
+            unknowns: string[];
+            checks: string[];
+            caution: string;
+            who?: string | null | undefined;
+        } | undefined;
+        indirectRoute?: {
+            source: "ai" | "rules";
+            blocker: string;
+            cues: string[];
+            idea: string;
+            steps: string[];
+            fairness: string;
+        } | undefined;
         synthesis?: {
+            source: "ai" | "ai+astro" | "inbuilt" | "engine";
             confidence: "low" | "medium" | "high";
             score: number;
             summary: string;
@@ -10542,7 +7141,6 @@ export declare const GetAnalysisByIdResponse: zod.ZodObject<{
             astroInsight: string;
             advice: string;
             timeframeDays: number;
-            source: "ai" | "ai+astro" | "engine";
             reasoning?: string | undefined;
             usedAi?: boolean | undefined;
             usedAstrology?: boolean | undefined;
@@ -10563,10 +7161,10 @@ export declare const GetAnalysisByIdResponse: zod.ZodObject<{
             } | undefined;
         } | undefined;
         modules?: {
-            key: "AJIT" | "MANU" | "FILTER" | "SIVI" | "ASTRO" | "AI";
-            name: string;
+            key: "AJIT" | "MANU" | "FILTER" | "SIVI" | "ASTRO" | "RSMI" | "AI";
             verdict: string;
-            area: "intent" | "emotion" | "synthesis" | "paths" | "astrology";
+            name: string;
+            area: "intent" | "emotion" | "silence" | "synthesis" | "paths" | "astrology";
             active: boolean;
             evidence: string[];
             role?: string | undefined;
@@ -10582,95 +7180,14 @@ export declare const GetAnalysisByIdResponse: zod.ZodObject<{
                 signal: "favorable" | "challenging" | "neutral";
             };
             interpretation: string;
-            vedicD1?: {
-                ascendant: string;
-                ascendantDegree: number;
-                planets: {
-                    longitude: number;
-                    name: string;
-                    sign: string;
-                    signIndex: number;
-                    degree: number;
-                    isRetrograde: boolean;
-                    navamsaSign: string;
-                    dasamsaSign: string;
-                    drekkanaSign?: string | undefined;
-                    house?: number | undefined;
-                    dignity?: "neutral" | "exalted" | "own" | "debilitated" | undefined;
-                }[];
-                ayanamsa: number;
-                chartType: string;
-                currentDasha?: {
-                    mahadasha: {
-                        planet: string;
-                        startDate: string;
-                        endDate: string;
-                        years: number;
-                    };
-                    antardasha?: {
-                        planet: string;
-                        startDate: string;
-                        endDate: string;
-                        years: number;
-                    } | undefined;
-                    pratyantardasha?: {
-                        planet: string;
-                        startDate: string;
-                        endDate: string;
-                        years: number;
-                    } | undefined;
-                    sookshmadasha?: {
-                        planet: string;
-                        startDate: string;
-                        endDate: string;
-                        years: number;
-                    } | undefined;
-                } | undefined;
+            ascendant?: {
+                sign: string;
+                degree: number;
+                lord?: string | undefined;
             } | undefined;
-            vedicD3?: {
-                ascendant: string;
-                ascendantDegree: number;
-                planets: {
-                    longitude: number;
-                    name: string;
-                    sign: string;
-                    signIndex: number;
-                    degree: number;
-                    isRetrograde: boolean;
-                    navamsaSign: string;
-                    dasamsaSign: string;
-                    drekkanaSign?: string | undefined;
-                    house?: number | undefined;
-                    dignity?: "neutral" | "exalted" | "own" | "debilitated" | undefined;
-                }[];
-                ayanamsa: number;
-                chartType: string;
-                currentDasha?: {
-                    mahadasha: {
-                        planet: string;
-                        startDate: string;
-                        endDate: string;
-                        years: number;
-                    };
-                    antardasha?: {
-                        planet: string;
-                        startDate: string;
-                        endDate: string;
-                        years: number;
-                    } | undefined;
-                    pratyantardasha?: {
-                        planet: string;
-                        startDate: string;
-                        endDate: string;
-                        years: number;
-                    } | undefined;
-                    sookshmadasha?: {
-                        planet: string;
-                        startDate: string;
-                        endDate: string;
-                        years: number;
-                    } | undefined;
-                } | undefined;
+            tuning?: {
+                id?: number | null | undefined;
+                astroShare?: number | null | undefined;
             } | undefined;
             prashna?: {
                 score: number;
@@ -10692,6 +7209,7 @@ export declare const GetAnalysisByIdResponse: zod.ZodObject<{
                     label: string;
                     effect: number;
                     detail: string;
+                    family?: string | undefined;
                 }[];
                 summary: string;
                 latitude?: number | undefined;
@@ -10699,99 +7217,22 @@ export declare const GetAnalysisByIdResponse: zod.ZodObject<{
                 risk?: "low" | "medium" | "high" | undefined;
                 stability?: "low" | "medium" | "high" | undefined;
                 dominantPlanet?: string | undefined;
-            } | undefined;
-            vedicD9?: {
-                ascendant: string;
-                ascendantDegree: number;
-                planets: {
-                    longitude: number;
-                    name: string;
-                    sign: string;
-                    signIndex: number;
-                    degree: number;
-                    isRetrograde: boolean;
-                    navamsaSign: string;
-                    dasamsaSign: string;
-                    drekkanaSign?: string | undefined;
-                    house?: number | undefined;
-                    dignity?: "neutral" | "exalted" | "own" | "debilitated" | undefined;
-                }[];
-                ayanamsa: number;
-                chartType: string;
-                currentDasha?: {
-                    mahadasha: {
-                        planet: string;
-                        startDate: string;
-                        endDate: string;
-                        years: number;
-                    };
-                    antardasha?: {
-                        planet: string;
-                        startDate: string;
-                        endDate: string;
-                        years: number;
-                    } | undefined;
-                    pratyantardasha?: {
-                        planet: string;
-                        startDate: string;
-                        endDate: string;
-                        years: number;
-                    } | undefined;
-                    sookshmadasha?: {
-                        planet: string;
-                        startDate: string;
-                        endDate: string;
-                        years: number;
-                    } | undefined;
+                lagnaDegree?: number | undefined;
+                focus?: {
+                    themes?: string[] | undefined;
+                    houses?: number[] | undefined;
                 } | undefined;
-            } | undefined;
-            vedicD10?: {
-                ascendant: string;
-                ascendantDegree: number;
-                planets: {
-                    longitude: number;
-                    name: string;
-                    sign: string;
-                    signIndex: number;
-                    degree: number;
-                    isRetrograde: boolean;
-                    navamsaSign: string;
-                    dasamsaSign: string;
-                    drekkanaSign?: string | undefined;
-                    house?: number | undefined;
-                    dignity?: "neutral" | "exalted" | "own" | "debilitated" | undefined;
-                }[];
-                ayanamsa: number;
-                chartType: string;
-                currentDasha?: {
-                    mahadasha: {
-                        planet: string;
-                        startDate: string;
-                        endDate: string;
-                        years: number;
-                    };
-                    antardasha?: {
-                        planet: string;
-                        startDate: string;
-                        endDate: string;
-                        years: number;
-                    } | undefined;
-                    pratyantardasha?: {
-                        planet: string;
-                        startDate: string;
-                        endDate: string;
-                        years: number;
-                    } | undefined;
-                    sookshmadasha?: {
-                        planet: string;
-                        startDate: string;
-                        endDate: string;
-                        years: number;
-                    } | undefined;
+                fit?: {
+                    ok: boolean;
+                    problems: string[];
                 } | undefined;
+                trace?: {
+                    title: string;
+                    points: string[];
+                }[] | undefined;
+                tuningId?: number | null | undefined;
             } | undefined;
             timing?: {
-                house: number;
                 summary: string;
                 timeBased: boolean;
                 basis: "question";
@@ -10821,6 +7262,7 @@ export declare const GetAnalysisByIdResponse: zod.ZodObject<{
                         durationYears?: number | undefined;
                     };
                 };
+                house: number;
                 houseSign: string;
                 houseLord: string;
                 activations: string[];
@@ -10851,6 +7293,23 @@ export declare const GetAnalysisByIdResponse: zod.ZodObject<{
                     notes: string[];
                 } | null | undefined;
             } | undefined;
+            skippedReason?: string | null | undefined;
+            outlook?: {
+                chance: number;
+                level: "low" | "high" | "fair";
+                headline: string;
+                favours: string[];
+                against: string[];
+                timing?: {
+                    confidence: "low" | "medium" | "high";
+                    text: string;
+                    basis: string;
+                    from: string;
+                    to: string;
+                    dashaCheck?: string | undefined;
+                } | null | undefined;
+                timingNote?: string | null | undefined;
+            } | undefined;
             location?: {
                 latitude: number;
                 longitude: number;
@@ -10868,18 +7327,34 @@ export declare const GetAnalysisByIdResponse: zod.ZodObject<{
             intensity: "low" | "medium" | "high";
         };
         simulation: {
+            source: "ai" | "rules";
+            context: {
+                desiredOutcome: string;
+                inferred: boolean;
+                knownFacts: string[];
+                constraints: string[];
+            };
             bestPath: {
                 action: string;
                 risk: "low" | "medium" | "high";
                 stability: "low" | "medium" | "high";
                 outcome: "positive" | "negative" | "mixed";
+                benefits: string[];
+                downsides: string[];
+                uncertainties: string[];
+                reversible: boolean;
             };
             alternatives: {
                 action: string;
                 risk: "low" | "medium" | "high";
                 stability: "low" | "medium" | "high";
                 outcome: "positive" | "negative" | "mixed";
+                benefits: string[];
+                downsides: string[];
+                uncertainties: string[];
+                reversible: boolean;
             }[];
+            comparison: string;
         };
         finalVerdict: {
             recommendedAction: string;
@@ -10894,11 +7369,15 @@ export declare const GetAnalysisByIdResponse: zod.ZodObject<{
             useAi?: boolean | undefined;
             useAstrology?: boolean | undefined;
         } | undefined;
+        clarifications?: {
+            question: string;
+            answer: string;
+        }[] | undefined;
         credits?: {
             depth: "standard" | "deep" | "expert";
             depthChosen: "auto" | "user";
             lines: {
-                key: "astro" | "ajit" | "manu" | "sivi" | "ai";
+                key: "astro" | "ajit" | "manu" | "sivi" | "rsmi" | "ai";
                 label: string;
                 credits: number;
                 note: string;
@@ -10907,7 +7386,40 @@ export declare const GetAnalysisByIdResponse: zod.ZodObject<{
             balance: number | null;
             charged: number;
         } | undefined;
+        safety?: {
+            action: "allow" | "support" | "redirect" | "block";
+            category: "none" | "self_harm" | "self_harm_method" | "harm_others" | "weapons" | "minor_sexual" | "manipulation";
+            message?: string | undefined;
+        } | undefined;
+        silence?: {
+            source: "ai" | "rules";
+            subject: "other" | "self";
+            channel: "message" | "in_person" | "call" | "organisation";
+            trigger: string;
+            duration: {
+                bucket: "unknown" | "moments" | "minutes" | "hours" | "days" | "weeks";
+                text?: string | null | undefined;
+            };
+            meanings: {
+                why: string;
+                meaning: string;
+                likelihood: "more likely" | "possible" | "less likely";
+            }[];
+            unknowns: string[];
+            checks: string[];
+            caution: string;
+            who?: string | null | undefined;
+        } | undefined;
+        indirectRoute?: {
+            source: "ai" | "rules";
+            blocker: string;
+            cues: string[];
+            idea: string;
+            steps: string[];
+            fairness: string;
+        } | undefined;
         synthesis?: {
+            source: "ai" | "ai+astro" | "inbuilt" | "engine";
             confidence: "low" | "medium" | "high";
             score: number;
             summary: string;
@@ -10915,7 +7427,6 @@ export declare const GetAnalysisByIdResponse: zod.ZodObject<{
             astroInsight: string;
             advice: string;
             timeframeDays: number;
-            source: "ai" | "ai+astro" | "engine";
             reasoning?: string | undefined;
             usedAi?: boolean | undefined;
             usedAstrology?: boolean | undefined;
@@ -10936,10 +7447,10 @@ export declare const GetAnalysisByIdResponse: zod.ZodObject<{
             } | undefined;
         } | undefined;
         modules?: {
-            key: "AJIT" | "MANU" | "FILTER" | "SIVI" | "ASTRO" | "AI";
-            name: string;
+            key: "AJIT" | "MANU" | "FILTER" | "SIVI" | "ASTRO" | "RSMI" | "AI";
             verdict: string;
-            area: "intent" | "emotion" | "synthesis" | "paths" | "astrology";
+            name: string;
+            area: "intent" | "emotion" | "silence" | "synthesis" | "paths" | "astrology";
             active: boolean;
             evidence: string[];
             role?: string | undefined;
@@ -10966,95 +7477,14 @@ export declare const GetAnalysisByIdResponse: zod.ZodObject<{
                 signal: "favorable" | "challenging" | "neutral";
             };
             interpretation: string;
-            vedicD1?: {
-                ascendant: string;
-                ascendantDegree: number;
-                planets: {
-                    longitude: number;
-                    name: string;
-                    sign: string;
-                    signIndex: number;
-                    degree: number;
-                    isRetrograde: boolean;
-                    navamsaSign: string;
-                    dasamsaSign: string;
-                    drekkanaSign?: string | undefined;
-                    house?: number | undefined;
-                    dignity?: "neutral" | "exalted" | "own" | "debilitated" | undefined;
-                }[];
-                ayanamsa: number;
-                chartType: string;
-                currentDasha?: {
-                    mahadasha: {
-                        planet: string;
-                        startDate: string;
-                        endDate: string;
-                        years: number;
-                    };
-                    antardasha?: {
-                        planet: string;
-                        startDate: string;
-                        endDate: string;
-                        years: number;
-                    } | undefined;
-                    pratyantardasha?: {
-                        planet: string;
-                        startDate: string;
-                        endDate: string;
-                        years: number;
-                    } | undefined;
-                    sookshmadasha?: {
-                        planet: string;
-                        startDate: string;
-                        endDate: string;
-                        years: number;
-                    } | undefined;
-                } | undefined;
+            ascendant?: {
+                sign: string;
+                degree: number;
+                lord?: string | undefined;
             } | undefined;
-            vedicD3?: {
-                ascendant: string;
-                ascendantDegree: number;
-                planets: {
-                    longitude: number;
-                    name: string;
-                    sign: string;
-                    signIndex: number;
-                    degree: number;
-                    isRetrograde: boolean;
-                    navamsaSign: string;
-                    dasamsaSign: string;
-                    drekkanaSign?: string | undefined;
-                    house?: number | undefined;
-                    dignity?: "neutral" | "exalted" | "own" | "debilitated" | undefined;
-                }[];
-                ayanamsa: number;
-                chartType: string;
-                currentDasha?: {
-                    mahadasha: {
-                        planet: string;
-                        startDate: string;
-                        endDate: string;
-                        years: number;
-                    };
-                    antardasha?: {
-                        planet: string;
-                        startDate: string;
-                        endDate: string;
-                        years: number;
-                    } | undefined;
-                    pratyantardasha?: {
-                        planet: string;
-                        startDate: string;
-                        endDate: string;
-                        years: number;
-                    } | undefined;
-                    sookshmadasha?: {
-                        planet: string;
-                        startDate: string;
-                        endDate: string;
-                        years: number;
-                    } | undefined;
-                } | undefined;
+            tuning?: {
+                id?: number | null | undefined;
+                astroShare?: number | null | undefined;
             } | undefined;
             prashna?: {
                 score: number;
@@ -11076,6 +7506,7 @@ export declare const GetAnalysisByIdResponse: zod.ZodObject<{
                     label: string;
                     effect: number;
                     detail: string;
+                    family?: string | undefined;
                 }[];
                 summary: string;
                 latitude?: number | undefined;
@@ -11083,99 +7514,22 @@ export declare const GetAnalysisByIdResponse: zod.ZodObject<{
                 risk?: "low" | "medium" | "high" | undefined;
                 stability?: "low" | "medium" | "high" | undefined;
                 dominantPlanet?: string | undefined;
-            } | undefined;
-            vedicD9?: {
-                ascendant: string;
-                ascendantDegree: number;
-                planets: {
-                    longitude: number;
-                    name: string;
-                    sign: string;
-                    signIndex: number;
-                    degree: number;
-                    isRetrograde: boolean;
-                    navamsaSign: string;
-                    dasamsaSign: string;
-                    drekkanaSign?: string | undefined;
-                    house?: number | undefined;
-                    dignity?: "neutral" | "exalted" | "own" | "debilitated" | undefined;
-                }[];
-                ayanamsa: number;
-                chartType: string;
-                currentDasha?: {
-                    mahadasha: {
-                        planet: string;
-                        startDate: string;
-                        endDate: string;
-                        years: number;
-                    };
-                    antardasha?: {
-                        planet: string;
-                        startDate: string;
-                        endDate: string;
-                        years: number;
-                    } | undefined;
-                    pratyantardasha?: {
-                        planet: string;
-                        startDate: string;
-                        endDate: string;
-                        years: number;
-                    } | undefined;
-                    sookshmadasha?: {
-                        planet: string;
-                        startDate: string;
-                        endDate: string;
-                        years: number;
-                    } | undefined;
+                lagnaDegree?: number | undefined;
+                focus?: {
+                    themes?: string[] | undefined;
+                    houses?: number[] | undefined;
                 } | undefined;
-            } | undefined;
-            vedicD10?: {
-                ascendant: string;
-                ascendantDegree: number;
-                planets: {
-                    longitude: number;
-                    name: string;
-                    sign: string;
-                    signIndex: number;
-                    degree: number;
-                    isRetrograde: boolean;
-                    navamsaSign: string;
-                    dasamsaSign: string;
-                    drekkanaSign?: string | undefined;
-                    house?: number | undefined;
-                    dignity?: "neutral" | "exalted" | "own" | "debilitated" | undefined;
-                }[];
-                ayanamsa: number;
-                chartType: string;
-                currentDasha?: {
-                    mahadasha: {
-                        planet: string;
-                        startDate: string;
-                        endDate: string;
-                        years: number;
-                    };
-                    antardasha?: {
-                        planet: string;
-                        startDate: string;
-                        endDate: string;
-                        years: number;
-                    } | undefined;
-                    pratyantardasha?: {
-                        planet: string;
-                        startDate: string;
-                        endDate: string;
-                        years: number;
-                    } | undefined;
-                    sookshmadasha?: {
-                        planet: string;
-                        startDate: string;
-                        endDate: string;
-                        years: number;
-                    } | undefined;
+                fit?: {
+                    ok: boolean;
+                    problems: string[];
                 } | undefined;
+                trace?: {
+                    title: string;
+                    points: string[];
+                }[] | undefined;
+                tuningId?: number | null | undefined;
             } | undefined;
             timing?: {
-                house: number;
                 summary: string;
                 timeBased: boolean;
                 basis: "question";
@@ -11205,6 +7559,7 @@ export declare const GetAnalysisByIdResponse: zod.ZodObject<{
                         durationYears?: number | undefined;
                     };
                 };
+                house: number;
                 houseSign: string;
                 houseLord: string;
                 activations: string[];
@@ -11235,6 +7590,23 @@ export declare const GetAnalysisByIdResponse: zod.ZodObject<{
                     notes: string[];
                 } | null | undefined;
             } | undefined;
+            skippedReason?: string | null | undefined;
+            outlook?: {
+                chance: number;
+                level: "low" | "high" | "fair";
+                headline: string;
+                favours: string[];
+                against: string[];
+                timing?: {
+                    confidence: "low" | "medium" | "high";
+                    text: string;
+                    basis: string;
+                    from: string;
+                    to: string;
+                    dashaCheck?: string | undefined;
+                } | null | undefined;
+                timingNote?: string | null | undefined;
+            } | undefined;
             location?: {
                 latitude: number;
                 longitude: number;
@@ -11252,18 +7624,34 @@ export declare const GetAnalysisByIdResponse: zod.ZodObject<{
             intensity: "low" | "medium" | "high";
         };
         simulation: {
+            source: "ai" | "rules";
+            context: {
+                desiredOutcome: string;
+                inferred: boolean;
+                knownFacts: string[];
+                constraints: string[];
+            };
             bestPath: {
                 action: string;
                 risk: "low" | "medium" | "high";
                 stability: "low" | "medium" | "high";
                 outcome: "positive" | "negative" | "mixed";
+                benefits: string[];
+                downsides: string[];
+                uncertainties: string[];
+                reversible: boolean;
             };
             alternatives: {
                 action: string;
                 risk: "low" | "medium" | "high";
                 stability: "low" | "medium" | "high";
                 outcome: "positive" | "negative" | "mixed";
+                benefits: string[];
+                downsides: string[];
+                uncertainties: string[];
+                reversible: boolean;
             }[];
+            comparison: string;
         };
         finalVerdict: {
             recommendedAction: string;
@@ -11278,11 +7666,15 @@ export declare const GetAnalysisByIdResponse: zod.ZodObject<{
             useAi?: boolean | undefined;
             useAstrology?: boolean | undefined;
         } | undefined;
+        clarifications?: {
+            question: string;
+            answer: string;
+        }[] | undefined;
         credits?: {
             depth: "standard" | "deep" | "expert";
             depthChosen: "auto" | "user";
             lines: {
-                key: "astro" | "ajit" | "manu" | "sivi" | "ai";
+                key: "astro" | "ajit" | "manu" | "sivi" | "rsmi" | "ai";
                 label: string;
                 credits: number;
                 note: string;
@@ -11291,7 +7683,40 @@ export declare const GetAnalysisByIdResponse: zod.ZodObject<{
             balance: number | null;
             charged: number;
         } | undefined;
+        safety?: {
+            action: "allow" | "support" | "redirect" | "block";
+            category: "none" | "self_harm" | "self_harm_method" | "harm_others" | "weapons" | "minor_sexual" | "manipulation";
+            message?: string | undefined;
+        } | undefined;
+        silence?: {
+            source: "ai" | "rules";
+            subject: "other" | "self";
+            channel: "message" | "in_person" | "call" | "organisation";
+            trigger: string;
+            duration: {
+                bucket: "unknown" | "moments" | "minutes" | "hours" | "days" | "weeks";
+                text?: string | null | undefined;
+            };
+            meanings: {
+                why: string;
+                meaning: string;
+                likelihood: "more likely" | "possible" | "less likely";
+            }[];
+            unknowns: string[];
+            checks: string[];
+            caution: string;
+            who?: string | null | undefined;
+        } | undefined;
+        indirectRoute?: {
+            source: "ai" | "rules";
+            blocker: string;
+            cues: string[];
+            idea: string;
+            steps: string[];
+            fairness: string;
+        } | undefined;
         synthesis?: {
+            source: "ai" | "ai+astro" | "inbuilt" | "engine";
             confidence: "low" | "medium" | "high";
             score: number;
             summary: string;
@@ -11299,7 +7724,6 @@ export declare const GetAnalysisByIdResponse: zod.ZodObject<{
             astroInsight: string;
             advice: string;
             timeframeDays: number;
-            source: "ai" | "ai+astro" | "engine";
             reasoning?: string | undefined;
             usedAi?: boolean | undefined;
             usedAstrology?: boolean | undefined;
@@ -11320,10 +7744,10 @@ export declare const GetAnalysisByIdResponse: zod.ZodObject<{
             } | undefined;
         } | undefined;
         modules?: {
-            key: "AJIT" | "MANU" | "FILTER" | "SIVI" | "ASTRO" | "AI";
-            name: string;
+            key: "AJIT" | "MANU" | "FILTER" | "SIVI" | "ASTRO" | "RSMI" | "AI";
             verdict: string;
-            area: "intent" | "emotion" | "synthesis" | "paths" | "astrology";
+            name: string;
+            area: "intent" | "emotion" | "silence" | "synthesis" | "paths" | "astrology";
             active: boolean;
             evidence: string[];
             role?: string | undefined;
@@ -11349,95 +7773,14 @@ export declare const GetAnalysisByIdResponse: zod.ZodObject<{
                 signal: "favorable" | "challenging" | "neutral";
             };
             interpretation: string;
-            vedicD1?: {
-                ascendant: string;
-                ascendantDegree: number;
-                planets: {
-                    longitude: number;
-                    name: string;
-                    sign: string;
-                    signIndex: number;
-                    degree: number;
-                    isRetrograde: boolean;
-                    navamsaSign: string;
-                    dasamsaSign: string;
-                    drekkanaSign?: string | undefined;
-                    house?: number | undefined;
-                    dignity?: "neutral" | "exalted" | "own" | "debilitated" | undefined;
-                }[];
-                ayanamsa: number;
-                chartType: string;
-                currentDasha?: {
-                    mahadasha: {
-                        planet: string;
-                        startDate: string;
-                        endDate: string;
-                        years: number;
-                    };
-                    antardasha?: {
-                        planet: string;
-                        startDate: string;
-                        endDate: string;
-                        years: number;
-                    } | undefined;
-                    pratyantardasha?: {
-                        planet: string;
-                        startDate: string;
-                        endDate: string;
-                        years: number;
-                    } | undefined;
-                    sookshmadasha?: {
-                        planet: string;
-                        startDate: string;
-                        endDate: string;
-                        years: number;
-                    } | undefined;
-                } | undefined;
+            ascendant?: {
+                sign: string;
+                degree: number;
+                lord?: string | undefined;
             } | undefined;
-            vedicD3?: {
-                ascendant: string;
-                ascendantDegree: number;
-                planets: {
-                    longitude: number;
-                    name: string;
-                    sign: string;
-                    signIndex: number;
-                    degree: number;
-                    isRetrograde: boolean;
-                    navamsaSign: string;
-                    dasamsaSign: string;
-                    drekkanaSign?: string | undefined;
-                    house?: number | undefined;
-                    dignity?: "neutral" | "exalted" | "own" | "debilitated" | undefined;
-                }[];
-                ayanamsa: number;
-                chartType: string;
-                currentDasha?: {
-                    mahadasha: {
-                        planet: string;
-                        startDate: string;
-                        endDate: string;
-                        years: number;
-                    };
-                    antardasha?: {
-                        planet: string;
-                        startDate: string;
-                        endDate: string;
-                        years: number;
-                    } | undefined;
-                    pratyantardasha?: {
-                        planet: string;
-                        startDate: string;
-                        endDate: string;
-                        years: number;
-                    } | undefined;
-                    sookshmadasha?: {
-                        planet: string;
-                        startDate: string;
-                        endDate: string;
-                        years: number;
-                    } | undefined;
-                } | undefined;
+            tuning?: {
+                id?: number | null | undefined;
+                astroShare?: number | null | undefined;
             } | undefined;
             prashna?: {
                 score: number;
@@ -11459,6 +7802,7 @@ export declare const GetAnalysisByIdResponse: zod.ZodObject<{
                     label: string;
                     effect: number;
                     detail: string;
+                    family?: string | undefined;
                 }[];
                 summary: string;
                 latitude?: number | undefined;
@@ -11466,99 +7810,22 @@ export declare const GetAnalysisByIdResponse: zod.ZodObject<{
                 risk?: "low" | "medium" | "high" | undefined;
                 stability?: "low" | "medium" | "high" | undefined;
                 dominantPlanet?: string | undefined;
-            } | undefined;
-            vedicD9?: {
-                ascendant: string;
-                ascendantDegree: number;
-                planets: {
-                    longitude: number;
-                    name: string;
-                    sign: string;
-                    signIndex: number;
-                    degree: number;
-                    isRetrograde: boolean;
-                    navamsaSign: string;
-                    dasamsaSign: string;
-                    drekkanaSign?: string | undefined;
-                    house?: number | undefined;
-                    dignity?: "neutral" | "exalted" | "own" | "debilitated" | undefined;
-                }[];
-                ayanamsa: number;
-                chartType: string;
-                currentDasha?: {
-                    mahadasha: {
-                        planet: string;
-                        startDate: string;
-                        endDate: string;
-                        years: number;
-                    };
-                    antardasha?: {
-                        planet: string;
-                        startDate: string;
-                        endDate: string;
-                        years: number;
-                    } | undefined;
-                    pratyantardasha?: {
-                        planet: string;
-                        startDate: string;
-                        endDate: string;
-                        years: number;
-                    } | undefined;
-                    sookshmadasha?: {
-                        planet: string;
-                        startDate: string;
-                        endDate: string;
-                        years: number;
-                    } | undefined;
+                lagnaDegree?: number | undefined;
+                focus?: {
+                    themes?: string[] | undefined;
+                    houses?: number[] | undefined;
                 } | undefined;
-            } | undefined;
-            vedicD10?: {
-                ascendant: string;
-                ascendantDegree: number;
-                planets: {
-                    longitude: number;
-                    name: string;
-                    sign: string;
-                    signIndex: number;
-                    degree: number;
-                    isRetrograde: boolean;
-                    navamsaSign: string;
-                    dasamsaSign: string;
-                    drekkanaSign?: string | undefined;
-                    house?: number | undefined;
-                    dignity?: "neutral" | "exalted" | "own" | "debilitated" | undefined;
-                }[];
-                ayanamsa: number;
-                chartType: string;
-                currentDasha?: {
-                    mahadasha: {
-                        planet: string;
-                        startDate: string;
-                        endDate: string;
-                        years: number;
-                    };
-                    antardasha?: {
-                        planet: string;
-                        startDate: string;
-                        endDate: string;
-                        years: number;
-                    } | undefined;
-                    pratyantardasha?: {
-                        planet: string;
-                        startDate: string;
-                        endDate: string;
-                        years: number;
-                    } | undefined;
-                    sookshmadasha?: {
-                        planet: string;
-                        startDate: string;
-                        endDate: string;
-                        years: number;
-                    } | undefined;
+                fit?: {
+                    ok: boolean;
+                    problems: string[];
                 } | undefined;
+                trace?: {
+                    title: string;
+                    points: string[];
+                }[] | undefined;
+                tuningId?: number | null | undefined;
             } | undefined;
             timing?: {
-                house: number;
                 summary: string;
                 timeBased: boolean;
                 basis: "question";
@@ -11588,6 +7855,7 @@ export declare const GetAnalysisByIdResponse: zod.ZodObject<{
                         durationYears?: number | undefined;
                     };
                 };
+                house: number;
                 houseSign: string;
                 houseLord: string;
                 activations: string[];
@@ -11618,6 +7886,23 @@ export declare const GetAnalysisByIdResponse: zod.ZodObject<{
                     notes: string[];
                 } | null | undefined;
             } | undefined;
+            skippedReason?: string | null | undefined;
+            outlook?: {
+                chance: number;
+                level: "low" | "high" | "fair";
+                headline: string;
+                favours: string[];
+                against: string[];
+                timing?: {
+                    confidence: "low" | "medium" | "high";
+                    text: string;
+                    basis: string;
+                    from: string;
+                    to: string;
+                    dashaCheck?: string | undefined;
+                } | null | undefined;
+                timingNote?: string | null | undefined;
+            } | undefined;
             location?: {
                 latitude: number;
                 longitude: number;
@@ -11635,18 +7920,34 @@ export declare const GetAnalysisByIdResponse: zod.ZodObject<{
             intensity: "low" | "medium" | "high";
         };
         simulation: {
+            source: "ai" | "rules";
+            context: {
+                desiredOutcome: string;
+                inferred: boolean;
+                knownFacts: string[];
+                constraints: string[];
+            };
             bestPath: {
                 action: string;
                 risk: "low" | "medium" | "high";
                 stability: "low" | "medium" | "high";
                 outcome: "positive" | "negative" | "mixed";
+                benefits: string[];
+                downsides: string[];
+                uncertainties: string[];
+                reversible: boolean;
             };
             alternatives: {
                 action: string;
                 risk: "low" | "medium" | "high";
                 stability: "low" | "medium" | "high";
                 outcome: "positive" | "negative" | "mixed";
+                benefits: string[];
+                downsides: string[];
+                uncertainties: string[];
+                reversible: boolean;
             }[];
+            comparison: string;
         };
         finalVerdict: {
             recommendedAction: string;
@@ -11661,11 +7962,15 @@ export declare const GetAnalysisByIdResponse: zod.ZodObject<{
             useAi?: boolean | undefined;
             useAstrology?: boolean | undefined;
         } | undefined;
+        clarifications?: {
+            question: string;
+            answer: string;
+        }[] | undefined;
         credits?: {
             depth: "standard" | "deep" | "expert";
             depthChosen: "auto" | "user";
             lines: {
-                key: "astro" | "ajit" | "manu" | "sivi" | "ai";
+                key: "astro" | "ajit" | "manu" | "sivi" | "rsmi" | "ai";
                 label: string;
                 credits: number;
                 note: string;
@@ -11674,7 +7979,40 @@ export declare const GetAnalysisByIdResponse: zod.ZodObject<{
             balance: number | null;
             charged: number;
         } | undefined;
+        safety?: {
+            action: "allow" | "support" | "redirect" | "block";
+            category: "none" | "self_harm" | "self_harm_method" | "harm_others" | "weapons" | "minor_sexual" | "manipulation";
+            message?: string | undefined;
+        } | undefined;
+        silence?: {
+            source: "ai" | "rules";
+            subject: "other" | "self";
+            channel: "message" | "in_person" | "call" | "organisation";
+            trigger: string;
+            duration: {
+                bucket: "unknown" | "moments" | "minutes" | "hours" | "days" | "weeks";
+                text?: string | null | undefined;
+            };
+            meanings: {
+                why: string;
+                meaning: string;
+                likelihood: "more likely" | "possible" | "less likely";
+            }[];
+            unknowns: string[];
+            checks: string[];
+            caution: string;
+            who?: string | null | undefined;
+        } | undefined;
+        indirectRoute?: {
+            source: "ai" | "rules";
+            blocker: string;
+            cues: string[];
+            idea: string;
+            steps: string[];
+            fairness: string;
+        } | undefined;
         synthesis?: {
+            source: "ai" | "ai+astro" | "inbuilt" | "engine";
             confidence: "low" | "medium" | "high";
             score: number;
             summary: string;
@@ -11682,7 +8020,6 @@ export declare const GetAnalysisByIdResponse: zod.ZodObject<{
             astroInsight: string;
             advice: string;
             timeframeDays: number;
-            source: "ai" | "ai+astro" | "engine";
             reasoning?: string | undefined;
             usedAi?: boolean | undefined;
             usedAstrology?: boolean | undefined;
@@ -11703,10 +8040,10 @@ export declare const GetAnalysisByIdResponse: zod.ZodObject<{
             } | undefined;
         } | undefined;
         modules?: {
-            key: "AJIT" | "MANU" | "FILTER" | "SIVI" | "ASTRO" | "AI";
-            name: string;
+            key: "AJIT" | "MANU" | "FILTER" | "SIVI" | "ASTRO" | "RSMI" | "AI";
             verdict: string;
-            area: "intent" | "emotion" | "synthesis" | "paths" | "astrology";
+            name: string;
+            area: "intent" | "emotion" | "silence" | "synthesis" | "paths" | "astrology";
             active: boolean;
             evidence: string[];
             role?: string | undefined;
@@ -12093,30 +8430,30 @@ export declare const GetCreditsResponse: zod.ZodObject<{
         analysisId: zod.ZodNullable<zod.ZodNumber>;
         createdAt: zod.ZodString;
     }, "strip", zod.ZodTypeAny, {
+        analysisId: number | null;
         id: number;
         createdAt: string;
         delta: number;
         balanceAfter: number;
         reason: "topup" | "single" | "plan" | "welcome" | "analysis" | "refund";
-        analysisId: number | null;
     }, {
+        analysisId: number | null;
         id: number;
         createdAt: string;
         delta: number;
         balanceAfter: number;
         reason: "topup" | "single" | "plan" | "welcome" | "analysis" | "refund";
-        analysisId: number | null;
     }>, "many">;
 }, "strip", zod.ZodTypeAny, {
     billingActive: boolean;
     balance: number;
     ledger: {
+        analysisId: number | null;
         id: number;
         createdAt: string;
         delta: number;
         balanceAfter: number;
         reason: "topup" | "single" | "plan" | "welcome" | "analysis" | "refund";
-        analysisId: number | null;
     }[];
     granted?: number | undefined;
     used?: number | undefined;
@@ -12124,12 +8461,12 @@ export declare const GetCreditsResponse: zod.ZodObject<{
     billingActive: boolean;
     balance: number;
     ledger: {
+        analysisId: number | null;
         id: number;
         createdAt: string;
         delta: number;
         balanceAfter: number;
         reason: "topup" | "single" | "plan" | "welcome" | "analysis" | "refund";
-        analysisId: number | null;
     }[];
     granted?: number | undefined;
     used?: number | undefined;
@@ -12281,6 +8618,7 @@ export declare const VerifyBillingPaymentResponse: zod.ZodObject<{
  */
 export declare const createFeedbackBodyRatingMax = 5;
 export declare const createFeedbackBodyAccuracyMax = 5;
+export declare const createFeedbackBodyReasonTagsMax = 14;
 export declare const CreateFeedbackBody: zod.ZodObject<{
     analysisId: zod.ZodNumber;
     rating: zod.ZodNumber;
@@ -12288,6 +8626,9 @@ export declare const CreateFeedbackBody: zod.ZodObject<{
     comment: zod.ZodOptional<zod.ZodString>;
     helpful: zod.ZodOptional<zod.ZodBoolean>;
     outcome: zod.ZodOptional<zod.ZodEnum<["matched", "partly", "different"]>>;
+    actionTaken: zod.ZodOptional<zod.ZodEnum<["followed", "other", "nothing"]>>;
+    result: zod.ZodOptional<zod.ZodEnum<["better", "same", "worse"]>>;
+    reasonTags: zod.ZodOptional<zod.ZodArray<zod.ZodEnum<["advice_right", "missed_perspective", "missed_facts", "too_generic", "timing_off", "timing_right", "astrology_helped", "astrology_off", "steps_helpful", "steps_unrealistic", "route_helpful", "route_unrealistic", "meaning_right", "meaning_off"]>, "many">>;
 }, "strip", zod.ZodTypeAny, {
     analysisId: number;
     rating: number;
@@ -12295,6 +8636,9 @@ export declare const CreateFeedbackBody: zod.ZodObject<{
     accuracy?: number | undefined;
     comment?: string | undefined;
     helpful?: boolean | undefined;
+    actionTaken?: "other" | "followed" | "nothing" | undefined;
+    result?: "better" | "same" | "worse" | undefined;
+    reasonTags?: ("advice_right" | "missed_perspective" | "missed_facts" | "too_generic" | "timing_off" | "timing_right" | "astrology_helped" | "astrology_off" | "steps_helpful" | "steps_unrealistic" | "route_helpful" | "route_unrealistic" | "meaning_right" | "meaning_off")[] | undefined;
 }, {
     analysisId: number;
     rating: number;
@@ -12302,6 +8646,9 @@ export declare const CreateFeedbackBody: zod.ZodObject<{
     accuracy?: number | undefined;
     comment?: string | undefined;
     helpful?: boolean | undefined;
+    actionTaken?: "other" | "followed" | "nothing" | undefined;
+    result?: "better" | "same" | "worse" | undefined;
+    reasonTags?: ("advice_right" | "missed_perspective" | "missed_facts" | "too_generic" | "timing_off" | "timing_right" | "astrology_helped" | "astrology_off" | "steps_helpful" | "steps_unrealistic" | "route_helpful" | "route_unrealistic" | "meaning_right" | "meaning_off")[] | undefined;
 }>;
 export declare const CreateFeedbackResponse: zod.ZodObject<{
     id: zod.ZodNumber;
@@ -12312,26 +8659,35 @@ export declare const CreateFeedbackResponse: zod.ZodObject<{
     comment: zod.ZodOptional<zod.ZodString>;
     helpful: zod.ZodOptional<zod.ZodBoolean>;
     outcome: zod.ZodOptional<zod.ZodString>;
+    actionTaken: zod.ZodOptional<zod.ZodString>;
+    result: zod.ZodOptional<zod.ZodString>;
+    reasonTags: zod.ZodOptional<zod.ZodArray<zod.ZodString, "many">>;
     createdAt: zod.ZodString;
 }, "strip", zod.ZodTypeAny, {
+    analysisId: number;
     id: number;
     createdAt: string;
-    analysisId: number;
     rating: number;
     outcome?: string | undefined;
     accuracy?: number | undefined;
     comment?: string | undefined;
     helpful?: boolean | undefined;
+    actionTaken?: string | undefined;
+    result?: string | undefined;
+    reasonTags?: string[] | undefined;
     situationSnippet?: string | undefined;
 }, {
+    analysisId: number;
     id: number;
     createdAt: string;
-    analysisId: number;
     rating: number;
     outcome?: string | undefined;
     accuracy?: number | undefined;
     comment?: string | undefined;
     helpful?: boolean | undefined;
+    actionTaken?: string | undefined;
+    result?: string | undefined;
+    reasonTags?: string[] | undefined;
     situationSnippet?: string | undefined;
 }>;
 /**
@@ -12348,9 +8704,9 @@ export declare const GetFeedbackListQueryParams: zod.ZodObject<{
     offset: number;
     analysisId?: number | undefined;
 }, {
+    analysisId?: number | undefined;
     limit?: number | undefined;
     offset?: number | undefined;
-    analysisId?: number | undefined;
 }>;
 export declare const GetFeedbackListResponse: zod.ZodObject<{
     items: zod.ZodArray<zod.ZodObject<{
@@ -12362,26 +8718,35 @@ export declare const GetFeedbackListResponse: zod.ZodObject<{
         comment: zod.ZodOptional<zod.ZodString>;
         helpful: zod.ZodOptional<zod.ZodBoolean>;
         outcome: zod.ZodOptional<zod.ZodString>;
+        actionTaken: zod.ZodOptional<zod.ZodString>;
+        result: zod.ZodOptional<zod.ZodString>;
+        reasonTags: zod.ZodOptional<zod.ZodArray<zod.ZodString, "many">>;
         createdAt: zod.ZodString;
     }, "strip", zod.ZodTypeAny, {
+        analysisId: number;
         id: number;
         createdAt: string;
-        analysisId: number;
         rating: number;
         outcome?: string | undefined;
         accuracy?: number | undefined;
         comment?: string | undefined;
         helpful?: boolean | undefined;
+        actionTaken?: string | undefined;
+        result?: string | undefined;
+        reasonTags?: string[] | undefined;
         situationSnippet?: string | undefined;
     }, {
+        analysisId: number;
         id: number;
         createdAt: string;
-        analysisId: number;
         rating: number;
         outcome?: string | undefined;
         accuracy?: number | undefined;
         comment?: string | undefined;
         helpful?: boolean | undefined;
+        actionTaken?: string | undefined;
+        result?: string | undefined;
+        reasonTags?: string[] | undefined;
         situationSnippet?: string | undefined;
     }>, "many">;
     total: zod.ZodNumber;
@@ -12392,14 +8757,17 @@ export declare const GetFeedbackListResponse: zod.ZodObject<{
     limit: number;
     offset: number;
     items: {
+        analysisId: number;
         id: number;
         createdAt: string;
-        analysisId: number;
         rating: number;
         outcome?: string | undefined;
         accuracy?: number | undefined;
         comment?: string | undefined;
         helpful?: boolean | undefined;
+        actionTaken?: string | undefined;
+        result?: string | undefined;
+        reasonTags?: string[] | undefined;
         situationSnippet?: string | undefined;
     }[];
 }, {
@@ -12407,14 +8775,17 @@ export declare const GetFeedbackListResponse: zod.ZodObject<{
     limit: number;
     offset: number;
     items: {
+        analysisId: number;
         id: number;
         createdAt: string;
-        analysisId: number;
         rating: number;
         outcome?: string | undefined;
         accuracy?: number | undefined;
         comment?: string | undefined;
         helpful?: boolean | undefined;
+        actionTaken?: string | undefined;
+        result?: string | undefined;
+        reasonTags?: string[] | undefined;
         situationSnippet?: string | undefined;
     }[];
 }>;

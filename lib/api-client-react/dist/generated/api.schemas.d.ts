@@ -28,6 +28,23 @@ export declare const AnalyzeRequestLanguage: {
     readonly hi: "hi";
     readonly hinglish: "hinglish";
 };
+/**
+ * Run one of the paths SIVI listed in an earlier analysis of yours as a new question. The server builds the question from that analysis (the situation text is ignored) and charges half price. Looking at a path costs nothing.
+ */
+export type AnalyzeRequestFromPath = {
+    analysisId: number;
+    /**
+     * 0 is the recommended path, then the alternatives in order
+     * @minimum 0
+     */
+    pathIndex: number;
+};
+export interface Clarification {
+    /** @maxLength 300 */
+    question: string;
+    /** @maxLength 500 */
+    answer: string;
+}
 export interface AnalyzeRequest {
     /** The situation to analyze (min 10 characters) */
     situation: string;
@@ -43,6 +60,121 @@ export interface AnalyzeRequest {
     useAi?: boolean;
     /** Use the astrology lens (default true). When false the astrology is not used in the answer and is not charged. */
     useAstrology?: boolean;
+    /** Leave the astrology out when the Prashna chart is not fit to be read (default false, so the chart is always read, with a warning). */
+    skipUnfitChart?: boolean;
+    /**
+     * Questions the app asked before the analysis and the person's answers; they are added to the situation.
+     * @maxItems 4
+     */
+    clarifications?: Clarification[];
+    /** Run one of the paths SIVI listed in an earlier analysis of yours as a new question. The server builds the question from that analysis (the situation text is ignored) and charges half price. Looking at a path costs nothing. */
+    fromPath?: AnalyzeRequestFromPath;
+}
+export type ClarifyRequestLanguage = (typeof ClarifyRequestLanguage)[keyof typeof ClarifyRequestLanguage];
+export declare const ClarifyRequestLanguage: {
+    readonly auto: "auto";
+    readonly en: "en";
+    readonly hi: "hi";
+    readonly hinglish: "hinglish";
+};
+export interface ClarifyRequest {
+    /** The situation written so far (min 10 characters) */
+    situation: string;
+    /** @maxItems 4 */
+    answers?: Clarification[];
+    language?: ClarifyRequestLanguage;
+    useAi?: boolean;
+}
+export type ClarifyResponseQuestion = {
+    question: string;
+    why?: string;
+    choices: string[];
+};
+export type ClarifyResponseSource = (typeof ClarifyResponseSource)[keyof typeof ClarifyResponseSource];
+export declare const ClarifyResponseSource: {
+    readonly ai: "ai";
+    readonly rules: "rules";
+};
+export interface ClarifyResponse {
+    /** True when enough is known (or the limit of questions is reached) */
+    done: boolean;
+    question?: ClarifyResponseQuestion;
+    /** How many questions have been answered so far */
+    round: number;
+    max: number;
+    source?: ClarifyResponseSource;
+}
+export type IndirectRouteSource = (typeof IndirectRouteSource)[keyof typeof IndirectRouteSource];
+export declare const IndirectRouteSource: {
+    readonly rules: "rules";
+    readonly ai: "ai";
+};
+/**
+ * AJIT - a clever but ethical way round a direct route that looks closed
+ */
+export interface IndirectRoute {
+    blocker: string;
+    cues: string[];
+    idea: string;
+    steps: string[];
+    fairness: string;
+    source: IndirectRouteSource;
+}
+export type SilenceMeaningLikelihood = (typeof SilenceMeaningLikelihood)[keyof typeof SilenceMeaningLikelihood];
+export declare const SilenceMeaningLikelihood: {
+    readonly more_likely: "more likely";
+    readonly possible: "possible";
+    readonly less_likely: "less likely";
+};
+export interface SilenceMeaning {
+    meaning: string;
+    likelihood: SilenceMeaningLikelihood;
+    why: string;
+}
+export type SilenceReadingSubject = (typeof SilenceReadingSubject)[keyof typeof SilenceReadingSubject];
+export declare const SilenceReadingSubject: {
+    readonly other: "other";
+    readonly self: "self";
+};
+export type SilenceReadingChannel = (typeof SilenceReadingChannel)[keyof typeof SilenceReadingChannel];
+export declare const SilenceReadingChannel: {
+    readonly in_person: "in_person";
+    readonly message: "message";
+    readonly call: "call";
+    readonly organisation: "organisation";
+};
+export type SilenceReadingDurationBucket = (typeof SilenceReadingDurationBucket)[keyof typeof SilenceReadingDurationBucket];
+export declare const SilenceReadingDurationBucket: {
+    readonly moments: "moments";
+    readonly minutes: "minutes";
+    readonly hours: "hours";
+    readonly days: "days";
+    readonly weeks: "weeks";
+    readonly unknown: "unknown";
+};
+export type SilenceReadingDuration = {
+    bucket: SilenceReadingDurationBucket;
+    text?: string | null;
+};
+export type SilenceReadingSource = (typeof SilenceReadingSource)[keyof typeof SilenceReadingSource];
+export declare const SilenceReadingSource: {
+    readonly rules: "rules";
+    readonly ai: "ai";
+};
+/**
+ * RSMI - the meanings a silence described in the question can have (possibilities, not mind reading)
+ */
+export interface SilenceReading {
+    subject: SilenceReadingSubject;
+    channel: SilenceReadingChannel;
+    who?: string | null;
+    trigger: string;
+    duration: SilenceReadingDuration;
+    meanings: SilenceMeaning[];
+    unknowns: string[];
+    checks: string[];
+    caution: string;
+    source: SilenceReadingSource;
 }
 export type TranslateRequestLanguage = (typeof TranslateRequestLanguage)[keyof typeof TranslateRequestLanguage];
 export declare const TranslateRequestLanguage: {
@@ -77,6 +209,7 @@ export declare const ModuleReportKey: {
     readonly FILTER: "FILTER";
     readonly SIVI: "SIVI";
     readonly ASTRO: "ASTRO";
+    readonly RSMI: "RSMI";
     readonly AI: "AI";
 };
 export type ModuleReportArea = (typeof ModuleReportArea)[keyof typeof ModuleReportArea];
@@ -85,6 +218,7 @@ export declare const ModuleReportArea: {
     readonly emotion: "emotion";
     readonly paths: "paths";
     readonly astrology: "astrology";
+    readonly silence: "silence";
     readonly synthesis: "synthesis";
 };
 /**
@@ -213,10 +347,62 @@ export interface PathOption {
     risk: PathOptionRisk;
     stability: PathOptionStability;
     outcome: PathOptionOutcome;
+    benefits: string[];
+    downsides: string[];
+    uncertainties: string[];
+    /** Whether the person could undo this path if it turns out wrong */
+    reversible: boolean;
 }
+/**
+ * What SIVI understood about the situation before comparing paths
+ */
+export interface SituationContext {
+    desiredOutcome: string;
+    /** True when the desired outcome was guessed, not stated by the person */
+    inferred: boolean;
+    knownFacts: string[];
+    constraints: string[];
+}
+export type SafetyNoticeAction = (typeof SafetyNoticeAction)[keyof typeof SafetyNoticeAction];
+export declare const SafetyNoticeAction: {
+    readonly allow: "allow";
+    readonly support: "support";
+    readonly redirect: "redirect";
+    readonly block: "block";
+};
+export type SafetyNoticeCategory = (typeof SafetyNoticeCategory)[keyof typeof SafetyNoticeCategory];
+export declare const SafetyNoticeCategory: {
+    readonly none: "none";
+    readonly self_harm: "self_harm";
+    readonly self_harm_method: "self_harm_method";
+    readonly harm_others: "harm_others";
+    readonly weapons: "weapons";
+    readonly minor_sexual: "minor_sexual";
+    readonly manipulation: "manipulation";
+};
+/**
+ * What the ethical filter decided about the message. "support" and "redirect" analyses carry a message that is shown to the person; blocked requests are refused with HTTP 422 and are never analysed or charged.
+ */
+export interface SafetyNotice {
+    action: SafetyNoticeAction;
+    category: SafetyNoticeCategory;
+    message?: string;
+}
+export type SimulationResultSource = (typeof SimulationResultSource)[keyof typeof SimulationResultSource];
+export declare const SimulationResultSource: {
+    readonly rules: "rules";
+    readonly ai: "ai";
+};
+/**
+ * SIVI comparison of the paths open to the person. It compares options; it does not predict the future.
+ */
 export interface SimulationResult {
+    context: SituationContext;
     bestPath: PathOption;
     alternatives: PathOption[];
+    /** Why the best path may be better than the others */
+    comparison: string;
+    source: SimulationResultSource;
 }
 export type FinalVerdictRiskLevel = (typeof FinalVerdictRiskLevel)[keyof typeof FinalVerdictRiskLevel];
 export declare const FinalVerdictRiskLevel: {
@@ -275,6 +461,8 @@ export interface PrashnaFactor {
     label: string;
     effect: number;
     detail: string;
+    /** Which part of the reading this factor belongs to (used for learned weighting) */
+    family?: string;
 }
 export interface PrashnaChartUse {
     chart: string;
@@ -299,6 +487,21 @@ export declare const PrashnaReadingRisk: {
     readonly medium: "medium";
     readonly high: "high";
 };
+export type PrashnaReadingFocus = {
+    themes?: string[];
+    houses?: number[];
+};
+/**
+ * First check of the reading. Only a warning unless the person chose to skip unfit charts.
+ */
+export type PrashnaReadingFit = {
+    ok: boolean;
+    problems: string[];
+};
+export type PrashnaReadingTraceItem = {
+    title: string;
+    points: string[];
+};
 /**
  * Prashna (horary) chart cast for the moment of the question, read for the question type
  */
@@ -308,6 +511,8 @@ export interface PrashnaReading {
     longitude?: number;
     lagna: string;
     lagnaLord: string;
+    /** Degrees into the rising sign */
+    lagnaDegree?: number;
     moonSign: string;
     moonNakshatra: string;
     moonWaxing: boolean;
@@ -321,6 +526,12 @@ export interface PrashnaReading {
     risk?: PrashnaReadingRisk;
     dominantPlanet?: string;
     summary: string;
+    focus?: PrashnaReadingFocus;
+    /** First check of the reading. Only a warning unless the person chose to skip unfit charts. */
+    fit?: PrashnaReadingFit;
+    /** The chain followed in the chart (lagna and its lord, Moon, the concerned house, 6/8/12 lords, the blend) as short points */
+    trace?: PrashnaReadingTraceItem[];
+    tuningId?: number | null;
 }
 export type AstroInfluenceStability = (typeof AstroInfluenceStability)[keyof typeof AstroInfluenceStability];
 export declare const AstroInfluenceStability: {
@@ -346,6 +557,51 @@ export interface AstroInfluence {
     risk: AstroInfluenceRisk;
     signal: AstroInfluenceSignal;
 }
+export type AstroOutlookLevel = (typeof AstroOutlookLevel)[keyof typeof AstroOutlookLevel];
+export declare const AstroOutlookLevel: {
+    readonly high: "high";
+    readonly fair: "fair";
+    readonly low: "low";
+};
+export type AstroOutlookTimingConfidence = (typeof AstroOutlookTimingConfidence)[keyof typeof AstroOutlookTimingConfidence];
+export declare const AstroOutlookTimingConfidence: {
+    readonly low: "low";
+    readonly medium: "medium";
+    readonly high: "high";
+};
+export type AstroOutlookTiming = {
+    text: string;
+    from: string;
+    to: string;
+    confidence: AstroOutlookTimingConfidence;
+    basis: string;
+    dashaCheck?: string;
+} | null;
+/**
+ * The chance that the matter happens and the anticipated timing, read from the Prashna chart
+ */
+export interface AstroOutlook {
+    /** Chance in percent (5-95) */
+    chance: number;
+    level: AstroOutlookLevel;
+    headline: string;
+    favours: string[];
+    against: string[];
+    timing?: AstroOutlookTiming;
+    timingNote?: string | null;
+}
+/**
+ * The rising sign at the moment of the question (the only part of the chart that is shown)
+ */
+export type AstroResultAscendant = {
+    sign: string;
+    degree: number;
+    lord?: string;
+};
+export type AstroResultTuning = {
+    id?: number | null;
+    astroShare?: number | null;
+};
 /**
  * The place the chart was cast for
  */
@@ -356,12 +612,14 @@ export type AstroResultLocation = {
 export interface AstroResult {
     influence: AstroInfluence;
     interpretation: string;
-    vedicD1?: VedicChart;
-    vedicD3?: VedicChart;
+    /** The rising sign at the moment of the question (the only part of the chart that is shown) */
+    ascendant?: AstroResultAscendant;
+    tuning?: AstroResultTuning;
     prashna?: PrashnaReading;
-    vedicD9?: VedicChart;
-    vedicD10?: VedicChart;
     timing?: TimingResult;
+    /** Set when the Settings said to skip unfit charts and this chart was skipped */
+    skippedReason?: string | null;
+    outlook?: AstroOutlook;
     /** The place the chart was cast for */
     location?: AstroResultLocation;
 }
@@ -389,6 +647,7 @@ export type SynthesisSource = (typeof SynthesisSource)[keyof typeof SynthesisSou
 export declare const SynthesisSource: {
     readonly "ai+astro": "ai+astro";
     readonly ai: "ai";
+    readonly inbuilt: "inbuilt";
     readonly engine: "engine";
 };
 /**
@@ -461,6 +720,7 @@ export declare const CostLineKey: {
     readonly ajit: "ajit";
     readonly manu: "manu";
     readonly sivi: "sivi";
+    readonly rsmi: "rsmi";
     readonly ai: "ai";
 };
 export interface CostLine {
@@ -486,6 +746,10 @@ export interface AnalysisResult {
     intent: IntentResult;
     emotion: EmotionResult;
     simulation: SimulationResult;
+    safety?: SafetyNotice;
+    silence?: SilenceReading;
+    indirectRoute?: IndirectRoute;
+    clarifications?: Clarification[];
     finalVerdict: FinalVerdict;
     astro: AstroResult;
     overallScore: number;
@@ -731,13 +995,48 @@ export interface DeleteResponse {
     message: string;
 }
 /**
- * Follow-up - did things turn out the way the reading suggested?
+ * Follow-up - did things turn out the way the reading suggested? (older clients; the server derives it from actionTaken and result when those are sent)
  */
 export type CreateFeedbackRequestOutcome = (typeof CreateFeedbackRequestOutcome)[keyof typeof CreateFeedbackRequestOutcome];
 export declare const CreateFeedbackRequestOutcome: {
     readonly matched: "matched";
     readonly partly: "partly";
     readonly different: "different";
+};
+/**
+ * What the person did - the suggested step, another step, or nothing
+ */
+export type CreateFeedbackRequestActionTaken = (typeof CreateFeedbackRequestActionTaken)[keyof typeof CreateFeedbackRequestActionTaken];
+export declare const CreateFeedbackRequestActionTaken: {
+    readonly followed: "followed";
+    readonly other: "other";
+    readonly nothing: "nothing";
+};
+/**
+ * How things actually turned out
+ */
+export type CreateFeedbackRequestResult = (typeof CreateFeedbackRequestResult)[keyof typeof CreateFeedbackRequestResult];
+export declare const CreateFeedbackRequestResult: {
+    readonly better: "better";
+    readonly same: "same";
+    readonly worse: "worse";
+};
+export type CreateFeedbackRequestReasonTagsItem = (typeof CreateFeedbackRequestReasonTagsItem)[keyof typeof CreateFeedbackRequestReasonTagsItem];
+export declare const CreateFeedbackRequestReasonTagsItem: {
+    readonly advice_right: "advice_right";
+    readonly missed_perspective: "missed_perspective";
+    readonly missed_facts: "missed_facts";
+    readonly too_generic: "too_generic";
+    readonly timing_off: "timing_off";
+    readonly timing_right: "timing_right";
+    readonly astrology_helped: "astrology_helped";
+    readonly astrology_off: "astrology_off";
+    readonly steps_helpful: "steps_helpful";
+    readonly steps_unrealistic: "steps_unrealistic";
+    readonly route_helpful: "route_helpful";
+    readonly route_unrealistic: "route_unrealistic";
+    readonly meaning_right: "meaning_right";
+    readonly meaning_off: "meaning_off";
 };
 export interface CreateFeedbackRequest {
     /** ID of the analysis being reviewed */
@@ -758,8 +1057,17 @@ export interface CreateFeedbackRequest {
     comment?: string;
     /** Was this analysis helpful? */
     helpful?: boolean;
-    /** Follow-up - did things turn out the way the reading suggested? */
+    /** Follow-up - did things turn out the way the reading suggested? (older clients; the server derives it from actionTaken and result when those are sent) */
     outcome?: CreateFeedbackRequestOutcome;
+    /** What the person did - the suggested step, another step, or nothing */
+    actionTaken?: CreateFeedbackRequestActionTaken;
+    /** How things actually turned out */
+    result?: CreateFeedbackRequestResult;
+    /**
+     * What was right or missed
+     * @maxItems 14
+     */
+    reasonTags?: CreateFeedbackRequestReasonTagsItem[];
 }
 export interface FeedbackItem {
     id: number;
@@ -770,6 +1078,9 @@ export interface FeedbackItem {
     comment?: string;
     helpful?: boolean;
     outcome?: string;
+    actionTaken?: string;
+    result?: string;
+    reasonTags?: string[];
     createdAt: string;
 }
 export interface FeedbackListResponse {
