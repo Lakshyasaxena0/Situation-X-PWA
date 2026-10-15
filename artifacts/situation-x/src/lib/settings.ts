@@ -69,7 +69,7 @@ export function requestOptions(s: Settings) {
     language: s.language,
     useAi: s.useAi,
     useAstrology: s.useAstrology,
-    skipUnfitChart: s.skipUnfitChart,
+    skipUnfitChart: s.useAstrology && s.skipUnfitChart,
     latitude: s.location?.latitude,
     longitude: s.location?.longitude,
   };

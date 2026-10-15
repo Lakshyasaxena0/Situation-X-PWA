@@ -62,6 +62,16 @@ function BulletList({ title, items, tone }: { title: string; items?: string[]; t
   );
 }
 
+/** A plain reason for a failed price check, taken from the server's own answer when it gave one. */
+function estimateProblem(err: unknown): string {
+  const e = err as { status?: number; data?: { message?: string } } | null;
+  const msg = e?.data?.message;
+  if (e?.status === 401) return "Please sign in again to check the price.";
+  if (e?.status === 404) return "That path was not found in the saved analysis. Open it from History and try again.";
+  if (msg) return msg;
+  return "Could not reach the server to check the price (it may be waking up).";
+}
+
 /**
  * Looking at a path is free. Running it as a question of its own is a new analysis, charged at half
  * price: the price is shown first and nothing happens until the person confirms.
@@ -106,7 +116,12 @@ function PathAnalyse({ analysisId, pathIndex }: { analysisId: number; pathIndex:
   return (
     <div className="mt-2 rounded border border-border bg-card p-3 text-xs space-y-2">
       {estimate.isPending && <p className="text-muted-foreground">Checking the price...</p>}
-      {estimate.isError && <p className="text-red-700">Could not check the price. Try again.</p>}
+      {estimate.isError && (
+        <p className="text-red-700">
+          {estimateProblem(estimate.error)}{" "}
+          <button type="button" onClick={() => estimate.mutate({ data: body })} className="underline">Try again</button>
+        </p>
+      )}
       {quote && (
         <>
           <p className="text-foreground">
@@ -881,13 +896,6 @@ function AnalysisBody({ result, header }: { result: AnalysisResult; header: Reac
               <div className="text-base font-bold text-foreground mb-1">{t("Why this order")}</div>
               <Points items={toPoints(result.simulation.comparison)} className="text-foreground" />
             </div>
-          )}
-          {result.simulation.source && (
-            <p className="text-xs text-muted-foreground">
-              {result.simulation.source === "ai"
-                ? "Choices were built by the AI from your whole situation. They compare options; they do not predict the future."
-                : "Choices are general ones based on the topic and mood of your question. They compare options; they do not predict the future."}
-            </p>
           )}
         </div>
       </EngineCard>
