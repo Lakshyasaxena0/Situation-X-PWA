@@ -112,25 +112,46 @@ export type CompleteJson = (prompt: string, maxTokens: number) => Promise<string
 
 const defaultComplete: CompleteJson = (prompt, maxTokens) => groqJsonCompletion(prompt, { maxTokens, temperature: 0.2 });
 
-/** Translates the texts; returns null when the model's answer is unusable (wrong count, not JSON). */
-export async function translateTexts(texts: AnalysisTexts, language: Exclude<Language, "auto">, complete: CompleteJson = defaultComplete): Promise<AnalysisTexts | null> {
-  const items = leaves(texts);
-  if (items.length === 0) return texts;
+const CHUNK_CHARS = 3500;
+
+async function translateChunk(items: string[], language: Exclude<Language, "auto">, complete: CompleteJson): Promise<string[] | null> {
   const prompt = `Translate every string in "items" into ${LANGUAGE_NAMES[language]}.
 Rules: keep the meaning and the tone; keep the same order and exactly ${items.length} items; keep numbers, scores, dates, and anything inside double quotes (keywords) unchanged; keep the module names AJIT, MANU, SIVI, ASTRO, AI and astrology terms such as planet, sign and dasha names recognisable (for Hindi use the usual Hindi names where natural). Do not add or remove anything.
 Reply with ONLY a JSON object: {"items": [ ...${items.length} translated strings... ]}
 
 ${JSON.stringify({ items })}`;
-  const raw = await complete(prompt, Math.min(7000, 1500 + Math.ceil(items.join("").length * 1.2)));
-  if (!raw) return null;
-  let parsed: unknown;
-  try {
-    parsed = JSON.parse(raw.trim().replace(/^```(?:json)?\s*|\s*```$/g, ""));
-  } catch {
-    return null;
+  for (let attempt = 0; attempt < 2; attempt++) {
+    const raw = await complete(prompt, Math.min(7000, 1500 + Math.ceil(items.join("").length * 1.6)));
+    if (!raw) continue;
+    try {
+      const out = (JSON.parse(raw.trim().replace(/^```(?:json)?\s*|\s*```$/g, "")) as { items?: unknown })?.items;
+      if (Array.isArray(out) && out.length === items.length && out.every((x) => typeof x === "string")) return out as string[];
+    } catch {
+      /* retry */
+    }
   }
-  const out = (parsed as { items?: unknown })?.items;
-  if (!Array.isArray(out) || out.length !== items.length || !out.every((x) => typeof x === "string")) return null;
+  return null;
+}
+
+/** Translates the texts in small batches (one big request fails on model limits); null if any batch fails. */
+export async function translateTexts(texts: AnalysisTexts, language: Exclude<Language, "auto">, complete: CompleteJson = defaultComplete): Promise<AnalysisTexts | null> {
+  const items = leaves(texts);
+  if (items.length === 0) return texts;
+  const batches: string[][] = [];
+  let cur: string[] = [];
+  let size = 0;
+  for (const it of items) {
+    if (cur.length && size + it.length > CHUNK_CHARS) { batches.push(cur); cur = []; size = 0; }
+    cur.push(it);
+    size += it.length;
+  }
+  if (cur.length) batches.push(cur);
+  const results: (string[] | null)[] = [];
+  for (let i = 0; i < batches.length; i += 3) {
+    results.push(...(await Promise.all(batches.slice(i, i + 3).map((b) => translateChunk(b, language, complete)))));
+  }
+  if (results.some((r) => r === null)) return null;
+  const out = (results as string[][]).flat();
   let i = 0;
   return rebuild(texts, () => out[i++] as string);
 }

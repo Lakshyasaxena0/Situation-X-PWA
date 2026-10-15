@@ -8,6 +8,7 @@ import { ChevronDown, ChevronUp, CheckCircle2, MinusCircle, Loader2 } from "luci
 import { applyTexts, type Texts } from "@/lib/translation";
 import { requestOptions, useSettings } from "@/lib/settings";
 import { analysisSession } from "@/lib/analysisSession";
+import { UiLangProvider, useT, type UiLang } from "@/lib/uiText";
 
 type RiskLevel = "low" | "medium" | "high";
 type Signal = "favorable" | "challenging" | "neutral";
@@ -147,6 +148,7 @@ function PathAnalyse({ analysisId, pathIndex }: { analysisId: number; pathIndex:
 
 /** One path: its levels always visible, benefits / downsides / uncertainties one tap away. */
 function PathView({ path, best = false, analysisId, pathIndex }: { path: SimulationView["bestPath"]; best?: boolean; analysisId?: number; pathIndex: number }) {
+  const t = useT();
   const [open, setOpen] = useState(best);
   const hasDetail = (path.benefits?.length ?? 0) + (path.downsides?.length ?? 0) + (path.uncertainties?.length ?? 0) > 0;
   return (
@@ -164,7 +166,7 @@ function PathView({ path, best = false, analysisId, pathIndex }: { path: Simulat
         <>
           <button type="button" onClick={() => setOpen(!open)} className="mt-2 inline-flex items-center gap-1 text-xs text-primary underline underline-offset-2" aria-expanded={open}>
             {open ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
-            {open ? "Hide details" : "Benefits, downsides, unknowns"}
+            {open ? t("Hide details") : t("Benefits, downsides, unknowns")}
           </button>
           {open && (
             <div className="mt-2 space-y-2">
@@ -181,10 +183,11 @@ function PathView({ path, best = false, analysisId, pathIndex }: { path: Simulat
 }
 
 function SituationContextView({ ctx }: { ctx: NonNullable<SimulationView["context"]> }) {
+  const t = useT();
   if (!ctx.desiredOutcome && ctx.knownFacts.length === 0 && ctx.constraints.length === 0) return null;
   return (
     <div className="rounded border border-border bg-card px-3 py-2 space-y-2">
-      <div className="text-xs font-semibold text-foreground">Your situation, as understood</div>
+      <div className="text-base font-bold text-foreground">{t("Your situation, as understood")}</div>
       {ctx.desiredOutcome && (
         <p className="text-sm text-foreground">
           <span className="font-semibold">You want: </span>
@@ -221,13 +224,14 @@ function Points({ items, className = "" }: { items: string[]; className?: string
 
 /** A module card that stays closed until tapped; the closed card shows a one-line result. */
 function EngineCard({ code, title, summary, children, defaultOpen = false }: { code: string; title: string; summary?: React.ReactNode; children: React.ReactNode; defaultOpen?: boolean }) {
+  const t = useT();
   const [open, setOpen] = useState(defaultOpen);
   return (
     <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} className="bg-card border border-card-border rounded-lg shadow-sm">
       <button type="button" onClick={() => setOpen((o) => !o)} aria-expanded={open} className="w-full text-left p-4 sm:p-5">
         <span className="flex items-center gap-2">
-          <span className="text-xs font-mono font-bold text-primary-foreground bg-primary px-2 py-0.5 rounded">{code}</span>
-          <span className="text-sm font-semibold text-foreground">{title}</span>
+          <span className="text-sm font-mono font-bold text-primary-foreground bg-primary px-2 py-0.5 rounded">{code}</span>
+          <span className="text-lg font-bold text-foreground">{t(title)}</span>
           <span className="ml-auto shrink-0 text-muted-foreground">{open ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}</span>
         </span>
         {!open && summary && <span className="mt-2 block text-sm text-foreground">{summary}</span>}
@@ -239,10 +243,11 @@ function EngineCard({ code, title, summary, children, defaultOpen = false }: { c
 
 /** Which modules took part and what each one concluded about this question. */
 function ModuleReports({ reports, heading }: { reports: ModuleReport[]; heading: string }) {
+  const t = useT();
   if (reports.length === 0) return null;
   return (
     <div className="space-y-2.5">
-      {reports.some((m) => m.active) && <div className="text-xs font-semibold text-foreground">{heading}</div>}
+      {reports.some((m) => m.active) && <div className="text-base font-bold text-foreground">{t(heading)}</div>}
       {reports.map((m) =>
         m.active ? (
           <div key={m.key} className="rounded-md bg-muted/50 p-3">
@@ -252,7 +257,7 @@ function ModuleReports({ reports, heading }: { reports: ModuleReport[]; heading:
                 {m.role && <p className="text-xs text-muted-foreground italic mb-1">{m.role}</p>}
                 <p className="text-sm font-medium text-foreground">{m.verdict}</p>
                 {m.evidence.length > 0 && (
-                  <ul className="mt-1 list-disc pl-4 text-xs text-muted-foreground space-y-1">
+                  <ul className="mt-1 list-disc pl-4 text-sm text-foreground space-y-1">
                     {m.evidence.map((e, i) => (
                       <li key={i}>{e}</li>
                     ))}
@@ -391,9 +396,10 @@ function TimingSection({ timing }: { timing: TimingResult }) {
 const DEFAULT_PLACE = { latitude: 28.6139, longitude: 77.209 };
 
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
+  const t = useT();
   return (
     <div className="space-y-1.5">
-      <div className="text-xs font-semibold text-foreground">{title}</div>
+      <div className="text-base font-bold text-foreground">{t(title)}</div>
       {children}
     </div>
   );
@@ -401,6 +407,7 @@ function Section({ title, children }: { title: string; children: React.ReactNode
 
 /** ASTRO: will it happen (chance in %), and by when. The chart facts it used are listed in short points. */
 function AstroCard({ result }: { result: AnalysisResult }) {
+  const t = useT();
   const [settings] = useSettings();
   const [showDasha, setShowDasha] = useState(false);
   const astroOn = result.options?.useAstrology !== false;
@@ -449,13 +456,13 @@ function AstroCard({ result }: { result: AnalysisResult }) {
               </div>
               {o.favours.length > 0 && (
                 <div>
-                  <div className="text-[11px] font-mono text-green-700 mb-0.5">WHAT HELPS</div>
+                  <div className="text-xs font-mono font-bold text-green-700 mb-0.5">{t("WHAT HELPS")}</div>
                   <Points items={o.favours} className="text-foreground" />
                 </div>
               )}
               {o.against.length > 0 && (
                 <div>
-                  <div className="text-[11px] font-mono text-red-700 mb-0.5">WHAT HOLDS IT BACK</div>
+                  <div className="text-xs font-mono font-bold text-red-700 mb-0.5">{t("WHAT HOLDS IT BACK")}</div>
                   <Points items={o.against} className="text-foreground" />
                 </div>
               )}
@@ -526,7 +533,7 @@ function AstroCard({ result }: { result: AnalysisResult }) {
           <div>
             <button type="button" onClick={() => setShowDasha((x) => !x)} aria-expanded={showDasha} className="inline-flex items-center gap-1 text-xs text-primary underline underline-offset-2">
               {showDasha ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
-              {showDasha ? "Hide dasha details" : "Show dasha details (for timing questions)"}
+              {showDasha ? t("Hide dasha details") : t("Show dasha details (for timing questions)")}
             </button>
             {showDasha && <div className="mt-3"><TimingSection timing={astro.timing} /></div>}
           </div>
@@ -544,14 +551,15 @@ const LIKELIHOOD_STYLE: Record<string, string> = {
 
 /** AJIT: a clever but ethical way round a direct route that looks closed. Shown only when the question says so, below the intent. */
 function IndirectRouteView({ route }: { route: AnalysisResult["indirectRoute"] }) {
+  const t = useT();
   if (!route) return null;
   return (
     <div className="mt-4 rounded-md border border-primary/30 bg-primary/5 p-3 space-y-2">
-      <p className="text-xs font-semibold text-foreground">Another way round</p>
+      <p className="text-base font-bold text-foreground">{t("Another way round")}</p>
       <p className="text-xs text-muted-foreground">What is in the way: {route.blocker}</p>
       <p className="text-sm text-foreground">{route.idea}</p>
       <div>
-        <div className="text-[11px] font-mono text-muted-foreground mb-0.5">STEPS</div>
+        <div className="text-xs font-mono font-bold text-foreground mb-0.5">{t("STEPS")}</div>
         <ol className="text-sm text-foreground space-y-1 list-decimal pl-5">
           {route.steps.map((st, i) => <li key={i}>{st}</li>)}
         </ol>
@@ -563,6 +571,7 @@ function IndirectRouteView({ route }: { route: AnalysisResult["indirectRoute"] }
 
 /** RSMI: the meanings a described silence can have. Only shown when the question mentioned a silence. */
 function SilenceCard({ result }: { result: AnalysisResult }) {
+  const t = useT();
   const s = result.silence;
   if (!s) return null;
   const who = s.subject === "self" ? "Your silence" : s.who ? `${s.who[0].toUpperCase()}${s.who.slice(1)}'s silence` : "The silence";
@@ -576,7 +585,7 @@ function SilenceCard({ result }: { result: AnalysisResult }) {
           {s.duration.text ? ` (${s.duration.text})` : ""}.
         </p>
         <div>
-          <div className="text-xs font-semibold text-foreground mb-1">What it may mean</div>
+          <div className="text-base font-bold text-foreground mb-1">{t("What it may mean")}</div>
           <ul className="space-y-2.5">
             {s.meanings.map((m, i) => (
               <li key={i} className="text-sm">
@@ -591,13 +600,13 @@ function SilenceCard({ result }: { result: AnalysisResult }) {
         </div>
         {s.checks.length > 0 && (
           <div>
-            <div className="text-xs font-semibold text-foreground mb-1">How to find out</div>
+            <div className="text-base font-bold text-foreground mb-1">{t("How to find out")}</div>
             <Points items={s.checks} className="text-foreground" />
           </div>
         )}
         {s.unknowns.length > 0 && (
           <div>
-            <div className="text-xs font-semibold text-foreground mb-1">Not known yet</div>
+            <div className="text-base font-bold text-foreground mb-1">{t("Not known yet")}</div>
             <Points items={s.unknowns} className="text-foreground" />
           </div>
         )}
@@ -625,10 +634,11 @@ const LANG_CHOICES: { value: LangChoice; label: string }[] = [
 
 /** Lets the person read the finished analysis in another language (the sentences are translated; numbers stay). */
 function LanguageSwitch({ result, lang, setLang, busy, error }: { result: AnalysisResult; lang: LangChoice; setLang: (l: LangChoice) => void; busy: boolean; error: string }) {
+  const t = useT();
   if (!result.id) return null;
   return (
     <div className="flex flex-wrap items-center gap-2 rounded-md bg-muted/60 px-3 py-2">
-      <span className="text-xs text-muted-foreground">Read this in:</span>
+      <span className="text-sm font-semibold text-foreground">{t("Read this in:")}</span>
       <div className="flex flex-wrap gap-1.5" role="radiogroup" aria-label="Language of this analysis">
         {LANG_CHOICES.map((o) => (
           <button
@@ -640,7 +650,7 @@ function LanguageSwitch({ result, lang, setLang, busy, error }: { result: Analys
             onClick={() => setLang(o.value)}
             className={`px-2.5 py-1 rounded border text-xs transition-colors ${lang === o.value ? "border-primary bg-primary/20 text-foreground font-semibold" : "border-border text-muted-foreground hover:text-foreground"}`}
           >
-            {o.label}
+            {o.value === "original" ? t("As written") : o.label}
           </button>
         ))}
       </div>
@@ -662,6 +672,21 @@ export function AnalysisDisplay({ result: original }: { result: AnalysisResult }
     setLang("original");
     setCache({});
     setError("");
+    // The language chosen in Settings applies to every analysis as it opens.
+    if (settings.language !== "auto" && original.id) {
+      setLang(settings.language);
+      translate.mutate(
+        { id: original.id, data: { language: settings.language } },
+        {
+          onSuccess: (data) => setCache({ [settings.language]: data.texts as Texts }),
+          onError: () => {
+            setError("Could not translate right now. Showing the original.");
+            setLang("original");
+          },
+        },
+      );
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [original.id]);
 
   // Changing the language in Settings while an analysis is on screen switches this analysis too.
@@ -692,7 +717,14 @@ export function AnalysisDisplay({ result: original }: { result: AnalysisResult }
   }
 
   const result = lang === "original" ? original : applyTexts(original, cache[lang]);
-  return <AnalysisBody result={result} header={<LanguageSwitch result={original} lang={lang} setLang={choose} busy={translate.isPending} error={error} />} />;
+  const uiLang: UiLang = lang === "original" ? (settings.language === "auto" ? "en" : settings.language) : lang;
+  return (
+    <UiLangProvider value={uiLang}>
+      <div className="analysis-ink">
+        <AnalysisBody result={result} header={<LanguageSwitch result={original} lang={lang} setLang={choose} busy={translate.isPending} error={error} />} />
+      </div>
+    </UiLangProvider>
+  );
 }
 
 function sourceLabel(syn: NonNullable<AnalysisResult["synthesis"]>, aiOff: boolean): string {
@@ -709,6 +741,7 @@ function summaryLine(result: AnalysisResult, area: ModuleReport["area"]): React.
 }
 
 function AnalysisBody({ result, header }: { result: AnalysisResult; header: React.ReactNode }) {
+  const t = useT();
   const syn = result.synthesis;
   const aiReport = (result.modules ?? []).find((m) => m.key === "AI");
   const aiOff = result.options?.useAi === false;
@@ -732,23 +765,23 @@ function AnalysisBody({ result, header }: { result: AnalysisResult; header: Reac
         }`}
       >
         <div className="flex flex-wrap items-center gap-2 mb-2">
-          <span className="text-xs font-mono font-bold text-foreground">YOUR ANSWER</span>
+          <span className="text-sm font-mono font-bold text-foreground">{t("YOUR ANSWER")}</span>
           <Badge label={`${result.finalVerdict.riskLevel} risk`} className={riskColor(result.finalVerdict.riskLevel as RiskLevel)} />
           {syn && <Badge label={syn.verdict} className="text-foreground bg-muted border-border" />}
         </div>
-        <p className="text-base font-semibold text-foreground mb-3">{result.finalVerdict.recommendedAction}</p>
+        <p className="text-lg font-bold text-foreground mb-3">{result.finalVerdict.recommendedAction}</p>
         <Points items={summaryPoints} className="text-foreground" />
 
         {syn && (
           <div className="mt-4 space-y-4 text-sm">
             {outlook && result.options?.useAstrology !== false && (
               <div className="rounded border border-border/60 bg-muted/30 p-3">
-                <div className="text-xs font-semibold text-foreground mb-1">What the chart says</div>
+                <div className="text-base font-bold text-foreground mb-1">{t("What the chart says")}</div>
                 <ul className="list-disc pl-5 space-y-1 text-foreground">
                   <li>
-                    Chance it happens: <strong>{outlook.chance}%</strong> ({outlook.level})
+                    {t("Chance it happens")}: <strong>{outlook.chance}%</strong> ({outlook.level})
                   </li>
-                  <li>{outlook.timing ? <>Expected time: <strong>{outlook.timing.text}</strong> ({outlook.timing.from} to {outlook.timing.to})</> : "No clear date from the chart."}</li>
+                  <li>{outlook.timing ? <>{t("Expected time")}: <strong>{outlook.timing.text}</strong> ({outlook.timing.from} to {outlook.timing.to})</> : "No clear date from the chart."}</li>
                   {syn.astroAlignment && (
                     <li className={syn.astroAlignment === "supports" ? "text-green-700" : syn.astroAlignment === "contradicts" ? "text-red-700" : "text-amber-700"}>
                       {syn.astroAlignment === "supports" ? "The chart agrees with the reasoning." : syn.astroAlignment === "contradicts" ? "The chart disagrees with the reasoning, so go carefully." : "The chart partly agrees with the reasoning."}
@@ -759,24 +792,24 @@ function AnalysisBody({ result, header }: { result: AnalysisResult; header: Reac
             )}
             {reasoningPoints.length > 0 && (
               <div>
-                <div className="text-xs font-semibold text-foreground mb-1">Why</div>
+                <div className="text-base font-bold text-foreground mb-1">{t("Why")}</div>
                 <Points items={reasoningPoints} className="text-foreground" />
               </div>
             )}
             {syn.risks && syn.risks.length > 0 && (
               <div>
-                <div className="text-xs font-semibold text-foreground mb-1">Risks</div>
+                <div className="text-base font-bold text-foreground mb-1">{t("Risks")}</div>
                 <Points items={syn.risks} className="text-foreground" />
               </div>
             )}
             {syn.keyUnknowns && syn.keyUnknowns.length > 0 && (
               <div>
-                <div className="text-xs font-semibold text-foreground mb-1">What could change this</div>
+                <div className="text-base font-bold text-foreground mb-1">{t("What could change this")}</div>
                 <Points items={syn.keyUnknowns} className="text-foreground" />
               </div>
             )}
             <div>
-              <div className="text-xs font-semibold text-foreground mb-1">What to do next</div>
+              <div className="text-base font-bold text-foreground mb-1">{t("What to do next")}</div>
               {syn.nextSteps && syn.nextSteps.length > 0 ? (
                 <ol className="list-decimal pl-5 space-y-1 text-foreground">
                   {syn.nextSteps.map((r, i) => (
@@ -796,7 +829,7 @@ function AnalysisBody({ result, header }: { result: AnalysisResult; header: Reac
         )}
       </motion.div>
 
-      <p className="pt-2 text-xs font-semibold text-muted-foreground">Modules used (tap to open)</p>
+      <p className="pt-2 text-base font-bold text-foreground">{t("Modules used (tap to open)")}</p>
 
       <EngineCard code="AJIT" title="Intent detection" summary={summaryLine(result, "intent")}>
         <div className="space-y-3">
@@ -830,12 +863,12 @@ function AnalysisBody({ result, header }: { result: AnalysisResult; header: Reac
           <ModuleReports reports={reportsFor(result, "paths")} heading="Recommendation by SIVI module" />
           {result.simulation.context && <SituationContextView ctx={result.simulation.context} />}
           <div>
-            <div className="text-xs font-semibold text-foreground mb-1">Best choice</div>
+            <div className="text-base font-bold text-foreground mb-1">{t("Best choice")}</div>
             <PathView path={result.simulation.bestPath} best analysisId={result.id} pathIndex={0} />
           </div>
           {result.simulation.alternatives.length > 0 && (
             <div>
-              <div className="text-xs font-semibold text-foreground mb-1">Other choices</div>
+              <div className="text-base font-bold text-foreground mb-1">{t("Other choices")}</div>
               <div className="space-y-2">
                 {result.simulation.alternatives.map((alt, i) => (
                   <PathView key={i} path={alt} analysisId={result.id} pathIndex={i + 1} />
@@ -845,7 +878,7 @@ function AnalysisBody({ result, header }: { result: AnalysisResult; header: Reac
           )}
           {result.simulation.comparison && (
             <div className="rounded border border-border bg-card px-3 py-2">
-              <div className="text-xs font-semibold text-foreground mb-1">Why this order</div>
+              <div className="text-base font-bold text-foreground mb-1">{t("Why this order")}</div>
               <Points items={toPoints(result.simulation.comparison)} className="text-foreground" />
             </div>
           )}

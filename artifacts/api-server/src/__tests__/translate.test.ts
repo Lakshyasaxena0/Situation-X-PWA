@@ -28,3 +28,17 @@ test("Translate: a wrong answer from the model is rejected", async () => {
   assert.equal(await translateTexts(texts, "en", async () => "nope"), null);
   assert.equal(await translateTexts(texts, "en", async () => null), null);
 });
+
+test("translateTexts splits long text into batches", async () => {
+  const long = "x".repeat(1200);
+  const texts = { summary: long, synthesis: { risks: [long, long, long, long, long, long] } };
+  let calls = 0;
+  const out = await translateTexts(texts as never, "hi", async (prompt) => {
+    calls++;
+    const items = (JSON.parse(prompt.trim().split("\n").pop() as string) as { items: string[] }).items;
+    return JSON.stringify({ items: items.map((x) => "T" + x) });
+  });
+  assert.ok(calls > 1);
+  assert.equal(out?.summary, "T" + long);
+  assert.equal(out?.synthesis?.risks?.length, 6);
+});

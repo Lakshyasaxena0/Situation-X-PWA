@@ -261,3 +261,10 @@
 .border-primary\/50 { border-color: hsl(var(--primary) / 0.5); }
 .hover\:bg-accent\/50:hover { background-color: hsl(var(--accent) / 0.5); }
 .hover\:border-destructive\/30:hover { border-color: hsl(var(--destructive) / 0.3); }
+
+/* The analysis is read as text: content in black, headings bold and larger. */
+.analysis-ink {
+  --foreground: 0 0% 0%;
+  --muted-foreground: 0 0% 8%;
+  color: #000;
+}
