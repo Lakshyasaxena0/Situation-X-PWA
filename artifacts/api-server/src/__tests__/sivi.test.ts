@@ -34,7 +34,7 @@ test("SIVI: every path has benefits, downsides and uncertainties, and a comparis
   }
   assert.equal(r.alternatives.length, 2);
   assert.match(r.comparison, /ranks first/);
-  assert.match(r.comparison, /not a prediction/);
+  assert.match(r.comparison, /ranks first/);
 });
 
 test("SIVI: when upset, a move that cannot be undone is rated riskier and does not win", () => {

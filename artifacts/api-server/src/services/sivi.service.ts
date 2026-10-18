@@ -285,6 +285,35 @@ const TEMPLATES: Record<IntentType, Template[]> = {
   ],
 };
 
+/** "Will it happen / when will it happen" questions ask for an outlook, not a choice between breaking up, quitting and so on. */
+const PREDICTION = /\b(will i|will my|will it|will he|will she|will they|when will|when do you think|kab tak|kab hogi|kab hoga|kab milegi|kab milega|get pregnant|conceive)\b|(?:होगा|होगी|मिलेगा|मिलेगी|कब तक|कब होगा|कब होगी|कब मिलेगी|कब मिलेगा)|\b(?:hoga|hogi|milega|milegi)\b/i;
+const DECISION_CUE = /\b(should (?:i|we)|shall i|kya karu|kya karun|kare ya na|or should|buy or|ya phir)\b/i;
+export const isPredictionQuestion = (text: string): boolean => PREDICTION.test(text) && !DECISION_CUE.test(text);
+
+const PREDICTION_TEMPLATES: Template[] = [
+  {
+    action: "Keep working steadily towards it and stay open to the opportunities that come",
+    benefits: ["Effort keeps the matter moving", "You are ready when the chance arrives"],
+    downsides: ["Results may take longer than you hope"],
+    uncertainties: ["Exactly when the matter will ripen"],
+    baseRisk: 1, baseStability: 3, reversible: true,
+  },
+  {
+    action: "Wait and watch for clear signs before making a big move",
+    benefits: ["Avoids rushing into the wrong thing", "Costs nothing"],
+    downsides: ["Waiting alone does not make it happen", "Worry can grow"],
+    uncertainties: ["How long to wait"],
+    baseRisk: 1, baseStability: 2, reversible: true,
+  },
+  {
+    action: "Push hard for a quick result right now",
+    benefits: ["Possible fast progress"],
+    downsides: ["Pressure can backfire", "Mistakes are costlier when the time is not ripe"],
+    uncertainties: ["Whether the situation is ready yet"],
+    baseRisk: 3, baseStability: 1, reversible: false, tags: ["bold"],
+  },
+];
+
 function why(best: PathOption, alt: PathOption): string {
   const bits: string[] = [];
   if (ORDER[best.risk] < ORDER[alt.risk]) bits.push("carries less risk");
@@ -299,7 +328,7 @@ export function compareText(best: PathOption, alternatives: PathOption[], note?:
   const parts = alternatives.map((a) => why(best, a));
   const lead = `"${best.action}" ranks first`;
   const body = parts.length ? `: ${parts.join("; ")}.` : ".";
-  return `${lead}${body}${note ? ` ${note}` : ""} This is a comparison of paths, not a prediction.`;
+  return `${lead}${body}${note ? ` ${note}` : ""} `;
 }
 
 export function simulatePaths(intent: IntentResult, emotion: EmotionResult, text = ""): SimulationResult {
@@ -308,7 +337,8 @@ export function simulatePaths(intent: IntentResult, emotion: EmotionResult, text
   const heated = emotion.emotion === "angry" || (strained && emotion.intensity === "high");
   const avoiding = intent.stance === "avoid";
 
-  const paths: PathOption[] = TEMPLATES[intent.intent].map((t) => {
+  const templates = isPredictionQuestion(text) && ["relationship", "career", "unclear", "decision"].includes(intent.intent) ? PREDICTION_TEMPLATES : TEMPLATES[intent.intent];
+  const paths: PathOption[] = templates.map((t) => {
     let risk = t.baseRisk;
     if (!t.reversible && (heated || strained)) risk += 1;
     if (t.tags?.includes("confront") && (avoiding || emotion.emotion === "angry")) risk += 1;

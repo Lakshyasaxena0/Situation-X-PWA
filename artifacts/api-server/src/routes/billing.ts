@@ -54,7 +54,7 @@ billingPublicRouter.get("/billing/plans", (_req, res) => {
     costs: {
       modules: [
         { label: "ASTRO - Prashna chart (always)", credits: MODULE_COSTS.astro },
-        { label: "ASTRO - each extra chart (D3 / D9 / D10)", credits: MODULE_COSTS.astroExtraChart },
+        { label: "ASTRO - each extra divisional chart (D9, D10, D3, D12...)", credits: MODULE_COSTS.astroExtraChart },
         { label: "AJIT - intent", credits: MODULE_COSTS.ajit },
         { label: "MANU - emotion", credits: MODULE_COSTS.manu },
         { label: "SIVI - path simulation", credits: MODULE_COSTS.sivi },

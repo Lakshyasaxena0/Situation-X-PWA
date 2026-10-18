@@ -38,6 +38,7 @@ export const INTENT_VOCABULARY: Vocabulary = {
     ...generic("family", "parents", "mother", "father", "mummy", "papa", "friend", "dost", "दोस्त"),
     ...topic("gf", "bf", "lover", "romantic", "romance", "proposal", "propose", "engaged", "engagement", "wedding", "bride", "groom", "affair", "intimacy", "commitment", "long distance", "situationship", "mohabbat", "ishq", "mangni", "baraat", "love marriage", "arranged marriage", "talaq", "separation", "reconcile", "patch up", "jealous*", "loyal*", "friendship", "dosti", "प्रेम", "विवाह", "तलाक", "रिश्ते", "मोहब्बत"),
     ...generic("brother", "sister", "bhai", "bhaiya", "behen", "bahan", "bhabhi", "didi", "son", "daughter", "beta", "beti", "maa", "mom", "mommy", "dad", "ghar wale", "relatives", "rishtedar", "child", "children", "baby", "neighbour", "neighbor", "trust", "माँ", "मां", "पापा", "परिवार", "भाई", "बहन", "बेटा", "बेटी", "दोस्ती"),
+    ...topic("pregnant", "pregnancy", "conceive", "conception", "garbh", "गर्भ", "शादी", "विवाह", "रिश्ता", "प्यार", "पति", "पत्नी", "बच्चा", "बच्चे", "संतान", "santan", "rishte"),
   ],
   conflict: [
     ...topic("fight", "argument", "argue", "quarrel", "dispute", "clash", "misunderstanding", "ladhai", "jhagda", "jhagra", "enemy", "rival", "harass*", "bully", "bullying", "betray*", "cheated", "complaint", "blame", "insult*", "court", "lawsuit", "vivad", "झगड़ा", "लड़ाई", "विवाद", "दुश्मन"),
@@ -50,6 +51,7 @@ export const INTENT_VOCABULARY: Vocabulary = {
     ...generic("work", "future", "offer", "quit", "project", "profit", "paisa", "kaam", "काम"),
     ...topic("profession", "employee", "employer", "recruiter", "hiring", "hired", "fired", "layoff", "laid off", "termination", "notice period", "joining", "increment", "hike", "wfh", "manager", "colleague", "coworker", "dukaan", "vyapar", "invest*", "loan", "emi", "debt", "karz", "customer", "sales", "marketing", "freelanc*", "skills", "certification", "upsc", "neet", "jee", "mba", "btech", "school", "admission", "scholarship", "abroad", "visa", "relocat*", "rozgar", "tankhwah", "tankha", "वेतन", "तनख्वाह", "बॉस", "इंटरव्यू", "बिज़नेस", "दुकान", "रोजगार"),
     ...generic("money", "savings", "rent", "team", "shop", "transfer", "hr"),
+    ...topic("visa", "abroad", "immigration", "passport", "foreign", "settle abroad", "videsh", "विदेश", "property", "house", "flat", "plot", "land", "makaan", "ghar kharid*", "मकान", "stock", "stocks", "share market", "shares", "trading", "mutual fund", "investment", "scholarship", "admission", "result", "results", "परीक्षा", "नौकरी", "व्यापार", "पैसा", "पढ़ाई", "तनख्वाह", "कारोबार", "धंधा", "dhandha", "karobar", "loss", "debt", "karz", "कर्ज"),
   ],
   health: [
     ...strong("health", "sehat", "सेहत", "स्वास्थ्य"),
@@ -58,6 +60,7 @@ export const INTENT_VOCABULARY: Vocabulary = {
     ...topic("weight loss", "weight gain", "diet", "exercise", "gym", "workout", "yoga", "migraine", "allergy", "asthma", "infection", "cough", "vomit*", "nausea", "dizzy", "dizziness", "weakness", "fatigue", "thyroid", "acidity", "stomach", "back pain", "chest pain", "kidney", "liver", "tablet", "capsule", "checkup", "check up", "scan", "mri", "xray", "x ray", "ambulance", "bukhar", "khansi", "zukam", "sar dard", "pet dard", "kamzori", "चक्कर", "खांसी", "सिरदर्द", "कमजोरी", "अस्पताल", "डॉक्टर", "ऑपरेशन"),
     ...entries(0.75, "cancel")("anxiety"),
     ...entries(0.5, "cancel")("stress*", "sleep", "tired", "thakan"),
+    ...topic("ill", "recover*", "recovery", "hospitalised", "hospitalized", "medical", "operation", "ICU", "paralysis", "fracture", "heart", "kidney", "liver", "bimar", "तबीयत", "tabiyat", "ठीक होगा", "theek hogi", "theek hoga"),
   ],
 };
 

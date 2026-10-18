@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useGetBillingPlans } from "@workspace/api-client-react";
 import { Shell } from "@/components/layout/Shell";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
@@ -17,9 +18,9 @@ const LANGUAGES: { value: Language; label: string; hint: string }[] = [
 
 const DEPTHS: { value: Depth; label: string; hint: string }[] = [
   { value: "auto", label: "Auto", hint: "Chosen from how complex the question is" },
-  { value: "standard", label: "Standard", hint: "4 credits" },
-  { value: "deep", label: "Deep", hint: "8 credits" },
-  { value: "expert", label: "Expert", hint: "14 credits" },
+  { value: "standard", label: "Standard", hint: "" },
+  { value: "deep", label: "Deep", hint: "" },
+  { value: "expert", label: "Expert", hint: "" },
 ];
 
 function Section({ title, hint, children }: { title: string; hint?: string; children: React.ReactNode }) {
@@ -65,6 +66,9 @@ function Chips<T extends string>({ options, value, onChange, label }: { options:
 }
 
 export default function Settings() {
+  // The prices come from the server, so this screen never shows a number that differs from what is charged.
+  const { data: plans } = useGetBillingPlans();
+  const depthOptions = DEPTHS.map((d, i) => (d.value === "auto" ? d : { ...d, hint: plans?.costs.ai[i] ? `${plans.costs.ai[i].credits} credits` : "" }));
   const [s, update] = useSettings();
   const [saved, setSaved] = useState("");
   return (
@@ -84,7 +88,7 @@ export default function Settings() {
           {s.useAi && (
             <div>
               <div className="text-xs text-muted-foreground mb-1.5">Default AI reasoning level</div>
-              <Chips label="Default AI reasoning level" options={DEPTHS} value={s.depth} onChange={(depth) => update({ depth })} />
+              <Chips label="Default AI reasoning level" options={depthOptions} value={s.depth} onChange={(depth) => update({ depth })} />
             </div>
           )}
           <ToggleRow label="Use astrology" hint="Prashna chart and dashas as a second opinion on timing. Off: the astrology is left out completely." checked={s.useAstrology} onChange={(useAstrology) => update({ useAstrology })} />

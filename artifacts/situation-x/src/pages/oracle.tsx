@@ -159,6 +159,25 @@ export default function Oracle() {
             <span>Astrology: <strong className="text-foreground">{settings.useAstrology ? "on" : "off"}</strong></span>
             <span>Language: <strong className="text-foreground">{settings.language === "auto" ? "same as question" : settings.language === "en" ? "English" : settings.language === "hi" ? "Hindi" : "Hinglish"}</strong></span>
             {settings.useAstrology && <span>Place: <strong className="text-foreground">{placeName}</strong></span>}
+            {settings.useAstrology && !settings.location && typeof navigator !== "undefined" && "geolocation" in navigator && (
+              <button
+                type="button"
+                className="underline underline-offset-2 text-foreground"
+                onClick={() =>
+                  navigator.geolocation.getCurrentPosition(
+                    (pos) => {
+                      const latitude = Number(pos.coords.latitude.toFixed(4));
+                      const longitude = Number(pos.coords.longitude.toFixed(4));
+                      updateSettings({ location: { name: `My location (${latitude.toFixed(2)}, ${longitude.toFixed(2)})`, latitude, longitude } });
+                    },
+                    () => undefined,
+                    { timeout: 10000, maximumAge: 10 * 60 * 1000 },
+                  )
+                }
+              >
+                Use my location for a more accurate chart
+              </button>
+            )}
             <Link href="/settings" className="ml-auto inline-flex items-center gap-1 text-primary underline underline-offset-2">
               <SettingsIcon className="w-3 h-3" /> Change in Settings
             </Link>
