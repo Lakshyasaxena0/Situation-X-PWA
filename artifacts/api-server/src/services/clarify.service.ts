@@ -58,6 +58,18 @@ const BY_INTENT: Record<IntentType, Candidate[]> = {
     { key: "i1", question: "What outcome would feel fair to you?", why: "It shapes whether to push, talk or step back.", choices: ["Peace", "An apology", "A clear boundary", "Not sure"] },
     { key: "i2", question: "Have you already talked to them about it?", why: "A first talk and a repeated one are handled differently.", choices: ["Yes", "Tried, it went badly", "Not yet"] },
   ],
+  money: [
+    { key: "i1", question: "How much of your savings is involved?", why: "Risking a small part and risking everything need different advice.", choices: ["A small part", "About half", "Most of it"] },
+    { key: "i2", question: "Can you afford to lose this money?", why: "It decides how careful you should be.", choices: ["Yes", "Partly", "No"] },
+  ],
+  education: [
+    { key: "i1", question: "How much time is left?", why: "The plan changes with the time you have.", choices: ["Days", "Weeks", "Months"] },
+    { key: "i2", question: "How prepared do you feel?", why: "It shows where to put your effort.", choices: ["Well prepared", "Partly", "Not much"] },
+  ],
+  travel: [
+    { key: "i1", question: "Have your documents and funds been checked?", why: "Most refusals come from missing papers.", choices: ["Yes", "Partly", "Not yet"] },
+    { key: "i2", question: "Do you have a backup plan?", why: "A second option lowers the risk.", choices: ["Yes", "No"] },
+  ],
   health: [
     { key: "i1", question: "Have you spoken to a doctor about this?", why: "Health questions need a professional's view first.", choices: ["Yes", "Not yet", "Planning to"] },
     { key: "i2", question: "How long has this been going on?", why: "Duration changes how urgent it is.", choices: ["Days", "Weeks", "Months or more"] },

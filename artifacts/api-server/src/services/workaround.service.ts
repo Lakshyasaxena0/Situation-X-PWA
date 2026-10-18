@@ -86,6 +86,33 @@ const TEMPLATES: Record<IntentType, Template> = {
       "Apply to two or three nearby options in parallel so one refusal does not stop you.",
     ],
   },
+  money: {
+    idea: "If the money route you wanted is closed, look for a smaller or slower honest route to the same aim: a part payment, a cheaper option, a lender with clear terms, or waiting for a better time.",
+    steps: [
+      "Write down the exact amount and the date you need it by.",
+      "List two or three cheaper or smaller ways to reach the same aim.",
+      "Ask a trusted, experienced person to check the terms before you commit.",
+      "Never risk money you cannot afford to lose, and avoid anyone who promises sure or fast returns.",
+    ],
+  },
+  education: {
+    idea: "If the first door to a course or exam is closed, find the next one: another intake, a related course, a bridge programme or an online route that leads to the same goal.",
+    steps: [
+      "Name the real goal behind this course or exam.",
+      "Find two or three other courses, colleges or attempts that lead to it.",
+      "Ask a teacher or someone who has already done it which route they would take.",
+      "Pick one and start the first small step this week.",
+    ],
+  },
+  travel: {
+    idea: "If one visa, country or route is blocked, look at the nearby doors: another country, another visa type, a study or work route, or a later date with stronger papers.",
+    steps: [
+      "Read the official rules and note exactly why the first route is blocked.",
+      "List two or three other countries or visa types that fit your profile.",
+      "Fix what is weak in your papers (funds, experience, language score) before applying again.",
+      "Use only official or licensed agents, and never pay for guaranteed approvals.",
+    ],
+  },
   health: {
     idea: "If one route to care or a habit is blocked, find another honest one: a different doctor or clinic, a government or low-cost scheme, a smaller daily step, or a family helper.",
     steps: [

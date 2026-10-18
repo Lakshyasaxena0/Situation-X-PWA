@@ -17,6 +17,9 @@ const INTENT_WORDS: Record<string, string> = {
   decision: "a decision",
   conflict: "a conflict",
   health: "health and wellbeing",
+  money: "money and finances",
+  education: "studies and exams",
+  travel: "travel, visa or moving abroad",
   unclear: "your situation",
 };
 

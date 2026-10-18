@@ -113,6 +113,9 @@ const PROFILES: Record<IntentType, Profile> = {
     goodLordHouses: STANDARD_GOOD_HOUSES,
   },
   conflict: { topic: "Conflict & opponents", primaryHouse: 6, supportHouses: [7, 3], karakas: ["Mars"], divisional: [{ chart: "D3", house: 3, purpose: "Courage, effort & allies" }], goodLordHouses: CONFLICT_GOOD_HOUSES },
+  money: { topic: "Money & assets", primaryHouse: 2, supportHouses: [11, 5], karakas: ["Jupiter", "Venus"], divisional: [{ chart: "D9", house: 2, purpose: "Lasting wealth" }], goodLordHouses: STANDARD_GOOD_HOUSES },
+  education: { topic: "Education & exams", primaryHouse: 5, supportHouses: [4, 9], karakas: ["Mercury", "Jupiter"], divisional: [{ chart: "D9", house: 5, purpose: "Learning & merit" }], goodLordHouses: STANDARD_GOOD_HOUSES },
+  travel: { topic: "Travel & foreign matters", primaryHouse: 12, supportHouses: [9, 3], karakas: ["Rahu", "Moon"], divisional: [{ chart: "D9", house: 12, purpose: "Foreign settlement & fortune" }], goodLordHouses: [1, 3, 5, 9, 11, 12] },
   health: { topic: "Health & vitality", primaryHouse: 1, supportHouses: [6, 8], karakas: ["Sun", "Moon"], divisional: [{ chart: "D9", house: 1, purpose: "Inner vitality & resilience" }], goodLordHouses: STANDARD_GOOD_HOUSES },
   unclear: { topic: "General outlook", primaryHouse: 1, supportHouses: [10, 11], karakas: ["Moon"], divisional: [{ chart: "D9", house: 1, purpose: "Overall strength" }], goodLordHouses: STANDARD_GOOD_HOUSES },
 };

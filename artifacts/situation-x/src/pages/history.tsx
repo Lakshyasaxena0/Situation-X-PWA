@@ -29,6 +29,9 @@ function intentColor(intent?: string) {
     conflict: "text-red-700 bg-red-400/10",
     decision: "text-orange-700 bg-orange-400/10",
     health: "text-green-700 bg-green-400/10",
+    money: "text-amber-700 bg-amber-400/10",
+    education: "text-indigo-700 bg-indigo-400/10",
+    travel: "text-cyan-700 bg-cyan-400/10",
     unclear: "text-slate-700 bg-slate-400/10",
   };
   return map[intent ?? ""] ?? "text-muted-foreground bg-muted";

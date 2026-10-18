@@ -926,7 +926,7 @@ components:
       properties:
         intent:
           type: string
-          enum: [decision, relationship, conflict, career, health, unclear]
+          enum: [decision, relationship, conflict, career, health, money, education, travel, unclear]
         confidence:
           type: string
           enum: [low, medium, high]

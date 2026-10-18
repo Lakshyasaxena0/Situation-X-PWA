@@ -15,5 +15,8 @@ export const IntentResultIntent = {
   conflict: "conflict",
   career: "career",
   health: "health",
+  money: "money",
+  education: "education",
+  travel: "travel",
   unclear: "unclear",
 } as const;

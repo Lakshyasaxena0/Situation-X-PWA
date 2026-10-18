@@ -100,6 +100,9 @@ const DEFAULT_OUTCOME: Record<IntentType, string> = {
   conflict: "The disagreement settled without making it worse",
   career: "A career step that improves your situation without needless risk",
   health: "Your health looked after properly, without panic or neglect",
+  money: "Your money handled safely, without a loss you cannot afford",
+  education: "The best result you can reach in your studies or exam",
+  travel: "A move or journey that works out smoothly and safely",
   unclear: "Clarity about what to do next",
 };
 
@@ -260,6 +263,75 @@ const TEMPLATES: Record<IntentType, Template[]> = {
       baseRisk: 3, baseStability: 1, reversible: true,
     },
   ],
+  money: [
+    {
+      action: "Check the numbers and keep a safety reserve, then go ahead in small steps",
+      benefits: ["A loss stays small", "You keep money for emergencies"],
+      downsides: ["Slower gains", "Needs time to study the details"],
+      uncertainties: ["How the market or the other side behaves"],
+      baseRisk: 1, baseStability: 3, reversible: true,
+    },
+    {
+      action: "Commit the full amount now",
+      benefits: ["Full benefit if it works", "No chance is missed"],
+      downsides: ["A bad outcome hurts a lot", "Hard to reverse"],
+      uncertainties: ["Whether the price or terms will hold"],
+      baseRisk: 3, baseStability: 1, reversible: false, tags: ["bold"],
+    },
+    {
+      action: "Wait and compare more options first",
+      benefits: ["No money at risk", "Better information"],
+      downsides: ["The good option may be gone", "Prices can move against you"],
+      uncertainties: ["How long to wait"],
+      baseRisk: 1, baseStability: 2, reversible: true,
+    },
+  ],
+  education: [
+    {
+      action: "Make a simple study plan and follow it every day until the exam",
+      benefits: ["Steady progress", "Less last-minute stress"],
+      downsides: ["Needs discipline from the start"],
+      uncertainties: ["How tough the paper or the competition will be"],
+      baseRisk: 1, baseStability: 3, reversible: true,
+    },
+    {
+      action: "Get help: a teacher, a mentor or a study group",
+      benefits: ["Weak topics get fixed faster", "Fresh ideas and support"],
+      downsides: ["May cost time or money"],
+      uncertainties: ["Whether the help matches how you learn"],
+      baseRisk: 1, baseStability: 3, reversible: true,
+    },
+    {
+      action: "Leave it to the last days and hope for the best",
+      benefits: ["Free time now"],
+      downsides: ["High stress", "Gaps stay unfilled"],
+      uncertainties: ["Whether the paper happens to suit you"],
+      baseRisk: 3, baseStability: 1, reversible: false, tags: ["bold"],
+    },
+  ],
+  travel: [
+    {
+      action: "Check the rules and documents first, then apply or book step by step",
+      benefits: ["Fewer surprises", "Less chance of rejection or delay"],
+      downsides: ["Takes time and paperwork"],
+      uncertainties: ["Processing time and officials' decisions"],
+      baseRisk: 1, baseStability: 3, reversible: true,
+    },
+    {
+      action: "Go ahead quickly and sort the details on the way",
+      benefits: ["Fast progress", "You do not lose the chance"],
+      downsides: ["Costly mistakes if a document or rule is missed"],
+      uncertainties: ["Whether everything will be accepted"],
+      baseRisk: 3, baseStability: 1, reversible: false, tags: ["bold"],
+    },
+    {
+      action: "Keep a backup plan (another country, date or route) ready",
+      benefits: ["One refusal does not stop you", "Less worry"],
+      downsides: ["Extra effort and cost"],
+      uncertainties: ["Which option will open first"],
+      baseRisk: 1, baseStability: 2, reversible: true,
+    },
+  ],
   unclear: [
     {
       action: "Wait and observe",
@@ -337,7 +409,7 @@ export function simulatePaths(intent: IntentResult, emotion: EmotionResult, text
   const heated = emotion.emotion === "angry" || (strained && emotion.intensity === "high");
   const avoiding = intent.stance === "avoid";
 
-  const templates = isPredictionQuestion(text) && ["relationship", "career", "unclear", "decision"].includes(intent.intent) ? PREDICTION_TEMPLATES : TEMPLATES[intent.intent];
+  const templates = isPredictionQuestion(text) && ["relationship", "career", "money", "education", "travel", "unclear", "decision"].includes(intent.intent) ? PREDICTION_TEMPLATES : TEMPLATES[intent.intent];
   const paths: PathOption[] = templates.map((t) => {
     let risk = t.baseRisk;
     if (!t.reversible && (heated || strained)) risk += 1;

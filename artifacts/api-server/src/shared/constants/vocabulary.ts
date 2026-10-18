@@ -47,11 +47,26 @@ export const INTENT_VOCABULARY: Vocabulary = {
     ...generic("notice", "complain*", "unfair", "misbehav*", "argue", "arguing"),
   ],
   career: [
-    ...topic("job", "career", "salary", "promotion", "college", "study", "studies", "exam", "interview", "resume", "business", "startup", "boss", "office", "company", "resign*", "naukri", "padhai", "degree", "university", "course", "placement", "income", "client", "appraisal", "internship", "नौकरी", "करियर", "पढ़ाई", "परीक्षा", "व्यापार"),
-    ...generic("work", "future", "offer", "quit", "project", "profit", "paisa", "kaam", "काम"),
-    ...topic("profession", "employee", "employer", "recruiter", "hiring", "hired", "fired", "layoff", "laid off", "termination", "notice period", "joining", "increment", "hike", "wfh", "manager", "colleague", "coworker", "dukaan", "vyapar", "invest*", "loan", "emi", "debt", "karz", "customer", "sales", "marketing", "freelanc*", "skills", "certification", "upsc", "neet", "jee", "mba", "btech", "school", "admission", "scholarship", "abroad", "visa", "relocat*", "rozgar", "tankhwah", "tankha", "वेतन", "तनख्वाह", "बॉस", "इंटरव्यू", "बिज़नेस", "दुकान", "रोजगार"),
-    ...generic("money", "savings", "rent", "team", "shop", "transfer", "hr"),
-    ...topic("visa", "abroad", "immigration", "passport", "foreign", "settle abroad", "videsh", "विदेश", "property", "house", "flat", "plot", "land", "makaan", "ghar kharid*", "मकान", "stock", "stocks", "share market", "shares", "trading", "mutual fund", "investment", "scholarship", "admission", "result", "results", "परीक्षा", "नौकरी", "व्यापार", "पैसा", "पढ़ाई", "तनख्वाह", "कारोबार", "धंधा", "dhandha", "karobar", "loss", "debt", "karz", "कर्ज"),
+    ...topic("job", "career", "promotion", "interview", "resume", "business", "startup", "boss", "office", "company", "resign*", "naukri", "placement", "client", "appraisal", "internship", "नौकरी", "करियर", "व्यापार"),
+    ...generic("work", "future", "offer", "quit", "project", "profit", "kaam", "काम"),
+    ...topic("profession", "employee", "employer", "recruiter", "hiring", "hired", "fired", "layoff", "laid off", "termination", "notice period", "joining", "increment", "hike", "wfh", "manager", "colleague", "coworker", "dukaan", "vyapar", "emi", "customer", "sales", "marketing", "freelanc*", "skills", "certification", "upsc", "neet", "jee", "mba", "btech", "school", "relocat*", "rozgar", "tankhwah", "tankha", "वेतन", "तनख्वाह", "बॉस", "इंटरव्यू", "बिज़नेस", "दुकान", "रोजगार"),
+    ...generic("team", "shop", "transfer", "hr"),
+    ...topic("नौकरी", "व्यापार", "तनख्वाह", "कारोबार", "धंधा", "dhandha", "karobar", "कर्ज"),
+    ...topic("salary", "income", "pay", "payroll"),
+  ],
+  money: [
+    ...strong("money", "finance", "financial", "paisa", "पैसा", "धन"),
+    ...topic("invest*", "investment", "stock", "stocks", "share market", "shares", "trading", "mutual fund", "sip", "crypto", "loan*", "emi", "debt", "karz", "कर्ज", "savings", "saving", "income", "salary", "tax", "insurance", "profit", "loss", "bank", "lottery", "wealth", "dhan", "udhaar", "udhar", "rent", "property", "house", "flat", "plot", "land", "makaan", "ghar kharid*", "मकान", "ghar", "gold", "sona", "bonus", "borrow*", "lend*", "afford"),
+    ...generic("buy", "sell", "budget"),
+  ],
+  education: [
+    ...strong("exam", "exams", "परीक्षा", "padhai", "पढ़ाई"),
+    ...topic("study", "studies", "college", "university", "degree", "course", "admission", "scholarship", "result", "results", "neet", "jee", "upsc", "ielts", "gre", "school", "student", "marks", "percentage", "rank", "mba", "phd", "thesis", "syllabus", "coaching", "pariksha", "parinam", "परिणाम", "shiksha", "शिक्षा", "entrance"),
+    ...generic("learn", "learning", "teacher", "class"),
+  ],
+  travel: [
+    ...strong("visa", "abroad", "immigration", "videsh", "विदेश"),
+    ...topic("passport", "foreign", "settle abroad", "relocat*", "migrate", "migration", "emigrat*", "work permit", "overseas", "canada", "australia", "usa", "germany", "dubai", "europe", "flight", "travel", "trip", "journey", "yatra", "यात्रा", "tour", "move to", "shift to", "shifting", "transfer city"),
   ],
   health: [
     ...strong("health", "sehat", "सेहत", "स्वास्थ्य"),
