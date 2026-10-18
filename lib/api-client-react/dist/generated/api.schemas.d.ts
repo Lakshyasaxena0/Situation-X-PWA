@@ -291,6 +291,9 @@ export declare const IntentResultIntent: {
     readonly conflict: "conflict";
     readonly career: "career";
     readonly health: "health";
+    readonly money: "money";
+    readonly education: "education";
+    readonly travel: "travel";
     readonly unclear: "unclear";
 };
 export type IntentResultConfidence = (typeof IntentResultConfidence)[keyof typeof IntentResultConfidence];

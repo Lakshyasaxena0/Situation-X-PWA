@@ -293,15 +293,15 @@ export declare const AnalyzeSituationResponse: zod.ZodObject<{
     id: zod.ZodNumber;
     situation: zod.ZodString;
     intent: zod.ZodObject<{
-        intent: zod.ZodEnum<["decision", "relationship", "conflict", "career", "health", "unclear"]>;
+        intent: zod.ZodEnum<["decision", "relationship", "conflict", "career", "health", "money", "education", "travel", "unclear"]>;
         confidence: zod.ZodEnum<["low", "medium", "high"]>;
         score: zod.ZodNumber;
     }, "strip", zod.ZodTypeAny, {
-        intent: "decision" | "relationship" | "conflict" | "career" | "health" | "unclear";
+        intent: "decision" | "relationship" | "conflict" | "career" | "health" | "money" | "education" | "travel" | "unclear";
         confidence: "low" | "medium" | "high";
         score: number;
     }, {
-        intent: "decision" | "relationship" | "conflict" | "career" | "health" | "unclear";
+        intent: "decision" | "relationship" | "conflict" | "career" | "health" | "money" | "education" | "travel" | "unclear";
         confidence: "low" | "medium" | "high";
         score: number;
     }>;
@@ -1828,7 +1828,7 @@ export declare const AnalyzeSituationResponse: zod.ZodObject<{
     };
     id: number;
     intent: {
-        intent: "decision" | "relationship" | "conflict" | "career" | "health" | "unclear";
+        intent: "decision" | "relationship" | "conflict" | "career" | "health" | "money" | "education" | "travel" | "unclear";
         confidence: "low" | "medium" | "high";
         score: number;
     };
@@ -2114,7 +2114,7 @@ export declare const AnalyzeSituationResponse: zod.ZodObject<{
     };
     id: number;
     intent: {
-        intent: "decision" | "relationship" | "conflict" | "career" | "health" | "unclear";
+        intent: "decision" | "relationship" | "conflict" | "career" | "health" | "money" | "education" | "travel" | "unclear";
         confidence: "low" | "medium" | "high";
         score: number;
     };
@@ -2284,15 +2284,15 @@ export declare const GetAnalysisHistoryResponse: zod.ZodObject<{
             id: zod.ZodNumber;
             situation: zod.ZodString;
             intent: zod.ZodObject<{
-                intent: zod.ZodEnum<["decision", "relationship", "conflict", "career", "health", "unclear"]>;
+                intent: zod.ZodEnum<["decision", "relationship", "conflict", "career", "health", "money", "education", "travel", "unclear"]>;
                 confidence: zod.ZodEnum<["low", "medium", "high"]>;
                 score: zod.ZodNumber;
             }, "strip", zod.ZodTypeAny, {
-                intent: "decision" | "relationship" | "conflict" | "career" | "health" | "unclear";
+                intent: "decision" | "relationship" | "conflict" | "career" | "health" | "money" | "education" | "travel" | "unclear";
                 confidence: "low" | "medium" | "high";
                 score: number;
             }, {
-                intent: "decision" | "relationship" | "conflict" | "career" | "health" | "unclear";
+                intent: "decision" | "relationship" | "conflict" | "career" | "health" | "money" | "education" | "travel" | "unclear";
                 confidence: "low" | "medium" | "high";
                 score: number;
             }>;
@@ -3819,7 +3819,7 @@ export declare const GetAnalysisHistoryResponse: zod.ZodObject<{
             };
             id: number;
             intent: {
-                intent: "decision" | "relationship" | "conflict" | "career" | "health" | "unclear";
+                intent: "decision" | "relationship" | "conflict" | "career" | "health" | "money" | "education" | "travel" | "unclear";
                 confidence: "low" | "medium" | "high";
                 score: number;
             };
@@ -4105,7 +4105,7 @@ export declare const GetAnalysisHistoryResponse: zod.ZodObject<{
             };
             id: number;
             intent: {
-                intent: "decision" | "relationship" | "conflict" | "career" | "health" | "unclear";
+                intent: "decision" | "relationship" | "conflict" | "career" | "health" | "money" | "education" | "travel" | "unclear";
                 confidence: "low" | "medium" | "high";
                 score: number;
             };
@@ -4402,7 +4402,7 @@ export declare const GetAnalysisHistoryResponse: zod.ZodObject<{
             };
             id: number;
             intent: {
-                intent: "decision" | "relationship" | "conflict" | "career" | "health" | "unclear";
+                intent: "decision" | "relationship" | "conflict" | "career" | "health" | "money" | "education" | "travel" | "unclear";
                 confidence: "low" | "medium" | "high";
                 score: number;
             };
@@ -4698,7 +4698,7 @@ export declare const GetAnalysisHistoryResponse: zod.ZodObject<{
             };
             id: number;
             intent: {
-                intent: "decision" | "relationship" | "conflict" | "career" | "health" | "unclear";
+                intent: "decision" | "relationship" | "conflict" | "career" | "health" | "money" | "education" | "travel" | "unclear";
                 confidence: "low" | "medium" | "high";
                 score: number;
             };
@@ -5002,7 +5002,7 @@ export declare const GetAnalysisHistoryResponse: zod.ZodObject<{
             };
             id: number;
             intent: {
-                intent: "decision" | "relationship" | "conflict" | "career" | "health" | "unclear";
+                intent: "decision" | "relationship" | "conflict" | "career" | "health" | "money" | "education" | "travel" | "unclear";
                 confidence: "low" | "medium" | "high";
                 score: number;
             };
@@ -5303,7 +5303,7 @@ export declare const GetAnalysisHistoryResponse: zod.ZodObject<{
             };
             id: number;
             intent: {
-                intent: "decision" | "relationship" | "conflict" | "career" | "health" | "unclear";
+                intent: "decision" | "relationship" | "conflict" | "career" | "health" | "money" | "education" | "travel" | "unclear";
                 confidence: "low" | "medium" | "high";
                 score: number;
             };
@@ -5496,15 +5496,15 @@ export declare const GetAnalysisByIdResponse: zod.ZodObject<{
         id: zod.ZodNumber;
         situation: zod.ZodString;
         intent: zod.ZodObject<{
-            intent: zod.ZodEnum<["decision", "relationship", "conflict", "career", "health", "unclear"]>;
+            intent: zod.ZodEnum<["decision", "relationship", "conflict", "career", "health", "money", "education", "travel", "unclear"]>;
             confidence: zod.ZodEnum<["low", "medium", "high"]>;
             score: zod.ZodNumber;
         }, "strip", zod.ZodTypeAny, {
-            intent: "decision" | "relationship" | "conflict" | "career" | "health" | "unclear";
+            intent: "decision" | "relationship" | "conflict" | "career" | "health" | "money" | "education" | "travel" | "unclear";
             confidence: "low" | "medium" | "high";
             score: number;
         }, {
-            intent: "decision" | "relationship" | "conflict" | "career" | "health" | "unclear";
+            intent: "decision" | "relationship" | "conflict" | "career" | "health" | "money" | "education" | "travel" | "unclear";
             confidence: "low" | "medium" | "high";
             score: number;
         }>;
@@ -7031,7 +7031,7 @@ export declare const GetAnalysisByIdResponse: zod.ZodObject<{
         };
         id: number;
         intent: {
-            intent: "decision" | "relationship" | "conflict" | "career" | "health" | "unclear";
+            intent: "decision" | "relationship" | "conflict" | "career" | "health" | "money" | "education" | "travel" | "unclear";
             confidence: "low" | "medium" | "high";
             score: number;
         };
@@ -7317,7 +7317,7 @@ export declare const GetAnalysisByIdResponse: zod.ZodObject<{
         };
         id: number;
         intent: {
-            intent: "decision" | "relationship" | "conflict" | "career" | "health" | "unclear";
+            intent: "decision" | "relationship" | "conflict" | "career" | "health" | "money" | "education" | "travel" | "unclear";
             confidence: "low" | "medium" | "high";
             score: number;
         };
@@ -7614,7 +7614,7 @@ export declare const GetAnalysisByIdResponse: zod.ZodObject<{
         };
         id: number;
         intent: {
-            intent: "decision" | "relationship" | "conflict" | "career" | "health" | "unclear";
+            intent: "decision" | "relationship" | "conflict" | "career" | "health" | "money" | "education" | "travel" | "unclear";
             confidence: "low" | "medium" | "high";
             score: number;
         };
@@ -7910,7 +7910,7 @@ export declare const GetAnalysisByIdResponse: zod.ZodObject<{
         };
         id: number;
         intent: {
-            intent: "decision" | "relationship" | "conflict" | "career" | "health" | "unclear";
+            intent: "decision" | "relationship" | "conflict" | "career" | "health" | "money" | "education" | "travel" | "unclear";
             confidence: "low" | "medium" | "high";
             score: number;
         };
