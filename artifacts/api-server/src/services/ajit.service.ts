@@ -18,6 +18,12 @@ export type IntentType =
   | "money"
   | "education"
   | "travel"
+  | "family"
+  | "legal"
+  | "business"
+  | "mind"
+  | "property"
+  | "lost"
   | "unclear";
 
 export type IntentResult = {
@@ -37,7 +43,7 @@ export type IntentAnalysis = {
   ranking: KeyScore[];
 };
 
-const DOMAIN: IntentType[] = ["relationship", "conflict", "career", "health", "money", "education", "travel"];
+const DOMAIN: IntentType[] = ["relationship", "conflict", "career", "health", "money", "education", "travel", "family", "legal", "business", "mind", "property", "lost"];
 const round1 = (n: number) => Math.round(n * 10) / 10;
 
 /** "decision" describes the FORM of a question ("should I..."); a real topic, when present, wins. */

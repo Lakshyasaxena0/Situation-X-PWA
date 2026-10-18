@@ -116,6 +116,12 @@ const PROFILES: Record<IntentType, Profile> = {
   money: { topic: "Money & assets", primaryHouse: 2, supportHouses: [11, 5], karakas: ["Jupiter", "Venus"], divisional: [{ chart: "D9", house: 2, purpose: "Lasting wealth" }], goodLordHouses: STANDARD_GOOD_HOUSES },
   education: { topic: "Education & exams", primaryHouse: 5, supportHouses: [4, 9], karakas: ["Mercury", "Jupiter"], divisional: [{ chart: "D9", house: 5, purpose: "Learning & merit" }], goodLordHouses: STANDARD_GOOD_HOUSES },
   travel: { topic: "Travel & foreign matters", primaryHouse: 12, supportHouses: [9, 3], karakas: ["Rahu", "Moon"], divisional: [{ chart: "D9", house: 12, purpose: "Foreign settlement & fortune" }], goodLordHouses: [1, 3, 5, 9, 11, 12] },
+  family: { topic: "Family & home", primaryHouse: 4, supportHouses: [2, 5], karakas: ["Moon", "Jupiter"], divisional: [{ chart: "D12", house: 4, purpose: "Parents & family" }], goodLordHouses: STANDARD_GOOD_HOUSES },
+  legal: { topic: "Legal matters & disputes", primaryHouse: 6, supportHouses: [7, 11], karakas: ["Saturn", "Mars"], divisional: [{ chart: "D3", house: 6, purpose: "Effort & support in the fight" }], goodLordHouses: CONFLICT_GOOD_HOUSES },
+  business: { topic: "Business & trade", primaryHouse: 10, supportHouses: [7, 11, 2], karakas: ["Mercury", "Saturn"], divisional: [{ chart: "D10", house: 10, purpose: "Business standing & success" }], goodLordHouses: STANDARD_GOOD_HOUSES },
+  mind: { topic: "Peace of mind", primaryHouse: 4, supportHouses: [1, 5], karakas: ["Moon", "Mercury"], divisional: [{ chart: "D9", house: 4, purpose: "Inner peace & resilience" }], goodLordHouses: STANDARD_GOOD_HOUSES },
+  property: { topic: "Property & vehicles", primaryHouse: 4, supportHouses: [2, 11], karakas: ["Mars", "Venus", "Saturn"], divisional: [{ chart: "D4", house: 4, purpose: "Property & fixed assets" }], goodLordHouses: STANDARD_GOOD_HOUSES },
+  lost: { topic: "Lost things & recovery", primaryHouse: 4, supportHouses: [2, 11], karakas: ["Moon", "Mercury"], divisional: [{ chart: "D9", house: 11, purpose: "Whether it comes back" }], goodLordHouses: [1, 2, 4, 5, 9, 11] },
   health: { topic: "Health & vitality", primaryHouse: 1, supportHouses: [6, 8], karakas: ["Sun", "Moon"], divisional: [{ chart: "D9", house: 1, purpose: "Inner vitality & resilience" }], goodLordHouses: STANDARD_GOOD_HOUSES },
   unclear: { topic: "General outlook", primaryHouse: 1, supportHouses: [10, 11], karakas: ["Moon"], divisional: [{ chart: "D9", house: 1, purpose: "Overall strength" }], goodLordHouses: STANDARD_GOOD_HOUSES },
 };

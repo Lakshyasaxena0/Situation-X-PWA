@@ -294,6 +294,12 @@ export declare const IntentResultIntent: {
     readonly money: "money";
     readonly education: "education";
     readonly travel: "travel";
+    readonly family: "family";
+    readonly legal: "legal";
+    readonly business: "business";
+    readonly mind: "mind";
+    readonly property: "property";
+    readonly lost: "lost";
     readonly unclear: "unclear";
 };
 export type IntentResultConfidence = (typeof IntentResultConfidence)[keyof typeof IntentResultConfidence];

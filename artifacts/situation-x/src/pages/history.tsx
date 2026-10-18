@@ -32,6 +32,12 @@ function intentColor(intent?: string) {
     money: "text-amber-700 bg-amber-400/10",
     education: "text-indigo-700 bg-indigo-400/10",
     travel: "text-cyan-700 bg-cyan-400/10",
+    family: "text-rose-700 bg-rose-400/10",
+    legal: "text-stone-700 bg-stone-400/10",
+    business: "text-teal-700 bg-teal-400/10",
+    mind: "text-purple-700 bg-purple-400/10",
+    property: "text-lime-700 bg-lime-400/10",
+    lost: "text-yellow-700 bg-yellow-400/10",
     unclear: "text-slate-700 bg-slate-400/10",
   };
   return map[intent ?? ""] ?? "text-muted-foreground bg-muted";

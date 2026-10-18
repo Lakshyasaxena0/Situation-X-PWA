@@ -20,6 +20,12 @@ const INTENT_WORDS: Record<string, string> = {
   money: "money and finances",
   education: "studies and exams",
   travel: "travel, visa or moving abroad",
+  family: "family and home life",
+  legal: "a legal matter",
+  business: "your business",
+  mind: "peace of mind",
+  property: "property or a vehicle",
+  lost: "something or someone lost",
   unclear: "your situation",
 };
 

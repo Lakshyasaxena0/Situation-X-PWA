@@ -40,7 +40,7 @@ test("AJIT: Hindi in Devanagari works", () => {
 });
 
 test("AJIT: a real topic wins over the form of the question, and decision is kept as secondary", () => {
-  const r = intent("Should I quit my job and start a business?");
+  const r = intent("Should I quit my job and take the promotion offer?");
   assert.equal(r.intent, "career");
   assert.equal(r.secondary, "decision");
 });

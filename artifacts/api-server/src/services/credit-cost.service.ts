@@ -66,7 +66,7 @@ export function complexityPoints(situation: string, engine: EngineResponse): num
   if (words >= 150) points += 1;
   if (engine.finalVerdict.riskLevel === "high") points += 1;
   if (engine.emotion.intensity === "high") points += 1;
-  if (engine.intent.intent === "health" || engine.intent.intent === "conflict") points += 1;
+  if (["health", "conflict", "legal", "mind"].includes(engine.intent.intent)) points += 1;
   return points;
 }
 

@@ -18,5 +18,11 @@ export const IntentResultIntent = {
   money: "money",
   education: "education",
   travel: "travel",
+  family: "family",
+  legal: "legal",
+  business: "business",
+  mind: "mind",
+  property: "property",
+  lost: "lost",
   unclear: "unclear",
 } as const;

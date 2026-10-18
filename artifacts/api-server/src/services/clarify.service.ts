@@ -70,6 +70,30 @@ const BY_INTENT: Record<IntentType, Candidate[]> = {
     { key: "i1", question: "Have your documents and funds been checked?", why: "Most refusals come from missing papers.", choices: ["Yes", "Partly", "Not yet"] },
     { key: "i2", question: "Do you have a backup plan?", why: "A second option lowers the risk.", choices: ["Yes", "No"] },
   ],
+  family: [
+    { key: "i1", question: "Who is mainly involved?", why: "The right step depends on who it is.", choices: ["Parents", "In-laws", "Children", "Siblings", "Others"] },
+    { key: "i2", question: "Have you already talked about it?", why: "A first talk and a repeated one are handled differently.", choices: ["Yes", "Tried, it went badly", "Not yet"] },
+  ],
+  legal: [
+    { key: "i1", question: "Has a case or notice been filed already?", why: "It decides how urgent and formal the next step is.", choices: ["Yes", "Notice only", "Not yet"] },
+    { key: "i2", question: "Do you have a lawyer?", why: "A professional should check the papers first.", choices: ["Yes", "Not yet"] },
+  ],
+  business: [
+    { key: "i1", question: "How long has the business been running?", why: "A new idea and an old business need different advice.", choices: ["Not started", "Under a year", "Over a year"] },
+    { key: "i2", question: "How much of your savings is at stake?", why: "It shows how much risk is sensible.", choices: ["A small part", "About half", "Most of it"] },
+  ],
+  mind: [
+    { key: "i1", question: "How long have you felt this way?", why: "Days and months point to different kinds of help.", choices: ["Days", "Weeks", "Months or more"] },
+    { key: "i2", question: "Have you been able to talk to someone about it?", why: "Support makes a big difference.", choices: ["Yes", "Not yet"] },
+  ],
+  property: [
+    { key: "i1", question: "Are the papers and title checked?", why: "Most property trouble starts with unclear papers.", choices: ["Yes", "Partly", "Not yet"] },
+    { key: "i2", question: "Is it to buy, sell or rent?", why: "The steps differ for each.", choices: ["Buy", "Sell", "Rent"] },
+  ],
+  lost: [
+    { key: "i1", question: "When and where was it last seen?", why: "It guides where to search first.", choices: [] },
+    { key: "i2", question: "Is it valuable or does it hold private data?", why: "It decides whether to report and block it right away.", choices: ["Yes", "No"] },
+  ],
   health: [
     { key: "i1", question: "Have you spoken to a doctor about this?", why: "Health questions need a professional's view first.", choices: ["Yes", "Not yet", "Planning to"] },
     { key: "i2", question: "How long has this been going on?", why: "Duration changes how urgent it is.", choices: ["Days", "Weeks", "Months or more"] },

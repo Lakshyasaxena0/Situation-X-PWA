@@ -113,6 +113,60 @@ const TEMPLATES: Record<IntentType, Template> = {
       "Use only official or licensed agents, and never pay for guaranteed approvals.",
     ],
   },
+  family: {
+    idea: "If a direct talk is not working, change the way in: a gentle word through someone they trust, a better time and place, or a small kind act first, so no one loses face.",
+    steps: [
+      "Choose a calm moment, not during a fight or a festival rush.",
+      "Start with what you appreciate, then say one clear thing you need.",
+      "Ask a respected elder or a close relative to help if it is too hard alone.",
+      "Agree on one small step everyone can accept, and review it after a few weeks.",
+    ],
+  },
+  legal: {
+    idea: "If the straight legal route is slow or blocked, look at the honest side doors: a legal notice, mediation or Lok Adalat, a written settlement, or free legal aid.",
+    steps: [
+      "Collect every paper, message and receipt in one file.",
+      "Ask a qualified lawyer (or free legal aid) about all the routes, not only court.",
+      "Try a written settlement or mediation if the other side is open.",
+      "Never use threats or fake papers; they can ruin your own case.",
+    ],
+  },
+  business: {
+    idea: "If one route to customers, money or a licence is blocked, find the side door: a smaller first product, a partner, a different channel, or a different place.",
+    steps: [
+      "Write what the blocked route was meant to give you.",
+      "List two or three other ways to get the same thing.",
+      "Try the cheapest one on a small scale for a few weeks.",
+      "Keep your personal savings safe and keep proper records.",
+    ],
+  },
+  mind: {
+    idea: "If you cannot get the peace you want in one way, try another gentle way: a short walk, writing your thoughts, a talk with a trusted person, prayer or meditation, or a counsellor.",
+    steps: [
+      "Do one small calming thing today, for example a 10-minute walk or slow breathing.",
+      "Tell one person you trust how you are feeling.",
+      "Keep fixed sleep and meal times for a week.",
+      "If the heaviness lasts more than two weeks or you feel unsafe, speak to a doctor or counsellor, or call a helpline.",
+    ],
+  },
+  property: {
+    idea: "If the property or vehicle deal is stuck, look at the side doors: a different property, a rental or lease first, a co-owner, or waiting until the papers are clear.",
+    steps: [
+      "List what you really need (location, size, budget).",
+      "Check the title, dues and approvals through an expert before any payment.",
+      "Look at two or three alternatives, including renting for now.",
+      "Pay only against written receipts and registered papers.",
+    ],
+  },
+  lost: {
+    idea: "If the direct search fails, widen the search sensibly: tell more people, use official channels, post notices, and secure what could be misused.",
+    steps: [
+      "Retrace the last place and time you remember.",
+      "Ask family, friends and nearby people or shops.",
+      "Report it officially if it is valuable, a document, a card or a person.",
+      "Block cards, SIMs or accounts to stop misuse, and keep checking.",
+    ],
+  },
   health: {
     idea: "If one route to care or a habit is blocked, find another honest one: a different doctor or clinic, a government or low-cost scheme, a smaller daily step, or a family helper.",
     steps: [

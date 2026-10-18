@@ -103,6 +103,12 @@ const DEFAULT_OUTCOME: Record<IntentType, string> = {
   money: "Your money handled safely, without a loss you cannot afford",
   education: "The best result you can reach in your studies or exam",
   travel: "A move or journey that works out smoothly and safely",
+  family: "Peace and understanding at home, with everyone treated fairly",
+  legal: "The matter settled fairly, with your rights protected and little stress",
+  business: "A business that grows steadily without risking more than you can afford",
+  mind: "A calmer, steadier mind and the strength to carry on",
+  property: "A property or vehicle matter settled safely, with clean papers",
+  lost: "Your lost thing or person found, or a clear and calm way forward",
   unclear: "Clarity about what to do next",
 };
 
@@ -332,6 +338,144 @@ const TEMPLATES: Record<IntentType, Template[]> = {
       baseRisk: 1, baseStability: 2, reversible: true,
     },
   ],
+  family: [
+    {
+      action: "Talk openly and listen to each person's side in a calm moment",
+      benefits: ["Misunderstandings clear up", "Everyone feels heard"],
+      downsides: ["Old hurts may come up"],
+      uncertainties: ["How ready the others are to listen"],
+      baseRisk: 1, baseStability: 3, reversible: true,
+    },
+    {
+      action: "Involve a trusted elder or neutral relative to help",
+      benefits: ["A fair, respected voice", "Takes pressure off you"],
+      downsides: ["Can feel like taking sides"],
+      uncertainties: ["Whether that person will stay neutral"],
+      baseRisk: 2, baseStability: 2, reversible: true,
+    },
+    {
+      action: "Stay silent and hope it settles by itself",
+      benefits: ["No fight today"],
+      downsides: ["Resentment can build", "Nothing gets solved"],
+      uncertainties: ["Whether it fades"],
+      baseRisk: 2, baseStability: 1, reversible: true,
+    },
+  ],
+  legal: [
+    {
+      action: "Talk to a qualified lawyer and collect all papers before acting",
+      benefits: ["You know your rights and options", "Strong papers help your case"],
+      downsides: ["Costs time and fees"],
+      uncertainties: ["How the other side and the court will act"],
+      baseRisk: 1, baseStability: 3, reversible: true,
+    },
+    {
+      action: "Try a settlement or mediation if both sides are willing",
+      benefits: ["Faster and cheaper", "Less stress"],
+      downsides: ["You may have to give up something"],
+      uncertainties: ["Whether the other side agrees"],
+      baseRisk: 1, baseStability: 2, reversible: true,
+    },
+    {
+      action: "Go to court or file the case immediately",
+      benefits: ["Starts the process at once", "Shows you are serious"],
+      downsides: ["Long, costly and stressful", "Hard to withdraw"],
+      uncertainties: ["The final outcome and the time it takes"],
+      baseRisk: 3, baseStability: 1, reversible: false, tags: ["bold"],
+    },
+  ],
+  business: [
+    {
+      action: "Test on a small scale first, then grow step by step",
+      benefits: ["A mistake stays small", "You learn what customers want"],
+      downsides: ["Growth is slower"],
+      uncertainties: ["Whether demand will last"],
+      baseRisk: 1, baseStability: 3, reversible: true,
+    },
+    {
+      action: "Bring in a trusted partner, mentor or funding",
+      benefits: ["More money and skills", "Shared risk"],
+      downsides: ["Shared control", "A wrong partner is a big problem"],
+      uncertainties: ["Whether the partner or investor is reliable"],
+      baseRisk: 2, baseStability: 2, reversible: true,
+    },
+    {
+      action: "Expand fast with all your money",
+      benefits: ["Quick growth if it works", "First-mover chance"],
+      downsides: ["One bad season can end it", "Hard to reverse"],
+      uncertainties: ["Market and cash flow ahead"],
+      baseRisk: 3, baseStability: 1, reversible: false, tags: ["bold"],
+    },
+  ],
+  mind: [
+    {
+      action: "Talk to someone you trust and keep a simple daily routine (sleep, food, walk)",
+      benefits: ["Feelings become lighter when shared", "A routine steadies the mind"],
+      downsides: ["Opening up can feel hard at first"],
+      uncertainties: ["How quickly you will feel better"],
+      baseRisk: 1, baseStability: 3, reversible: true,
+    },
+    {
+      action: "Speak to a counsellor or doctor if it is heavy or lasting",
+      benefits: ["Proper help and tools", "Faster relief"],
+      downsides: ["Needs time and sometimes money"],
+      uncertainties: ["Which kind of help suits you"],
+      baseRisk: 1, baseStability: 3, reversible: true,
+    },
+    {
+      action: "Keep it inside and push through alone",
+      benefits: ["No effort today"],
+      downsides: ["Feelings can grow heavier", "You miss support"],
+      uncertainties: ["Whether it will pass by itself"],
+      baseRisk: 3, baseStability: 1, reversible: true,
+    },
+  ],
+  property: [
+    {
+      action: "Check every paper, legal title and price with an expert before paying",
+      benefits: ["Avoids fraud and disputes", "Fair price"],
+      downsides: ["Takes time and a small fee"],
+      uncertainties: ["Hidden dues or claims"],
+      baseRisk: 1, baseStability: 3, reversible: true,
+    },
+    {
+      action: "Negotiate and take a smaller step first (token amount, rent, lease)",
+      benefits: ["Lower risk", "Time to decide"],
+      downsides: ["The seller may not wait"],
+      uncertainties: ["Whether the price and terms will hold"],
+      baseRisk: 2, baseStability: 2, reversible: true,
+    },
+    {
+      action: "Pay in full now to secure the deal",
+      benefits: ["Deal secured at once"],
+      downsides: ["Big loss if papers are weak", "Hard to reverse"],
+      uncertainties: ["Whether the title is clean"],
+      baseRisk: 3, baseStability: 1, reversible: false, tags: ["bold"],
+    },
+  ],
+  lost: [
+    {
+      action: "Search the last known places and tell people who can help (family, friends, the authorities if needed)",
+      benefits: ["Best chance of finding it early", "Help from others"],
+      downsides: ["Takes time and effort"],
+      uncertainties: ["Whether it can be found"],
+      baseRisk: 1, baseStability: 3, reversible: true,
+    },
+    {
+      action: "Report it officially (police, bank, service provider) and block or secure what you can",
+      benefits: ["Protects you from misuse", "A record exists"],
+      downsides: ["Some paperwork"],
+      uncertainties: ["How fast the authorities act"],
+      baseRisk: 1, baseStability: 3, reversible: true,
+    },
+    {
+      action: "Wait quietly without doing anything",
+      benefits: ["No effort"],
+      downsides: ["The chance of finding it falls with time"],
+      uncertainties: ["Whether it will return by itself"],
+      baseRisk: 3, baseStability: 1, reversible: true,
+    },
+  ],
   unclear: [
     {
       action: "Wait and observe",
@@ -409,7 +553,7 @@ export function simulatePaths(intent: IntentResult, emotion: EmotionResult, text
   const heated = emotion.emotion === "angry" || (strained && emotion.intensity === "high");
   const avoiding = intent.stance === "avoid";
 
-  const templates = isPredictionQuestion(text) && ["relationship", "career", "money", "education", "travel", "unclear", "decision"].includes(intent.intent) ? PREDICTION_TEMPLATES : TEMPLATES[intent.intent];
+  const templates = isPredictionQuestion(text) && ["relationship", "career", "money", "education", "travel", "family", "business", "mind", "property", "unclear", "decision"].includes(intent.intent) ? PREDICTION_TEMPLATES : TEMPLATES[intent.intent];
   const paths: PathOption[] = templates.map((t) => {
     let risk = t.baseRisk;
     if (!t.reversible && (heated || strained)) risk += 1;
