@@ -41,6 +41,8 @@ export interface PrashnaReading {
   focus?: PrashnaReadingFocus;
   /** First check of the reading. Only a warning unless the person chose to skip unfit charts. */
   fit?: PrashnaReadingFit;
+  /** Rising sign, where its lord sits and the planets sitting in the lagna, as short points */
+  glance?: string[];
   /** The chain followed in the chart (lagna and its lord, Moon, the concerned house, 6/8/12 lords, the blend) as short points */
   trace?: PrashnaReadingTraceItem[];
   tuningId?: number | null;

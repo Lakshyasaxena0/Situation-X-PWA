@@ -21,7 +21,7 @@ export declare const HealthCheckResponse: zod.ZodObject<{
  */
 export declare const estimateAnalysisCostBodyClarificationsItemQuestionMax = 300;
 export declare const estimateAnalysisCostBodyClarificationsItemAnswerMax = 500;
-export declare const estimateAnalysisCostBodyClarificationsMax = 4;
+export declare const estimateAnalysisCostBodyClarificationsMax = 5;
 export declare const estimateAnalysisCostBodyFromPathPathIndexMin = 0;
 export declare const EstimateAnalysisCostBody: zod.ZodObject<{
     situation: zod.ZodString;
@@ -145,7 +145,7 @@ export declare const EstimateAnalysisCostResponse: zod.ZodObject<{
  */
 export declare const clarifySituationBodyAnswersItemQuestionMax = 300;
 export declare const clarifySituationBodyAnswersItemAnswerMax = 500;
-export declare const clarifySituationBodyAnswersMax = 4;
+export declare const clarifySituationBodyAnswersMax = 5;
 export declare const ClarifySituationBody: zod.ZodObject<{
     situation: zod.ZodString;
     answers: zod.ZodOptional<zod.ZodArray<zod.ZodObject<{
@@ -221,7 +221,7 @@ export declare const ClarifySituationResponse: zod.ZodObject<{
  */
 export declare const analyzeSituationBodyClarificationsItemQuestionMax = 300;
 export declare const analyzeSituationBodyClarificationsItemAnswerMax = 500;
-export declare const analyzeSituationBodyClarificationsMax = 4;
+export declare const analyzeSituationBodyClarificationsMax = 5;
 export declare const analyzeSituationBodyFromPathPathIndexMin = 0;
 export declare const AnalyzeSituationBody: zod.ZodObject<{
     situation: zod.ZodString;
@@ -687,6 +687,7 @@ export declare const AnalyzeSituationResponse: zod.ZodObject<{
                 ok: boolean;
                 problems: string[];
             }>>;
+            glance: zod.ZodOptional<zod.ZodArray<zod.ZodString, "many">>;
             trace: zod.ZodOptional<zod.ZodArray<zod.ZodObject<{
                 title: zod.ZodString;
                 points: zod.ZodArray<zod.ZodString, "many">;
@@ -735,6 +736,7 @@ export declare const AnalyzeSituationResponse: zod.ZodObject<{
                 ok: boolean;
                 problems: string[];
             } | undefined;
+            glance?: string[] | undefined;
             trace?: {
                 title: string;
                 points: string[];
@@ -777,6 +779,7 @@ export declare const AnalyzeSituationResponse: zod.ZodObject<{
                 ok: boolean;
                 problems: string[];
             } | undefined;
+            glance?: string[] | undefined;
             trace?: {
                 title: string;
                 points: string[];
@@ -1265,6 +1268,7 @@ export declare const AnalyzeSituationResponse: zod.ZodObject<{
                 ok: boolean;
                 problems: string[];
             } | undefined;
+            glance?: string[] | undefined;
             trace?: {
                 title: string;
                 points: string[];
@@ -1407,6 +1411,7 @@ export declare const AnalyzeSituationResponse: zod.ZodObject<{
                 ok: boolean;
                 problems: string[];
             } | undefined;
+            glance?: string[] | undefined;
             trace?: {
                 title: string;
                 points: string[];
@@ -1737,6 +1742,7 @@ export declare const AnalyzeSituationResponse: zod.ZodObject<{
                 ok: boolean;
                 problems: string[];
             } | undefined;
+            glance?: string[] | undefined;
             trace?: {
                 title: string;
                 points: string[];
@@ -2023,6 +2029,7 @@ export declare const AnalyzeSituationResponse: zod.ZodObject<{
                 ok: boolean;
                 problems: string[];
             } | undefined;
+            glance?: string[] | undefined;
             trace?: {
                 title: string;
                 points: string[];
@@ -2678,6 +2685,7 @@ export declare const GetAnalysisHistoryResponse: zod.ZodObject<{
                         ok: boolean;
                         problems: string[];
                     }>>;
+                    glance: zod.ZodOptional<zod.ZodArray<zod.ZodString, "many">>;
                     trace: zod.ZodOptional<zod.ZodArray<zod.ZodObject<{
                         title: zod.ZodString;
                         points: zod.ZodArray<zod.ZodString, "many">;
@@ -2726,6 +2734,7 @@ export declare const GetAnalysisHistoryResponse: zod.ZodObject<{
                         ok: boolean;
                         problems: string[];
                     } | undefined;
+                    glance?: string[] | undefined;
                     trace?: {
                         title: string;
                         points: string[];
@@ -2768,6 +2777,7 @@ export declare const GetAnalysisHistoryResponse: zod.ZodObject<{
                         ok: boolean;
                         problems: string[];
                     } | undefined;
+                    glance?: string[] | undefined;
                     trace?: {
                         title: string;
                         points: string[];
@@ -3256,6 +3266,7 @@ export declare const GetAnalysisHistoryResponse: zod.ZodObject<{
                         ok: boolean;
                         problems: string[];
                     } | undefined;
+                    glance?: string[] | undefined;
                     trace?: {
                         title: string;
                         points: string[];
@@ -3398,6 +3409,7 @@ export declare const GetAnalysisHistoryResponse: zod.ZodObject<{
                         ok: boolean;
                         problems: string[];
                     } | undefined;
+                    glance?: string[] | undefined;
                     trace?: {
                         title: string;
                         points: string[];
@@ -3728,6 +3740,7 @@ export declare const GetAnalysisHistoryResponse: zod.ZodObject<{
                         ok: boolean;
                         problems: string[];
                     } | undefined;
+                    glance?: string[] | undefined;
                     trace?: {
                         title: string;
                         points: string[];
@@ -4014,6 +4027,7 @@ export declare const GetAnalysisHistoryResponse: zod.ZodObject<{
                         ok: boolean;
                         problems: string[];
                     } | undefined;
+                    glance?: string[] | undefined;
                     trace?: {
                         title: string;
                         points: string[];
@@ -4311,6 +4325,7 @@ export declare const GetAnalysisHistoryResponse: zod.ZodObject<{
                         ok: boolean;
                         problems: string[];
                     } | undefined;
+                    glance?: string[] | undefined;
                     trace?: {
                         title: string;
                         points: string[];
@@ -4607,6 +4622,7 @@ export declare const GetAnalysisHistoryResponse: zod.ZodObject<{
                         ok: boolean;
                         problems: string[];
                     } | undefined;
+                    glance?: string[] | undefined;
                     trace?: {
                         title: string;
                         points: string[];
@@ -4911,6 +4927,7 @@ export declare const GetAnalysisHistoryResponse: zod.ZodObject<{
                         ok: boolean;
                         problems: string[];
                     } | undefined;
+                    glance?: string[] | undefined;
                     trace?: {
                         title: string;
                         points: string[];
@@ -5212,6 +5229,7 @@ export declare const GetAnalysisHistoryResponse: zod.ZodObject<{
                         ok: boolean;
                         problems: string[];
                     } | undefined;
+                    glance?: string[] | undefined;
                     trace?: {
                         title: string;
                         points: string[];
@@ -5890,6 +5908,7 @@ export declare const GetAnalysisByIdResponse: zod.ZodObject<{
                     ok: boolean;
                     problems: string[];
                 }>>;
+                glance: zod.ZodOptional<zod.ZodArray<zod.ZodString, "many">>;
                 trace: zod.ZodOptional<zod.ZodArray<zod.ZodObject<{
                     title: zod.ZodString;
                     points: zod.ZodArray<zod.ZodString, "many">;
@@ -5938,6 +5957,7 @@ export declare const GetAnalysisByIdResponse: zod.ZodObject<{
                     ok: boolean;
                     problems: string[];
                 } | undefined;
+                glance?: string[] | undefined;
                 trace?: {
                     title: string;
                     points: string[];
@@ -5980,6 +6000,7 @@ export declare const GetAnalysisByIdResponse: zod.ZodObject<{
                     ok: boolean;
                     problems: string[];
                 } | undefined;
+                glance?: string[] | undefined;
                 trace?: {
                     title: string;
                     points: string[];
@@ -6468,6 +6489,7 @@ export declare const GetAnalysisByIdResponse: zod.ZodObject<{
                     ok: boolean;
                     problems: string[];
                 } | undefined;
+                glance?: string[] | undefined;
                 trace?: {
                     title: string;
                     points: string[];
@@ -6610,6 +6632,7 @@ export declare const GetAnalysisByIdResponse: zod.ZodObject<{
                     ok: boolean;
                     problems: string[];
                 } | undefined;
+                glance?: string[] | undefined;
                 trace?: {
                     title: string;
                     points: string[];
@@ -6940,6 +6963,7 @@ export declare const GetAnalysisByIdResponse: zod.ZodObject<{
                     ok: boolean;
                     problems: string[];
                 } | undefined;
+                glance?: string[] | undefined;
                 trace?: {
                     title: string;
                     points: string[];
@@ -7226,6 +7250,7 @@ export declare const GetAnalysisByIdResponse: zod.ZodObject<{
                     ok: boolean;
                     problems: string[];
                 } | undefined;
+                glance?: string[] | undefined;
                 trace?: {
                     title: string;
                     points: string[];
@@ -7523,6 +7548,7 @@ export declare const GetAnalysisByIdResponse: zod.ZodObject<{
                     ok: boolean;
                     problems: string[];
                 } | undefined;
+                glance?: string[] | undefined;
                 trace?: {
                     title: string;
                     points: string[];
@@ -7819,6 +7845,7 @@ export declare const GetAnalysisByIdResponse: zod.ZodObject<{
                     ok: boolean;
                     problems: string[];
                 } | undefined;
+                glance?: string[] | undefined;
                 trace?: {
                     title: string;
                     points: string[];

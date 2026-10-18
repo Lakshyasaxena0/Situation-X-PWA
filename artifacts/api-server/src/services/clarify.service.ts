@@ -12,7 +12,7 @@ import { LANGUAGE_NAMES, type Language } from "./analysis-options.js";
 import { detectSilence } from "./rsmi.service.js";
 import { checkOutputSafety } from "./safety.service.js";
 
-export const MAX_ROUNDS = 4;
+export const MAX_ROUNDS = 5;
 export const MAX_QUESTION_LENGTH = 300;
 export const MAX_ANSWER_LENGTH = 500;
 
@@ -149,7 +149,7 @@ ${situation.replace(/[<>]/g, "")}
 Questions already asked and answered:
 ${done}
 
-Decide: is there one important fact still missing (who exactly, what was said, how long, what they want, how the other person reacted, what has already been tried, a deadline)? If the situation already has enough, or ${MAX_ROUNDS} questions have been asked, say done.
+Decide: is any fact that would change your advice still missing or unclear (who exactly, what was said, how long, what they want, how the other person reacted, what has already been tried, a deadline, amounts, ages, dates, the place)? If YES, ask about it: never guess or assume it yourself. Only say done when you could advise without guessing any important fact, or when ${MAX_ROUNDS} questions have been asked.
 Rules: never repeat a question; do not ask for anything private or sensitive that the advice does not need; never ask the person to do or say anything harmful; no advice here; a question is at most 20 words; give 2-4 short answers they can tap (or [] for an open question). Write in ${LANGUAGE_NAMES[language]}; keep the JSON keys in English.
 Reply with ONLY JSON: {"done": true} or {"done": false, "question": "<the question>", "why": "<at most 14 words: why it matters>", "choices": ["<short answer>", ...]}`;
 }

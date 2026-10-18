@@ -103,7 +103,7 @@ export default function Oracle() {
   }
 
   function finishQuestions(forText: string, given: Answered[]) {
-    setQa({ forText, answers: given, current: null, round: given.length, max: 4, done: true });
+    setQa({ forText, answers: given, current: null, round: given.length, max: 5, done: true });
     // With credits in use the final price (it can change with the answers) is shown first; otherwise just run.
     if (!estimate.data?.billingActive) runAnalysis(given);
   }

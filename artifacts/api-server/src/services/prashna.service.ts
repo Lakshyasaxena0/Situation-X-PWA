@@ -45,7 +45,7 @@ import {
 import { HOUSE_SIGNIFICATIONS, PLANET_KARAKATVA, SIGN_KARAKATVA, detectFocus, type DivisionalUse, type Focus } from "./significations.js";
 import type { BodyName } from "./ephemeris.service.js";
 import { readThemes, themeFactors } from "./signification-blend.service.js";
-import { chartFitness, traceFactors, traceReading, type TraceSection } from "./prashna-trace.service.js";
+import { chartFitness, chartGlance, traceFactors, traceReading, type TraceSection } from "./prashna-trace.service.js";
 
 export type FactorFamily = "lagna" | "moon" | "house" | "karaka" | "divisional" | "aspects" | "relations" | "strength" | "hora" | "condition";
 export const FACTOR_FAMILIES: FactorFamily[] = ["lagna", "moon", "house", "karaka", "divisional", "aspects", "relations", "strength", "hora", "condition"];
@@ -80,6 +80,8 @@ export type PrashnaReading = {
   tuningId: number | null;
   /** The chain followed in the chart (lagna and its lord, Moon, the concerned house, 6/8/12 lords, the blend), as short points. */
   trace: TraceSection[];
+  /** Rising sign, where its lord sits and the planets in the lagna, as short points. */
+  glance: string[];
   /** First check: is the chart fit to be read? Only a warning, unless the person chose in Settings to skip unfit charts. */
   fit: { ok: boolean; problems: string[] };
   /** Everything the reading looked at, written for the AI. Never sent to the person. */
@@ -561,6 +563,7 @@ export function readPrashna(intent: IntentType, sky: PrashnaSky, options: ReadOp
     focus: { themes: cfg.focus.themes.map((t) => t.label), houses: [cfg.primaryHouse, ...cfg.supportHouses] },
     tuningId: tuning.id,
     trace,
+    glance: chartGlance(view, { sb: d.sb, bb: d.bb }),
     fit: (({ ok, problems }) => ({ ok, problems }))(chartFitness(view)),
     dossier: dossierFor(sky, cfg, d, qLord, top),
   };

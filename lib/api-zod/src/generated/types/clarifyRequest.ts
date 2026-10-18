@@ -11,7 +11,7 @@ import type { ClarifyRequestLanguage } from "./clarifyRequestLanguage";
 export interface ClarifyRequest {
   /** The situation written so far (min 10 characters) */
   situation: string;
-  /** @maxItems 4 */
+  /** @maxItems 5 */
   answers?: Clarification[];
   language?: ClarifyRequestLanguage;
   useAi?: boolean;

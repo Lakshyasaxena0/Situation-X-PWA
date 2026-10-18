@@ -21,7 +21,7 @@ export const estimateAnalysisCostBodyClarificationsItemQuestionMax = 300;
 
 export const estimateAnalysisCostBodyClarificationsItemAnswerMax = 500;
 
-export const estimateAnalysisCostBodyClarificationsMax = 4;
+export const estimateAnalysisCostBodyClarificationsMax = 5;
 
 export const estimateAnalysisCostBodyFromPathPathIndexMin = 0;
 
@@ -128,7 +128,7 @@ export const clarifySituationBodyAnswersItemQuestionMax = 300;
 
 export const clarifySituationBodyAnswersItemAnswerMax = 500;
 
-export const clarifySituationBodyAnswersMax = 4;
+export const clarifySituationBodyAnswersMax = 5;
 
 export const ClarifySituationBody = zod.object({
   situation: zod
@@ -172,7 +172,7 @@ export const analyzeSituationBodyClarificationsItemQuestionMax = 300;
 
 export const analyzeSituationBodyClarificationsItemAnswerMax = 500;
 
-export const analyzeSituationBodyClarificationsMax = 4;
+export const analyzeSituationBodyClarificationsMax = 5;
 
 export const analyzeSituationBodyFromPathPathIndexMin = 0;
 
@@ -507,6 +507,12 @@ export const AnalyzeSituationResponse = zod.object({
           .optional()
           .describe(
             "First check of the reading. Only a warning unless the person chose to skip unfit charts.",
+          ),
+        glance: zod
+          .array(zod.string())
+          .optional()
+          .describe(
+            "Rising sign, where its lord sits and the planets sitting in the lagna, as short points",
           ),
         trace: zod
           .array(
@@ -1055,6 +1061,12 @@ export const GetAnalysisHistoryResponse = zod.object({
                   .optional()
                   .describe(
                     "First check of the reading. Only a warning unless the person chose to skip unfit charts.",
+                  ),
+                glance: zod
+                  .array(zod.string())
+                  .optional()
+                  .describe(
+                    "Rising sign, where its lord sits and the planets sitting in the lagna, as short points",
                   ),
                 trace: zod
                   .array(
@@ -1627,6 +1639,12 @@ export const GetAnalysisByIdResponse = zod.object({
               .optional()
               .describe(
                 "First check of the reading. Only a warning unless the person chose to skip unfit charts.",
+              ),
+            glance: zod
+              .array(zod.string())
+              .optional()
+              .describe(
+                "Rising sign, where its lord sits and the planets sitting in the lagna, as short points",
               ),
             trace: zod
               .array(

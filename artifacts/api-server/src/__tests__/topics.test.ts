@@ -32,3 +32,19 @@ test("Topics: a will/when question gets outlook-style options, not break-up or q
   const all = [e.simulation.bestPath, ...e.simulation.alternatives].map((p) => p.action).join(" ");
   assert.doesNotMatch(all, /End the relationship|Switch or quit/);
 });
+
+test("Chart glance: ascendant, lagna lord position and planets in the lagna are given", () => {
+  const e = runEngine("Will I get a promotion this year?", {});
+  const g = e.astro.prashna!.glance;
+  assert.equal(g.length, 3);
+  assert.match(g[0], /Ascendant/);
+  assert.match(g[1], /Lagna lord .* house/);
+  assert.match(g[2], /Planets sitting in the lagna|No planet sits in the lagna/);
+  console.log("GLANCE", g.join(" || "));
+});
+
+test("Questions: up to five, and the AI is told to ask instead of assuming", async () => {
+  const { MAX_ROUNDS, buildClarifyPrompt } = await import("../services/clarify.service.js");
+  assert.equal(MAX_ROUNDS, 5);
+  assert.match(buildClarifyPrompt("I want to move", [], "en"), /never guess or assume/);
+});

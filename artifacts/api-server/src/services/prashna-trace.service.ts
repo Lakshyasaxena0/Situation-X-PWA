@@ -165,6 +165,17 @@ function assessPlanet(view: SkyView, n: BodyName, st?: TraceInput["strength"]): 
   return { strong, weak };
 }
 
+/** The first things a Prashna astrologer notes: the rising sign, where its lord sits, and who sits in the lagna. */
+export function chartGlance(view: SkyView, strength?: TraceInput["strength"]): string[] {
+  const lord = lordOf(view, 1);
+  const sitting = occupantsOf(view, 1);
+  return [
+    `Ascendant (rising sign): ${RASHI_NAMES[view.ascSign]} at ${view.ascDeg.toFixed(1)}° (${signNature(view.ascSign)}).`,
+    `Lagna lord ${lord} ${whereItGoes(view, lord, strength)}.`,
+    sitting.length ? `Planets sitting in the lagna: ${list(sitting)}.` : "No planet sits in the lagna.",
+  ];
+}
+
 export function traceReading(view: SkyView, input: TraceInput): TraceSection[] {
   const { primaryHouse: qh } = input;
   const st = input.strength;

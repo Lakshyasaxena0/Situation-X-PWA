@@ -29,7 +29,7 @@ export interface AnalyzeRequest {
   skipUnfitChart?: boolean;
   /**
    * Questions the app asked before the analysis and the person's answers; they are added to the situation.
-   * @maxItems 4
+   * @maxItems 5
    */
   clarifications?: Clarification[];
   /** Run one of the paths SIVI listed in an earlier analysis of yours as a new question. The server builds the question from that analysis (the situation text is ignored) and charges half price. Looking at a path costs nothing. */

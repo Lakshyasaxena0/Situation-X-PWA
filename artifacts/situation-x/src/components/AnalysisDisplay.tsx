@@ -521,10 +521,14 @@ function AstroCard({ result }: { result: AnalysisResult }) {
 
         <Section title={o ? "4. Chart used" : "Chart used"}>
           <ul className="list-disc pl-5 space-y-1 text-sm text-foreground">
-            {asc && (
-              <li>
-                Rising sign (Lagna): <strong>{asc.sign}</strong> {asc.degree.toFixed(2)}&deg;{asc.lord ? `, ruled by ${asc.lord}` : ""}
-              </li>
+            {astro.prashna?.glance?.length ? (
+              astro.prashna.glance.map((g, i) => <li key={i}>{g}</li>)
+            ) : (
+              asc && (
+                <li>
+                  Rising sign (Lagna): <strong>{asc.sign}</strong> {asc.degree.toFixed(2)}&deg;{asc.lord ? `, ruled by ${asc.lord}` : ""}
+                </li>
+              )
             )}
             {astro.prashna && (
               <li>
