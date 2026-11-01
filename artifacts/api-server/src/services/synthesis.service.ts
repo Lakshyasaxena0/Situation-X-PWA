@@ -83,7 +83,7 @@ export const ASTRO_MAX_PULL = 25;
 const DEFAULT_TIMEFRAME_DAYS = 14;
 const MIN_TIMEFRAME_DAYS = 3;
 const MAX_TIMEFRAME_DAYS = 90;
-const AI_MAX_TOKENS = 2100;
+const AI_MAX_TOKENS = 2300;
 
 /**
  * How hard the AI is asked to think. Higher levels are charged more credits (credit-cost.service)
@@ -269,6 +269,15 @@ function describeTransits(engine: EngineResponse): string {
   ].join("\n");
 }
 
+const ASTRO_PRIMER = `HOW TO READ A PRASHNA CHART LIKE A SENIOR ASTROLOGER (use this to understand the notes below; do not recite it):
+- Separate three questions: (a) PROMISE: does the chart support the matter at all (lagna, the lord of the question-house, the Moon, the D9 confirmation)? (b) OBSTACLES: what blocks it (6/8/12 lords, afflicted or combust or debilitated key planets, malefics on the house, a void Moon)? (c) TIMING: when does it ripen (the Moon's next contact with a significator, the running dasha lord, movable/fixed/dual sign pace)?
+- The lagna and its lord are the person; the question-house and its lord are the matter. If the two lords are linked (same house, exchange, aspect, one in the other's house) the person and the matter meet and it can happen; no link means effort is needed or it stays far.
+- The Moon is the mind and the event's carrier: a Moon applying to a good significator promises progress; a void or afflicted Moon, or one moving away from the significator, delays or denies.
+- Strength decides how much a planet can deliver: own or exalted sign and strong shadbala deliver; debilitated, combust, retrograde or Mrityu Bhaga planets promise but with delay, doubt or damage; weakness in D1 that is repaired in D9 still gives hope.
+- Benefics aspecting the house or lord help; malefics hurt, except in the 3rd, 6th, 10th and 11th houses where they often give effort-based gains. A planet's house, sign and meaning all matter together; use only the part that overlaps with this question.
+- Weigh the evidence, do not count it: one strong, direct link (lagna lord to the question-house, or Moon to its significator) outweighs several weak signs. When signs conflict, say which side is stronger and why.
+- Translate everything into plain advice: what the chart suggests about chance, timing, hidden trouble, and what the person can do about it. Astrology shows tendencies, not fixed fate.`;
+
 export function buildPrompt(
   situation: string,
   engine: EngineResponse,
@@ -288,6 +297,7 @@ export function buildPrompt(
 
   const step2 = useAstro
     ? `STEP 2 - THE ASTROLOGY VERDICT. A Prashna (horary) chart was cast for the moment of the question; the person gave no birth details. Treat it as a second opinion about timing, momentum and hidden obstacles. Do not dismiss it and do not defer to it blindly.
+${ASTRO_PRIMER}
 ${describeTransits(engine)}
 ${describePrashna(engine)}
 Astrology score (0-100): ${astro}  (same scale: 70+ YES, 45-69 CONDITIONAL, below 45 NO)
@@ -325,8 +335,10 @@ ${step3}
 
 Rules: speak in tendencies, never promise outcomes; do not invent or assume facts the person did not state (ages, dates, names, amounts, who is involved): when something important is missing, say so in keyUnknowns and make asking for it one of the nextSteps instead of guessing; for health, legal, money-critical or safety matters recommend a qualified professional where it matters; be candid but kind; no cosmic fluff. Use simple, everyday words that a school student understands: short sentences, no jargon, and explain any astrology word in a few plain words. Write every text value in ${language}; keep the JSON keys in English.
 
+BEFORE YOU ANSWER, THINK PRIVATELY in the "notes" field (about 80 words, never shown to the person): the real question in one line; the facts given and the facts missing; the two strongest ${useAstro ? "points for and against from your own judgment and from the chart (promise, obstacles, timing)" : "points for and against"}; where you could be wrong. Then write the answer so that it follows from these notes. BEFORE FINISHING, CHECK: (1) every claim rests on a stated fact or a named chart point; (2) the chance, timing and score you give agree with each other and with what you write; (3) nothing in summary, risks and steps contradicts another part; (4) the plain words a school student can follow.
+
 Reply with ONLY a JSON object, no prose, with exactly these keys in this order:
-{"situationAnalysis": "<3-5 SHORT bullet points, each starting with \u2022 and separated by a newline: what is really being asked, key facts, the options and their trade-offs>", "risks": ["<up to 3 short risks>"], "situationContext": {"desiredOutcome": "<what the person wants>", "knownFacts": ["<up to 4 facts they stated>"], "constraints": ["<up to 4 limits they mentioned>"]}, "paths": [{"action": "<a concrete path>", "benefits": ["<up to 3>"], "downsides": ["<up to 3>"], "uncertainties": ["<up to 2>"], "reversible": true | false, "risk": "low" | "medium" | "high", "stability": "low" | "medium" | "high"}], "bestPath": <0-based index into paths>, "pathComparison": "<2-3 sentences: why the best path beats the others, and when another would be better>", ${engine.silence ? `"silence": {"meanings": [{"meaning": "<what the silence may mean>", "likelihood": "more likely" | "possible" | "less likely", "why": "<short reason from their facts>"}], "checks": ["<2-4 ways to find out, without pressure>"], "unknowns": ["<up to 3 facts that would change this>"]}, ` : ""}${engine.route ? `"indirectRoute": {"blocker": "<what is in the way, in their terms>", "idea": "<1-2 sentences: the other route to the same goal>", "steps": ["<3-5 ordered concrete steps>"], "fairness": "<one line: why this is honest and fair to everyone>"}, ` : ""}"keyUnknowns": ["<up to 3 things that would change the answer>"], "logicScore": <integer 0-100>, ${useAstro ? `"astrologyAssessment": "<2-3 short sentences: the chance in % and the anticipated timing from the chart, naming the specific planets, houses, charts or dasha periods that drive the astrology verdict and what they imply for timing or caution>", "astroAlignment": "supports" | "mixed" | "contradicts",` : ""} "finalScore": <integer 0-100>, "summary": "<2-3 short sentences: the final answer, direct and practical, reconciling both lenses>", "advice": "<the single most important next step>", "nextSteps": ["<2-4 ordered concrete steps>"], "timeframeDays": <integer, days until the outcome should become visible, ${MIN_TIMEFRAME_DAYS}-${MAX_TIMEFRAME_DAYS}>}`;
+{"notes": "<your private thinking, about 80 words>", "situationAnalysis": "<3-5 SHORT bullet points, each starting with \u2022 and separated by a newline: what is really being asked, key facts, the options and their trade-offs>", "risks": ["<up to 3 short risks>"], "situationContext": {"desiredOutcome": "<what the person wants>", "knownFacts": ["<up to 4 facts they stated>"], "constraints": ["<up to 4 limits they mentioned>"]}, "paths": [{"action": "<a concrete path>", "benefits": ["<up to 3>"], "downsides": ["<up to 3>"], "uncertainties": ["<up to 2>"], "reversible": true | false, "risk": "low" | "medium" | "high", "stability": "low" | "medium" | "high"}], "bestPath": <0-based index into paths>, "pathComparison": "<2-3 sentences: why the best path beats the others, and when another would be better>", ${engine.silence ? `"silence": {"meanings": [{"meaning": "<what the silence may mean>", "likelihood": "more likely" | "possible" | "less likely", "why": "<short reason from their facts>"}], "checks": ["<2-4 ways to find out, without pressure>"], "unknowns": ["<up to 3 facts that would change this>"]}, ` : ""}${engine.route ? `"indirectRoute": {"blocker": "<what is in the way, in their terms>", "idea": "<1-2 sentences: the other route to the same goal>", "steps": ["<3-5 ordered concrete steps>"], "fairness": "<one line: why this is honest and fair to everyone>"}, ` : ""}"keyUnknowns": ["<up to 3 things that would change the answer>"], "logicScore": <integer 0-100>, ${useAstro ? `"astrologyAssessment": "<2-3 short sentences: the chance in % and the anticipated timing from the chart, then WHY: name the 2-3 strongest chart points (for example the lagna lord, the Moon, the lord of the question-house, the D9 check or the dasha lord), what each means for this person in plain words, and what it implies for timing or caution>", "astroAlignment": "supports" | "mixed" | "contradicts",` : ""} "finalScore": <integer 0-100>, "summary": "<2-3 short sentences: the final answer, direct and practical, reconciling both lenses>", "advice": "<the single most important next step>", "nextSteps": ["<2-4 ordered concrete steps>"], "timeframeDays": <integer, days until the outcome should become visible, ${MIN_TIMEFRAME_DAYS}-${MAX_TIMEFRAME_DAYS}>}`;
 }
 
 function text(value: unknown, max: number): string | null {
