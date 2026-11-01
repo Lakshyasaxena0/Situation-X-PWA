@@ -90,7 +90,7 @@ export default function Oracle() {
   function askNext(given: Answered[]) {
     const forText = situation.trim();
     clarify.mutate(
-      { data: { situation: forText, answers: given, language: settings.language, useAi: settings.useAi } },
+      { data: { situation: forText, answers: given, language: settings.language, useAi: true } },
       {
         onSuccess: (r) => {
           if (r.done || !r.question) return finishQuestions(forText, given);
@@ -155,7 +155,7 @@ export default function Oracle() {
 
           {/* What Settings currently say, with a link to change it */}
           <div className="flex flex-wrap items-center gap-x-3 gap-y-1 rounded-md bg-muted/60 px-3 py-2 text-xs text-muted-foreground">
-            <span>AI: <strong className="text-foreground">{settings.useAi ? "on" : "off"}</strong></span>
+            <span>AI: <strong className="text-foreground">on</strong></span>
             <span>Astrology: <strong className="text-foreground">{settings.useAstrology ? "on" : "off"}</strong></span>
             <span>Language: <strong className="text-foreground">{settings.language === "auto" ? "same as question" : settings.language === "en" ? "English" : settings.language === "hi" ? "Hindi" : "Hinglish"}</strong></span>
             {settings.useAstrology && <span>Place: <strong className="text-foreground">{placeName}</strong></span>}
@@ -184,7 +184,7 @@ export default function Oracle() {
           </div>
 
           {/* How deeply the AI should think: costs more credits, shown before you run. */}
-          {settings.useAi && (
+          {(
           <div>
             <p className="text-xs text-muted-foreground mb-1.5">AI reasoning level</p>
             <div className="flex gap-1.5 flex-wrap" role="radiogroup" aria-label="AI reasoning level">

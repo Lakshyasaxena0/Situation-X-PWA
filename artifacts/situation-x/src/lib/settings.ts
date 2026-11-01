@@ -46,7 +46,7 @@ export function sanitizeSettings(raw: unknown): Settings {
   const r = (raw && typeof raw === "object" ? raw : {}) as Record<string, unknown>;
   return {
     language: LANGS.includes(r.language as Language) ? (r.language as Language) : DEFAULT_SETTINGS.language,
-    useAi: typeof r.useAi === "boolean" ? r.useAi : DEFAULT_SETTINGS.useAi,
+    useAi: true, // AI is always on
     useAstrology: typeof r.useAstrology === "boolean" ? r.useAstrology : DEFAULT_SETTINGS.useAstrology,
     skipUnfitChart: typeof r.skipUnfitChart === "boolean" ? r.skipUnfitChart : DEFAULT_SETTINGS.skipUnfitChart,
     depth: DEPTHS.includes(r.depth as Depth) ? (r.depth as Depth) : DEFAULT_SETTINGS.depth,
@@ -67,7 +67,7 @@ export function useSettings(): [Settings, (patch: Partial<Settings>) => void] {
 export function requestOptions(s: Settings) {
   return {
     language: s.language,
-    useAi: s.useAi,
+    useAi: true,
     useAstrology: s.useAstrology,
     skipUnfitChart: s.useAstrology && s.skipUnfitChart,
     latitude: s.location?.latitude,

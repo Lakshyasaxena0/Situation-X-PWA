@@ -83,9 +83,8 @@ export default function Settings() {
           <Chips label="Answer language" options={LANGUAGES} value={s.language} onChange={(language) => update({ language })} />
         </Section>
 
-        <Section title="AI and astrology" hint="Switch either lens off if you only want the other. Credits are only charged for what you use.">
-          <ToggleRow label="Use AI" hint="The AI thinks through your situation. Off: you get the module and astrology answer only." checked={s.useAi} onChange={(useAi) => update({ useAi })} />
-          {s.useAi && (
+        <Section title="AI and astrology" hint="The AI is always on. You can switch astrology off if you do not want it.">
+          {(
             <div>
               <div className="text-xs text-muted-foreground mb-1.5">Default AI reasoning level</div>
               <Chips label="Default AI reasoning level" options={depthOptions} value={s.depth} onChange={(depth) => update({ depth })} />
