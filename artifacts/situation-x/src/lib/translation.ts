@@ -6,7 +6,7 @@ type PathTexts = { action?: string; benefits?: string[]; downsides?: string[]; u
 export type Texts = {
   summary?: string;
   finalVerdict?: { recommendedAction?: string; reasoning?: string };
-  synthesis?: { summary?: string; astroInsight?: string; advice?: string; reasoning?: string; risks?: string[]; keyUnknowns?: string[]; nextSteps?: string[] };
+  synthesis?: { summary?: string; astroInsight?: string; advice?: string; reasoning?: string; risks?: string[]; keyUnknowns?: string[]; couldBeWrong?: string[]; nextSteps?: string[] };
   simulation?: {
     context?: { desiredOutcome?: string; knownFacts?: string[]; constraints?: string[] };
     comparison?: string;
@@ -56,6 +56,7 @@ export function applyTexts(result: AnalysisResult, t: Texts | undefined): Analys
           reasoning: pick(t.synthesis?.reasoning, syn.reasoning),
           risks: pickList(t.synthesis?.risks, syn.risks),
           keyUnknowns: pickList(t.synthesis?.keyUnknowns, syn.keyUnknowns),
+          couldBeWrong: pickList(t.synthesis?.couldBeWrong, syn.couldBeWrong),
           nextSteps: pickList(t.synthesis?.nextSteps, syn.nextSteps),
         }
       : syn,

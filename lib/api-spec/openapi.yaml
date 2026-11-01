@@ -1537,6 +1537,11 @@ components:
           type: array
           items:
             type: string
+        couldBeWrong:
+          type: array
+          description: Honest points where this answer could be wrong
+          items:
+            type: string
         nextSteps:
           type: array
           items:

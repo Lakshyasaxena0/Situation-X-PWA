@@ -58,6 +58,8 @@ export type Synthesis = {
   reasoning?: string;
   risks?: string[];
   keyUnknowns?: string[];
+  /** Honest points where this answer could be wrong (a missing fact, a doubtful chart point, an assumption). */
+  couldBeWrong?: string[];
   nextSteps?: string[];
   /** Weights used to blend the two lenses. */
   weights?: { logic: number; astro: number };
@@ -338,7 +340,7 @@ Rules: speak in tendencies, never promise outcomes; do not invent or assume fact
 BEFORE YOU ANSWER, THINK PRIVATELY in the "notes" field (about 80 words, never shown to the person): the real question in one line; the facts given and the facts missing; the two strongest ${useAstro ? "points for and against from your own judgment and from the chart (promise, obstacles, timing)" : "points for and against"}; where you could be wrong. Then write the answer so that it follows from these notes. BEFORE FINISHING, CHECK: (1) every claim rests on a stated fact or a named chart point; (2) the chance, timing and score you give agree with each other and with what you write; (3) nothing in summary, risks and steps contradicts another part; (4) the plain words a school student can follow.
 
 Reply with ONLY a JSON object, no prose, with exactly these keys in this order:
-{"notes": "<your private thinking, about 80 words>", "situationAnalysis": "<3-5 SHORT bullet points, each starting with \u2022 and separated by a newline: what is really being asked, key facts, the options and their trade-offs>", "risks": ["<up to 3 short risks>"], "situationContext": {"desiredOutcome": "<what the person wants>", "knownFacts": ["<up to 4 facts they stated>"], "constraints": ["<up to 4 limits they mentioned>"]}, "paths": [{"action": "<a concrete path>", "benefits": ["<up to 3>"], "downsides": ["<up to 3>"], "uncertainties": ["<up to 2>"], "reversible": true | false, "risk": "low" | "medium" | "high", "stability": "low" | "medium" | "high"}], "bestPath": <0-based index into paths>, "pathComparison": "<2-3 sentences: why the best path beats the others, and when another would be better>", ${engine.silence ? `"silence": {"meanings": [{"meaning": "<what the silence may mean>", "likelihood": "more likely" | "possible" | "less likely", "why": "<short reason from their facts>"}], "checks": ["<2-4 ways to find out, without pressure>"], "unknowns": ["<up to 3 facts that would change this>"]}, ` : ""}${engine.route ? `"indirectRoute": {"blocker": "<what is in the way, in their terms>", "idea": "<1-2 sentences: the other route to the same goal>", "steps": ["<3-5 ordered concrete steps>"], "fairness": "<one line: why this is honest and fair to everyone>"}, ` : ""}"keyUnknowns": ["<up to 3 things that would change the answer>"], "logicScore": <integer 0-100>, ${useAstro ? `"astrologyAssessment": "<2-3 short sentences: the chance in % and the anticipated timing from the chart, then WHY: name the 2-3 strongest chart points (for example the lagna lord, the Moon, the lord of the question-house, the D9 check or the dasha lord), what each means for this person in plain words, and what it implies for timing or caution>", "astroAlignment": "supports" | "mixed" | "contradicts",` : ""} "finalScore": <integer 0-100>, "summary": "<2-3 short sentences: the final answer, direct and practical, reconciling both lenses>", "advice": "<the single most important next step>", "nextSteps": ["<2-4 ordered concrete steps>"], "timeframeDays": <integer, days until the outcome should become visible, ${MIN_TIMEFRAME_DAYS}-${MAX_TIMEFRAME_DAYS}>}`;
+{"notes": "<your private thinking, about 80 words>", "situationAnalysis": "<3-5 SHORT bullet points, each starting with \u2022 and separated by a newline: what is really being asked, key facts, the options and their trade-offs>", "risks": ["<up to 3 short risks>"], "situationContext": {"desiredOutcome": "<what the person wants>", "knownFacts": ["<up to 4 facts they stated>"], "constraints": ["<up to 4 limits they mentioned>"]}, "paths": [{"action": "<a concrete path>", "benefits": ["<up to 3>"], "downsides": ["<up to 3>"], "uncertainties": ["<up to 2>"], "reversible": true | false, "risk": "low" | "medium" | "high", "stability": "low" | "medium" | "high"}], "bestPath": <0-based index into paths>, "pathComparison": "<2-3 sentences: why the best path beats the others, and when another would be better>", ${engine.silence ? `"silence": {"meanings": [{"meaning": "<what the silence may mean>", "likelihood": "more likely" | "possible" | "less likely", "why": "<short reason from their facts>"}], "checks": ["<2-4 ways to find out, without pressure>"], "unknowns": ["<up to 3 facts that would change this>"]}, ` : ""}${engine.route ? `"indirectRoute": {"blocker": "<what is in the way, in their terms>", "idea": "<1-2 sentences: the other route to the same goal>", "steps": ["<3-5 ordered concrete steps>"], "fairness": "<one line: why this is honest and fair to everyone>"}, ` : ""}"keyUnknowns": ["<up to 3 things that would change the answer>"], "couldBeWrong": ["<1-3 honest points, in simple words, on where THIS answer could be wrong: a fact you had to guess, a doubtful or conflicting chart point, or how the person's feelings may have coloured the question>"], "logicScore": <integer 0-100>, ${useAstro ? `"astrologyAssessment": "<2-3 short sentences: the chance in % and the anticipated timing from the chart, then WHY: name the 2-3 strongest chart points (for example the lagna lord, the Moon, the lord of the question-house, the D9 check or the dasha lord), what each means for this person in plain words, and what it implies for timing or caution>", "astroAlignment": "supports" | "mixed" | "contradicts",` : ""} "finalScore": <integer 0-100>, "summary": "<2-3 short sentences: the final answer, direct and practical, reconciling both lenses>", "advice": "<the single most important next step>", "nextSteps": ["<2-4 ordered concrete steps>"], "timeframeDays": <integer, days until the outcome should become visible, ${MIN_TIMEFRAME_DAYS}-${MAX_TIMEFRAME_DAYS}>}`;
 }
 
 function text(value: unknown, max: number): string | null {
@@ -364,6 +366,7 @@ export type AiAnswer = {
   advice: string | null;
   risks: string[];
   keyUnknowns: string[];
+  couldBeWrong: string[];
   nextSteps: string[];
   timeframeDays: number;
   /** SIVI paths built by the AI from the whole situation (null when missing or unusable). */
@@ -398,6 +401,7 @@ export function parseAiAnswer(raw: string | null | undefined): AiAnswer | null {
     advice: text(o.advice, 500),
     risks: list(o.risks, 3, 300),
     keyUnknowns: list(o.keyUnknowns, 3, 300),
+    couldBeWrong: list(o.couldBeWrong, 3, 300),
     nextSteps: list(o.nextSteps, 4, 300),
     timeframeDays: clampDays(o.timeframeDays),
     simulation: parseAiSimulation(o),
@@ -450,7 +454,7 @@ export async function synthesize(
   // The ethical filter also checks what the AI wrote. If anything in it recommends harm, the whole AI
   // answer is withheld and the built-in answer is shown instead.
   const written = [
-    ai.summary, ai.advice ?? "", ai.reasoning ?? "", ai.astrologyAssessment ?? "", ...ai.risks, ...ai.nextSteps, ...ai.keyUnknowns,
+    ai.summary, ai.advice ?? "", ai.reasoning ?? "", ai.astrologyAssessment ?? "", ...ai.risks, ...ai.nextSteps, ...ai.keyUnknowns, ...ai.couldBeWrong,
     ...(ai.simulation ? [ai.simulation.comparison, ...[ai.simulation.bestPath, ...ai.simulation.alternatives].flatMap((p) => [p.action, ...p.benefits, ...p.downsides, ...p.uncertainties])] : []),
   ];
   const silence = engine.silence ? mergeSilence(engine.silence, ai.silence) : undefined;
@@ -497,6 +501,7 @@ function compose(
     reasoning: ai.reasoning ?? undefined,
     risks: ai.risks,
     keyUnknowns: ai.keyUnknowns,
+    couldBeWrong: ai.couldBeWrong.length ? ai.couldBeWrong : undefined,
     nextSteps: ai.nextSteps,
     simulation,
     silence,

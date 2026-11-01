@@ -685,6 +685,10 @@ export const AnalyzeSituationResponse = zod.object({
         .describe("The AI's reasoning about the situation itself"),
       risks: zod.array(zod.string()).optional(),
       keyUnknowns: zod.array(zod.string()).optional(),
+      couldBeWrong: zod
+        .array(zod.string())
+        .optional()
+        .describe("Honest points where this answer could be wrong"),
       nextSteps: zod.array(zod.string()).optional(),
       weights: zod
         .object({
@@ -1241,6 +1245,10 @@ export const GetAnalysisHistoryResponse = zod.object({
                 .describe("The AI's reasoning about the situation itself"),
               risks: zod.array(zod.string()).optional(),
               keyUnknowns: zod.array(zod.string()).optional(),
+              couldBeWrong: zod
+                .array(zod.string())
+                .optional()
+                .describe("Honest points where this answer could be wrong"),
               nextSteps: zod.array(zod.string()).optional(),
               weights: zod
                 .object({
@@ -1819,6 +1827,10 @@ export const GetAnalysisByIdResponse = zod.object({
             .describe("The AI's reasoning about the situation itself"),
           risks: zod.array(zod.string()).optional(),
           keyUnknowns: zod.array(zod.string()).optional(),
+          couldBeWrong: zod
+            .array(zod.string())
+            .optional()
+            .describe("Honest points where this answer could be wrong"),
           nextSteps: zod.array(zod.string()).optional(),
           weights: zod
             .object({

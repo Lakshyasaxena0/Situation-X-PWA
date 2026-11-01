@@ -15,6 +15,7 @@ const LABELS: Record<string, { hi: string; hinglish: string }> = {
   "Why": { hi: "क्यों", hinglish: "Kyun" },
   "Risks": { hi: "जोखिम", hinglish: "Jokhim" },
   "What could change this": { hi: "क्या इसे बदल सकता है", hinglish: "Kya isse badal sakta hai" },
+  "Where this could be wrong": { hi: "यह कहाँ गलत हो सकता है", hinglish: "Yeh kahan galat ho sakta hai" },
   "What to do next": { hi: "आगे क्या करें", hinglish: "Aage kya karein" },
   "Modules used (tap to open)": { hi: "उपयोग किए गए मॉड्यूल (खोलने के लिए दबाएँ)", hinglish: "Use hue modules (kholne ke liye dabayein)" },
   "Intent detection": { hi: "आपका इरादा", hinglish: "Aapka irada" },

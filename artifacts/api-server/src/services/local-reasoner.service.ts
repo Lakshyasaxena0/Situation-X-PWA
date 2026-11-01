@@ -68,6 +68,14 @@ export function localAnswer(engine: EngineResponse, score: number): AiAnswer {
   const risks = uniq([...best.downsides, ...others.flatMap((o) => o.downsides.slice(0, 1)), ...(emo && engine.emotion.intensity === "high" ? [cap(emo, 120)] : [])]).slice(0, 3).map((r) => cap(r, 280));
   const keyUnknowns = uniq([...best.uncertainties, ...(engine.silence?.unknowns ?? [])]).slice(0, 3).map((r) => cap(r, 280));
 
+  const wrong: string[] = [];
+  if (sim.context.inferred) wrong.push("You did not say clearly what you want, so I guessed it. If the guess is wrong, the advice changes.");
+  const oc = engine.astro.outlook;
+  if (oc && oc.chance >= 35 && oc.chance <= 65) wrong.push(`The chart gives about ${oc.chance}%, which is close to the middle, so it could go either way.`);
+  if (engine.intent.confidence === "low") wrong.push("The topic of your question was not very clear to me, so I may have read it the wrong way.");
+  if (engine.emotion.intensity === "high") wrong.push("Strong feelings can colour how a situation looks. Look at it again after some rest.");
+  wrong.push("I only know what you wrote. A fact you did not mention can change the answer.");
+
   const steps: string[] = [];
   if (engine.route && engine.route.steps.length) steps.push(...engine.route.steps.slice(0, 3));
   else {
@@ -91,6 +99,7 @@ export function localAnswer(engine: EngineResponse, score: number): AiAnswer {
     advice: cap(best.action, 400),
     risks,
     keyUnknowns,
+    couldBeWrong: wrong.slice(0, 3).map((r) => cap(r, 280)),
     nextSteps: steps.slice(0, 4).map((s) => cap(s, 280)),
     timeframeDays: timeframeFrom(engine),
     simulation: null,

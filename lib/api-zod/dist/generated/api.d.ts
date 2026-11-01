@@ -1533,6 +1533,7 @@ export declare const AnalyzeSituationResponse: zod.ZodObject<{
         reasoning: zod.ZodOptional<zod.ZodString>;
         risks: zod.ZodOptional<zod.ZodArray<zod.ZodString, "many">>;
         keyUnknowns: zod.ZodOptional<zod.ZodArray<zod.ZodString, "many">>;
+        couldBeWrong: zod.ZodOptional<zod.ZodArray<zod.ZodString, "many">>;
         nextSteps: zod.ZodOptional<zod.ZodArray<zod.ZodString, "many">>;
         weights: zod.ZodOptional<zod.ZodObject<{
             logic: zod.ZodNumber;
@@ -1566,6 +1567,7 @@ export declare const AnalyzeSituationResponse: zod.ZodObject<{
         astroAlignment?: "mixed" | "supports" | "contradicts" | undefined;
         risks?: string[] | undefined;
         keyUnknowns?: string[] | undefined;
+        couldBeWrong?: string[] | undefined;
         nextSteps?: string[] | undefined;
         weights?: {
             astro: number;
@@ -1593,6 +1595,7 @@ export declare const AnalyzeSituationResponse: zod.ZodObject<{
         astroAlignment?: "mixed" | "supports" | "contradicts" | undefined;
         risks?: string[] | undefined;
         keyUnknowns?: string[] | undefined;
+        couldBeWrong?: string[] | undefined;
         nextSteps?: string[] | undefined;
         weights?: {
             astro: number;
@@ -1957,6 +1960,7 @@ export declare const AnalyzeSituationResponse: zod.ZodObject<{
         astroAlignment?: "mixed" | "supports" | "contradicts" | undefined;
         risks?: string[] | undefined;
         keyUnknowns?: string[] | undefined;
+        couldBeWrong?: string[] | undefined;
         nextSteps?: string[] | undefined;
         weights?: {
             astro: number;
@@ -2244,6 +2248,7 @@ export declare const AnalyzeSituationResponse: zod.ZodObject<{
         astroAlignment?: "mixed" | "supports" | "contradicts" | undefined;
         risks?: string[] | undefined;
         keyUnknowns?: string[] | undefined;
+        couldBeWrong?: string[] | undefined;
         nextSteps?: string[] | undefined;
         weights?: {
             astro: number;
@@ -3531,6 +3536,7 @@ export declare const GetAnalysisHistoryResponse: zod.ZodObject<{
                 reasoning: zod.ZodOptional<zod.ZodString>;
                 risks: zod.ZodOptional<zod.ZodArray<zod.ZodString, "many">>;
                 keyUnknowns: zod.ZodOptional<zod.ZodArray<zod.ZodString, "many">>;
+                couldBeWrong: zod.ZodOptional<zod.ZodArray<zod.ZodString, "many">>;
                 nextSteps: zod.ZodOptional<zod.ZodArray<zod.ZodString, "many">>;
                 weights: zod.ZodOptional<zod.ZodObject<{
                     logic: zod.ZodNumber;
@@ -3564,6 +3570,7 @@ export declare const GetAnalysisHistoryResponse: zod.ZodObject<{
                 astroAlignment?: "mixed" | "supports" | "contradicts" | undefined;
                 risks?: string[] | undefined;
                 keyUnknowns?: string[] | undefined;
+                couldBeWrong?: string[] | undefined;
                 nextSteps?: string[] | undefined;
                 weights?: {
                     astro: number;
@@ -3591,6 +3598,7 @@ export declare const GetAnalysisHistoryResponse: zod.ZodObject<{
                 astroAlignment?: "mixed" | "supports" | "contradicts" | undefined;
                 risks?: string[] | undefined;
                 keyUnknowns?: string[] | undefined;
+                couldBeWrong?: string[] | undefined;
                 nextSteps?: string[] | undefined;
                 weights?: {
                     astro: number;
@@ -3955,6 +3963,7 @@ export declare const GetAnalysisHistoryResponse: zod.ZodObject<{
                 astroAlignment?: "mixed" | "supports" | "contradicts" | undefined;
                 risks?: string[] | undefined;
                 keyUnknowns?: string[] | undefined;
+                couldBeWrong?: string[] | undefined;
                 nextSteps?: string[] | undefined;
                 weights?: {
                     astro: number;
@@ -4242,6 +4251,7 @@ export declare const GetAnalysisHistoryResponse: zod.ZodObject<{
                 astroAlignment?: "mixed" | "supports" | "contradicts" | undefined;
                 risks?: string[] | undefined;
                 keyUnknowns?: string[] | undefined;
+                couldBeWrong?: string[] | undefined;
                 nextSteps?: string[] | undefined;
                 weights?: {
                     astro: number;
@@ -4540,6 +4550,7 @@ export declare const GetAnalysisHistoryResponse: zod.ZodObject<{
                 astroAlignment?: "mixed" | "supports" | "contradicts" | undefined;
                 risks?: string[] | undefined;
                 keyUnknowns?: string[] | undefined;
+                couldBeWrong?: string[] | undefined;
                 nextSteps?: string[] | undefined;
                 weights?: {
                     astro: number;
@@ -4837,6 +4848,7 @@ export declare const GetAnalysisHistoryResponse: zod.ZodObject<{
                 astroAlignment?: "mixed" | "supports" | "contradicts" | undefined;
                 risks?: string[] | undefined;
                 keyUnknowns?: string[] | undefined;
+                couldBeWrong?: string[] | undefined;
                 nextSteps?: string[] | undefined;
                 weights?: {
                     astro: number;
@@ -5142,6 +5154,7 @@ export declare const GetAnalysisHistoryResponse: zod.ZodObject<{
                 astroAlignment?: "mixed" | "supports" | "contradicts" | undefined;
                 risks?: string[] | undefined;
                 keyUnknowns?: string[] | undefined;
+                couldBeWrong?: string[] | undefined;
                 nextSteps?: string[] | undefined;
                 weights?: {
                     astro: number;
@@ -5444,6 +5457,7 @@ export declare const GetAnalysisHistoryResponse: zod.ZodObject<{
                 astroAlignment?: "mixed" | "supports" | "contradicts" | undefined;
                 risks?: string[] | undefined;
                 keyUnknowns?: string[] | undefined;
+                couldBeWrong?: string[] | undefined;
                 nextSteps?: string[] | undefined;
                 weights?: {
                     astro: number;
@@ -6754,6 +6768,7 @@ export declare const GetAnalysisByIdResponse: zod.ZodObject<{
             reasoning: zod.ZodOptional<zod.ZodString>;
             risks: zod.ZodOptional<zod.ZodArray<zod.ZodString, "many">>;
             keyUnknowns: zod.ZodOptional<zod.ZodArray<zod.ZodString, "many">>;
+            couldBeWrong: zod.ZodOptional<zod.ZodArray<zod.ZodString, "many">>;
             nextSteps: zod.ZodOptional<zod.ZodArray<zod.ZodString, "many">>;
             weights: zod.ZodOptional<zod.ZodObject<{
                 logic: zod.ZodNumber;
@@ -6787,6 +6802,7 @@ export declare const GetAnalysisByIdResponse: zod.ZodObject<{
             astroAlignment?: "mixed" | "supports" | "contradicts" | undefined;
             risks?: string[] | undefined;
             keyUnknowns?: string[] | undefined;
+            couldBeWrong?: string[] | undefined;
             nextSteps?: string[] | undefined;
             weights?: {
                 astro: number;
@@ -6814,6 +6830,7 @@ export declare const GetAnalysisByIdResponse: zod.ZodObject<{
             astroAlignment?: "mixed" | "supports" | "contradicts" | undefined;
             risks?: string[] | undefined;
             keyUnknowns?: string[] | undefined;
+            couldBeWrong?: string[] | undefined;
             nextSteps?: string[] | undefined;
             weights?: {
                 astro: number;
@@ -7178,6 +7195,7 @@ export declare const GetAnalysisByIdResponse: zod.ZodObject<{
             astroAlignment?: "mixed" | "supports" | "contradicts" | undefined;
             risks?: string[] | undefined;
             keyUnknowns?: string[] | undefined;
+            couldBeWrong?: string[] | undefined;
             nextSteps?: string[] | undefined;
             weights?: {
                 astro: number;
@@ -7465,6 +7483,7 @@ export declare const GetAnalysisByIdResponse: zod.ZodObject<{
             astroAlignment?: "mixed" | "supports" | "contradicts" | undefined;
             risks?: string[] | undefined;
             keyUnknowns?: string[] | undefined;
+            couldBeWrong?: string[] | undefined;
             nextSteps?: string[] | undefined;
             weights?: {
                 astro: number;
@@ -7763,6 +7782,7 @@ export declare const GetAnalysisByIdResponse: zod.ZodObject<{
             astroAlignment?: "mixed" | "supports" | "contradicts" | undefined;
             risks?: string[] | undefined;
             keyUnknowns?: string[] | undefined;
+            couldBeWrong?: string[] | undefined;
             nextSteps?: string[] | undefined;
             weights?: {
                 astro: number;
@@ -8060,6 +8080,7 @@ export declare const GetAnalysisByIdResponse: zod.ZodObject<{
             astroAlignment?: "mixed" | "supports" | "contradicts" | undefined;
             risks?: string[] | undefined;
             keyUnknowns?: string[] | undefined;
+            couldBeWrong?: string[] | undefined;
             nextSteps?: string[] | undefined;
             weights?: {
                 astro: number;

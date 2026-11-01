@@ -823,6 +823,12 @@ function AnalysisBody({ result, header }: { result: AnalysisResult; header: Reac
                 <Points items={syn.risks} className="text-foreground" />
               </div>
             )}
+            {syn.couldBeWrong && syn.couldBeWrong.length > 0 && (
+              <div>
+                <div className="text-base font-bold text-foreground mb-1">{t("Where this could be wrong")}</div>
+                <Points items={syn.couldBeWrong} className="text-foreground" />
+              </div>
+            )}
             {syn.keyUnknowns && syn.keyUnknowns.length > 0 && (
               <div>
                 <div className="text-base font-bold text-foreground mb-1">{t("What could change this")}</div>

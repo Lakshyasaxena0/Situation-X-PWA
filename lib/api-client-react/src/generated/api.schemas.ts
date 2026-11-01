@@ -875,6 +875,8 @@ export interface Synthesis {
   reasoning?: string;
   risks?: string[];
   keyUnknowns?: string[];
+  /** Honest points where this answer could be wrong */
+  couldBeWrong?: string[];
   nextSteps?: string[];
   /** Weights used to blend the AI judgment and the astrology verdict */
   weights?: SynthesisWeights;

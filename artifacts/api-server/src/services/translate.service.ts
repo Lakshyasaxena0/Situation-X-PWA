@@ -13,7 +13,7 @@ export type PathTexts = { action?: string; benefits?: string[]; downsides?: stri
 export type AnalysisTexts = {
   summary?: string;
   finalVerdict?: { recommendedAction?: string; reasoning?: string };
-  synthesis?: { summary?: string; astroInsight?: string; advice?: string; reasoning?: string; risks?: string[]; keyUnknowns?: string[]; nextSteps?: string[] };
+  synthesis?: { summary?: string; astroInsight?: string; advice?: string; reasoning?: string; risks?: string[]; keyUnknowns?: string[]; couldBeWrong?: string[]; nextSteps?: string[] };
   simulation?: {
     context?: { desiredOutcome?: string; knownFacts?: string[]; constraints?: string[] };
     comparison?: string;
@@ -59,6 +59,7 @@ export function extractTexts(fa: Record<string, unknown>): AnalysisTexts {
       reasoning: str(syn.reasoning),
       risks: strs(syn.risks),
       keyUnknowns: strs(syn.keyUnknowns),
+      couldBeWrong: strs(syn.couldBeWrong),
       nextSteps: strs(syn.nextSteps),
     },
     simulation: {
