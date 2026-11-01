@@ -260,7 +260,7 @@ function EngineCard({ code, title, summary, children, defaultOpen = false }: { c
 }
 
 /** Which modules took part and what each one concluded about this question. */
-function ModuleReports({ reports, heading }: { reports: ModuleReport[]; heading: string }) {
+function ModuleReports({ reports, heading, showEvidence = true }: { reports: ModuleReport[]; heading: string; showEvidence?: boolean }) {
   const t = useT();
   if (reports.length === 0) return null;
   return (
@@ -274,7 +274,7 @@ function ModuleReports({ reports, heading }: { reports: ModuleReport[]; heading:
               <div className="min-w-0">
                 {m.role && <p className="text-xs text-muted-foreground italic mb-1">{m.role}</p>}
                 <p className="text-sm font-medium text-foreground">{m.verdict}</p>
-                {m.evidence.length > 0 && (
+                {showEvidence && m.evidence.length > 0 && (
                   <ul className="mt-1 list-disc pl-4 text-sm text-foreground space-y-1">
                     {m.evidence.map((e, i) => (
                       <li key={i}>{e}</li>
@@ -535,7 +535,6 @@ function AstroCard({ result }: { result: AnalysisResult }) {
                 Moon in {astro.prashna.moonSign} ({astro.prashna.moonNakshatra}, {astro.prashna.moonWaxing ? "growing" : "shrinking"})
               </li>
             )}
-            {astro.prashna && <li>Topic read: {astro.prashna.topic}</li>}
             {loc && (
               <li>
                 Place used: <strong>{placeName}</strong> (lat {loc.latitude.toFixed(2)}, lon {loc.longitude.toFixed(2)})
@@ -547,7 +546,6 @@ function AstroCard({ result }: { result: AnalysisResult }) {
                 )}
               </li>
             )}
-            <li>Chart is cast for the moment you asked.</li>
           </ul>
         </Section>
 
@@ -758,12 +756,6 @@ export function AnalysisDisplay({ result: original }: { result: AnalysisResult }
   );
 }
 
-function sourceLabel(syn: NonNullable<AnalysisResult["synthesis"]>, aiOff: boolean): string {
-  if (syn.source === "ai+astro") return "Online AI + astrology";
-  if (syn.source === "ai") return "Online AI";
-  if (aiOff) return syn.usedAstrology ? "Modules + astrology (AI is off in Settings)" : "Modules only";
-  return syn.usedAstrology ? "Built-in reasoning + astrology" : "Built-in reasoning";
-}
 
 function summaryLine(result: AnalysisResult, area: ModuleReport["area"]): React.ReactNode {
   const m = reportsFor(result, area)[0];
@@ -774,8 +766,6 @@ function summaryLine(result: AnalysisResult, area: ModuleReport["area"]): React.
 function AnalysisBody({ result, header }: { result: AnalysisResult; header: React.ReactNode }) {
   const t = useT();
   const syn = result.synthesis;
-  const aiReport = (result.modules ?? []).find((m) => m.key === "AI");
-  const aiOff = result.options?.useAi === false;
   const outlook = result.astro?.outlook;
   const reasoningPoints = toPoints(syn?.reasoning);
   const summaryPoints = toPoints(result.summary);
@@ -852,9 +842,7 @@ function AnalysisBody({ result, header }: { result: AnalysisResult; header: Reac
               )}
             </div>
             <p className="text-xs text-muted-foreground">
-              Score {result.overallScore}/100 &middot; confidence {syn.confidence} &middot; {sourceLabel(syn, aiOff)}
-              {syn.logicScore !== undefined && syn.weights ? ` · reasoning ${syn.logicScore}${syn.astroScore !== undefined ? `, astrology ${syn.astroScore}` : ""}` : ""}
-              {syn.calibration?.applied && ` · past accuracy ${Math.round(syn.calibration.hitRate * 100)}% (${syn.calibration.samples} follow-ups)`}. We&rsquo;ll ask how it turned out in about {syn.timeframeDays} days.
+              We&rsquo;ll ask how it turned out in about {syn.timeframeDays} days.
             </p>
           </div>
         )}
@@ -870,7 +858,7 @@ function AnalysisBody({ result, header }: { result: AnalysisResult; header: Reac
               <Badge label={result.intent.confidence} className={intensityColor(result.intent.confidence)} />
             </div>
           )}
-          <ModuleReports reports={reportsFor(result, "intent")} heading="What the AJIT module found" />
+          <ModuleReports reports={reportsFor(result, "intent")} heading="What the AJIT module found" showEvidence={false} />
           <IndirectRouteView route={result.indirectRoute} />
         </div>
       </EngineCard>
@@ -883,7 +871,7 @@ function AnalysisBody({ result, header }: { result: AnalysisResult; header: Reac
               <Badge label={result.emotion.intensity} className={intensityColor(result.emotion.intensity)} />
             </div>
           )}
-          <ModuleReports reports={reportsFor(result, "emotion")} heading="What the MANU module found" />
+          <ModuleReports reports={reportsFor(result, "emotion")} heading="What the MANU module found" showEvidence={false} />
         </div>
       </EngineCard>
 
@@ -918,11 +906,6 @@ function AnalysisBody({ result, header }: { result: AnalysisResult; header: Reac
 
       <AstroCard result={result} />
 
-      {aiReport && (
-        <EngineCard code="AI" title="Reasoning" summary={aiReport.active ? undefined : <span className="text-muted-foreground">{aiReport.verdict}</span>}>
-          <ModuleReports reports={[aiReport]} heading="How the answer was reasoned" />
-        </EngineCard>
-      )}
       <CreditsUsedCard result={result} />
       {result.id ? <QueryFeedback analysisId={result.id} analysis={result} situation={(result as { situation?: string }).situation} /> : null}
     </div>
