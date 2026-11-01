@@ -272,7 +272,6 @@ function ModuleReports({ reports, heading, showEvidence = true }: { reports: Mod
             <div className="flex items-start gap-2">
               <CheckCircle2 className="w-4 h-4 mt-0.5 shrink-0 text-green-700" />
               <div className="min-w-0">
-                {m.role && <p className="text-xs text-muted-foreground italic mb-1">{m.role}</p>}
                 <p className="text-sm font-medium text-foreground">{m.verdict}</p>
                 {showEvidence && m.evidence.length > 0 && (
                   <ul className="mt-1 list-disc pl-4 text-sm text-foreground space-y-1">
@@ -284,13 +283,7 @@ function ModuleReports({ reports, heading, showEvidence = true }: { reports: Mod
               </div>
             </div>
           </div>
-        ) : (
-          <div key={m.key} className="flex items-center gap-2 rounded-md bg-muted/30 px-3 py-2 text-sm text-muted-foreground">
-            <MinusCircle className="w-4 h-4 shrink-0" />
-            <span className="font-semibold">{m.name}</span>
-            <span className="ml-auto text-[10px] font-mono uppercase">not activated</span>
-          </div>
-        ),
+        ) : null,
       )}
     </div>
   );
@@ -435,6 +428,7 @@ function AstroCard({ result }: { result: AnalysisResult }) {
   const legacy = astro as unknown as { vedicD1?: { ascendant: string; ascendantDegree: number } };
   const asc = astro.ascendant ?? (legacy.vedicD1 ? { sign: legacy.vedicD1.ascendant, degree: legacy.vedicD1.ascendantDegree, lord: "" } : null);
 
+  if (!astroOn && !astro.skippedReason) return null;
   if (!astroOn) {
     const why = astro.skippedReason ? `Skipped, as you chose in Settings. ${astro.skippedReason}` : "Not activated (switched off in Settings).";
     return (
@@ -757,6 +751,12 @@ export function AnalysisDisplay({ result: original }: { result: AnalysisResult }
 }
 
 
+/** A module that had nothing to say about this question is not shown at all. */
+function isActive(result: AnalysisResult, area: ModuleReport["area"]): boolean {
+  const r = reportsFor(result, area);
+  return r.length === 0 || r.some((m) => m.active);
+}
+
 function summaryLine(result: AnalysisResult, area: ModuleReport["area"]): React.ReactNode {
   const m = reportsFor(result, area)[0];
   if (!m) return undefined;
@@ -850,30 +850,32 @@ function AnalysisBody({ result, header }: { result: AnalysisResult; header: Reac
 
       <p className="pt-2 text-base font-bold text-foreground">{t("Modules used (tap to open)")}</p>
 
+      {isActive(result, "intent") && (
       <EngineCard code="AJIT" title="Intent detection" summary={summaryLine(result, "intent")}>
         <div className="space-y-3">
           {result.intent.intent !== "unclear" && (
             <div className="flex items-center gap-3 flex-wrap">
               <span className="text-lg font-bold text-foreground capitalize">{result.intent.intent}</span>
-              <Badge label={result.intent.confidence} className={intensityColor(result.intent.confidence)} />
             </div>
           )}
           <ModuleReports reports={reportsFor(result, "intent")} heading="What the AJIT module found" showEvidence={false} />
           <IndirectRouteView route={result.indirectRoute} />
         </div>
       </EngineCard>
+      )}
 
+      {isActive(result, "emotion") && (
       <EngineCard code="MANU" title="Mood reading" summary={summaryLine(result, "emotion")}>
         <div className="space-y-3">
           {result.emotion.score > 0 && (
             <div className="flex items-center gap-3 flex-wrap">
               <span className="text-lg font-bold text-foreground capitalize">{result.emotion.emotion}</span>
-              <Badge label={result.emotion.intensity} className={intensityColor(result.emotion.intensity)} />
             </div>
           )}
           <ModuleReports reports={reportsFor(result, "emotion")} heading="What the MANU module found" showEvidence={false} />
         </div>
       </EngineCard>
+      )}
 
       <SilenceCard result={result} />
 
