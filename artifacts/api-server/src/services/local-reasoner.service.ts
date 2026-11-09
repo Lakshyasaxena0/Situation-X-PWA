@@ -3,6 +3,7 @@
 // reasoning in points, risks, what is unknown, next steps and a time frame. It is rule-based and says
 // so; it never pretends to be the online AI.
 
+import { topicPattern } from "../shared/constants/experience.js";
 import type { EngineResponse } from "./engine.service.js";
 import type { AiAnswer } from "./synthesis.service.js";
 import type { PathOption } from "./sivi.service.js";
@@ -60,6 +61,7 @@ export function localAnswer(engine: EngineResponse, score: number): AiAnswer {
   if (sim.context.constraints.length) points.push(`Limits you mentioned: ${sim.context.constraints.slice(0, 3).join("; ")}.`);
   points.push(`The safest useful path looks like: ${sentence(best.action)} (risk ${best.risk}, steadiness ${best.stability}${best.reversible ? ", can be undone" : ", hard to undo"}).`);
   if (others.length) points.push(`Other options: ${others.slice(0, 2).map((o) => o.action).join(" / ")}.`);
+  points.push(`What usually happens in such situations: ${topicPattern(engine.intent.intent)}`);
   const emo = EMOTION_NOTE[engine.emotion.emotion];
   if (emo && engine.emotion.intensity !== "low") points.push(emo);
   if (engine.silence) points.push("You mention a silence. It can mean many things, so check before you assume.");

@@ -47,7 +47,8 @@ export function calibrationFactor(cal: Calibration): number {
 /** Pure: shrinks (or slightly widens) a 0-100 score around 50. */
 export function applyCalibration(score: number, cal: Calibration): number {
   const adjusted = 50 + (score - 50) * calibrationFactor(cal);
-  return Math.min(100, Math.max(0, Math.round(adjusted)));
+  // Certainty is rare in real life: keep a small margin from 0 and 100.
+  return Math.min(95, Math.max(5, Math.round(adjusted)));
 }
 
 let cache: { at: number; byCategory: Map<string, CalibrationCounts> } | null = null;

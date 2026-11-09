@@ -10,6 +10,7 @@ import { describeSilence, mergeSilence, silenceTexts, type SilenceReading } from
 import { mergeContext, parseAiSimulation, type SimulationResult } from "./sivi.service.js";
 import type { TimingResult } from "./timing.service.js";
 import { localAnswer } from "./local-reasoner.service.js";
+import { FORECAST_PRIMER, topicPattern } from "../shared/constants/experience.js";
 import { DEFAULT_OPTIONS, LANGUAGE_NAMES, type AnalysisOptions } from "./analysis-options.js";
 
 /**
@@ -323,6 +324,8 @@ Hints from the app's specialised modules (they are keyword-based and can be wron
 - SIVI (rule-based draft of the paths, only from the intent and emotion, so general): best path "${engine.simulation.bestPath.action}" (risk ${engine.simulation.bestPath.risk}, stability ${engine.simulation.bestPath.stability}); alternatives: ${alternatives || "none"}. Build better, situation-specific paths yourself in STEP 1.
 ${engine.silence ? `- RSMI (silence): ${describeSilence(engine.silence)} Facts not given: ${engine.silence.unknowns.join('; ') || 'none'}.\n` : ""}${engine.route ? `- AJIT (indirect route): ${describeRoute(engine.route)}\n` : ""}
 ${engine.safety.guard ? `${engine.safety.guard}\n\n` : ""}STEP 1 - YOUR OWN JUDGMENT. Do this first, from the situation itself, with logic, evidence, common sense, psychology and practical wisdom:
+${FORECAST_PRIMER}
+- USUAL REAL-LIFE PATTERN for this kind of situation (a starting base rate from general experience, NOT a fact about this person; move away from it only for facts they stated): ${topicPattern(engine.intent.intent)}
 - What is really being asked? Which facts are stated and which assumptions are you making?
 - What are the realistic options, including waiting, doing nothing, or a middle path?
 - For each: likely upside, downside, reversibility, cost of being wrong, and what is within the person's control.
